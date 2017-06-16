@@ -59,13 +59,13 @@ class Cell(object):
         Cell.COLUMN_DATA_NAME: column,
     }
 
-  def add_data(self, name, value):
-    if name in self._data:
-      raise Exception('Unexpected existing value with name: ', name)
-    self._data[name] = value
+  def add_data(self, key, value):
+    if key in self._data:
+      raise Exception('Unexpected existing value with key: ', key)
+    self._data[key] = value
 
-  def get_data(self, name):
-    return self._data.get(name, '')
+  def get_data(self, key):
+    return self._data.get(key, '')
 
   # List cells in a deterministic order using this.
   def get_sort_key(self):
@@ -108,27 +108,46 @@ def parse_panel_accessions(lines):
   return accessions, labels
 
 
-def main():
-  accessions, accessions_labels = parse_panel_accessions(
-      read_csv('PanelAccessions-BAP.csv'))
-  plot_map_plant_ids = read_csv('BAP16_PlotMap_Plant_IDs.csv')
+def parse_rw_by_ra(lines, data_key, cells, get_extra_data_fn=None,
+                   add_cells=False):
+  for line in lines[1:]:
+    row = line[0]
 
-  cells = Cells()
-  for line in plot_map_plant_ids[1:]:
     for i, value in enumerate(line[1:], start=1):
       if value == '':
         continue
 
-      cell = cells.add(line[0], plot_map_plant_ids[0][i])
-      cell.add_data('plant_id', value)
+      column = lines[0][i]
+      if add_cells:
+        cells.add(row, column)
+      cell = cells.get(row, column)
+      cell.add_data(data_key, value)
 
-      if value not in accessions:
-        print('WARNING: No panel accessions for plant id: ',
-              value, line[0], plot_map_plant_ids[0][i])
-        continue
+      if get_extra_data_fn is not None:
+        for k, v in get_extra_data_fn(value).items():
+          cell.add_data(k, v)
 
-      for accession_key, accession_value in accessions[value].items():
-        cell.add_data(accession_key, accession_value)
+
+
+def main():
+  accessions, accessions_labels = parse_panel_accessions(
+      read_csv('PanelAccessions-BAP.csv'))
+
+  missing_accessions = set()
+  def get_accessions_data_fn(plant_id):
+    if plant_id not in accessions:
+      if plant_id not in missing_accessions:
+        missing_accessions.add(plant_id)
+        print('WARNING: No panel accessions for plant id: ', plant_id)
+      return {}
+
+    return accessions[plant_id]
+
+
+  cells = Cells()
+  parse_rw_by_ra(read_csv('BAP16_PlotMap_Plant_IDs.csv'), 'plant_id', cells,
+                 get_extra_data_fn=get_accessions_data_fn, add_cells=True)
+
 
 
   # Write final contents.
