@@ -65,6 +65,12 @@ class Cell(object):
         DataKeys(Cell.COLUMN_DATA_NAME): column,
     }
 
+  def __str__(self):
+    return self._row + ' ' + self._column
+
+  def __repr__(self):
+    return self.__str__()
+
   def add_data(self, key, value):
     if key in self._data:
       raise Exception('Unexpected existing value with key: ', key)
@@ -115,6 +121,7 @@ def parse_panel_accessions(lines):
 def parse_rw_by_ra(csv_filepath, data_key, cells, get_extra_data_fn=None,
                    add_cells=False):
   lines = read_csv(csv_filepath)
+  added_cells = []
   for line in lines[1:]:
     row = line[0]
 
@@ -124,16 +131,16 @@ def parse_rw_by_ra(csv_filepath, data_key, cells, get_extra_data_fn=None,
 
       column = lines[0][i]
       if not cells.exists(row, column):
-        cells.add(row, column)
-        if not add_cells:
-          # TODO this error message could easily become defunct. Improve.
-          print('WARNING: Adding cell with no known plant id: ', row, column)
+        added_cells.append(cells.add(row, column))
       cell = cells.get(row, column)
       cell.add_data(data_key, value)
 
       if get_extra_data_fn is not None:
         for k, v in get_extra_data_fn(value).items():
           cell.add_data(k, v)
+
+  if not add_cells and len(added_cells) != 0:
+    print('WARNING: Added cell(s) that were missing: ', data_key, added_cells)
 
 
 class DataKeys(Enum):
