@@ -11,7 +11,7 @@ DATA_DIRECTORY = '2016'
 # Simple container of all cells.
 class Cells(object):
   def __init__(self):
-    self._cells = dict()
+    self._cells = {}
 
   # Rw = row (case insensitive).
   # Ra = column (case insensitive).
@@ -21,7 +21,7 @@ class Cells(object):
     row = row.lower()
     column = column.lower()
 
-    columns =  self._cells.setdefault(row, dict())
+    columns =  self._cells.setdefault(row, {})
     # TODO is it ok to create so many Cell objects?
     return columns.setdefault(column, Cell(row, column))
 
@@ -31,7 +31,7 @@ class Cell(object):
   def __init(self, row, column):
     self._row = row
     self._column = column
-    self._data = dict()
+    self._data = {}
 
   def add_data(self, name, value):
     if name in self._data:
@@ -44,14 +44,37 @@ def read_csv(file_name):
   with open(file_path, 'r') as f:
     lines = []
     for line in csv.reader(f):
-      lines.append(map(lambda v: '' if v in EMPTY_VALUES else v, line))
+      lines.append(['' if v in EMPTY_VALUES else v for v in line])
 
+  # TODO quick manual check of these lines error messages.
+  num_columns = len(lines[0])
+  if len(set(lines[0])) != num_columns:
+    raise Exception('Duplicate label in first row of csv: ', file_name)
+  for i, line in enumerate(lines):
+    if len(line) != num_columns:
+      raise Exception('Unexpected amount of values in line: ',
+                      i, len(line), num_columns)
   return lines
 
 
+def parse_panel_accessions(lines):
+  accessions = {}
+  for line in lines[1:]:
+    plant_id = line[0]  # File has plant id in first column.
+    if plant_id in accessions:
+      raise Exception('Duplicate entries for plant id: ', line[0])
+
+    accession = {}
+    for i, value in enumerate(line[1:], start=1):
+      accession[lines[0][i]] = value
+    accessions[plant_id] = accession
+
+  return accessions
+
+
 def main():
-  lines = read_csv('BAP16_PlotMap_Plant_IDs.csv')
-  print(len(lines))
+  accessions = parse_panel_accessions(read_csv('PanelAccessions-BAP.csv'))
+  print(accessions['PI_63715'])
 
 
 if __name__ == '__main__':
