@@ -1,8 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # TODO add file header docs.
 
 import csv
+from enum import Enum
 import os
 
 DATA_DIRECTORY = '2016'
@@ -55,8 +56,8 @@ class Cell(object):
     self._row = row
     self._column = column
     self._data = {
-        Cell.ROW_DATA_NAME: row,
-        Cell.COLUMN_DATA_NAME: column,
+        DataKeys(Cell.ROW_DATA_NAME): row,
+        DataKeys(Cell.COLUMN_DATA_NAME): column,
     }
 
   def add_data(self, key, value):
@@ -92,20 +93,18 @@ def read_csv(file_name):
 
 def parse_panel_accessions(lines):
   accessions = {}
-  labels = ['accession_' + v for v in lines[0]]
+  labels = [DataKeys('accession_' + v) for v in lines[0][1:]]
   for line in lines[1:]:
     plant_id = line[0]  # File has plant id in first column.
     if plant_id in accessions:
       raise Exception('Duplicate entries for plant id: ', line[0])
 
     accession = {}
-    for i, value in enumerate(line[1:], start=1):
+    for i, value in enumerate(line[1:]):
       accession[labels[i]] = value
     accessions[plant_id] = accession
 
-  # Drop label that was for the plant id.
-  labels = labels[1:]
-  return accessions, labels
+  return accessions
 
 
 def parse_rw_by_ra(lines, data_key, cells, get_extra_data_fn=None,
@@ -128,13 +127,22 @@ def parse_rw_by_ra(lines, data_key, cells, get_extra_data_fn=None,
           cell.add_data(k, v)
 
 
+class DataKeys(Enum):
+  ROW = Cell.ROW_DATA_NAME
+  COLUMN = Cell.COLUMN_DATA_NAME
+  PLANT_ID = 'plant_id'
+  # parse_panel_accessions depends on these exact ACCESSION_* string values.
+  ACCESSION_PHOTOPERIOD = 'accession_PHOTOPERIOD'
+  ACCESSION_TYPE = 'accession_Type'
+  ACCESSION_ORIGIN = 'accession_Origin'
+  ACCESSION_RACE = 'accession_Race'
+
 
 def main():
-  accessions, accessions_labels = parse_panel_accessions(
-      read_csv('PanelAccessions-BAP.csv'))
+  accessions = parse_panel_accessions(read_csv('PanelAccessions-BAP.csv'))
 
   missing_accessions = set()
-  def get_accessions_data_fn(plant_id):
+  def get_accessions_fn(plant_id):
     if plant_id not in accessions:
       if plant_id not in missing_accessions:
         missing_accessions.add(plant_id)
@@ -145,19 +153,17 @@ def main():
 
 
   cells = Cells()
-  parse_rw_by_ra(read_csv('BAP16_PlotMap_Plant_IDs.csv'), 'plant_id', cells,
-                 get_extra_data_fn=get_accessions_data_fn, add_cells=True)
+  parse_rw_by_ra(read_csv('BAP16_PlotMap_Plant_IDs.csv'), DataKeys.PLANT_ID,
+                 cells, get_extra_data_fn=get_accessions_fn, add_cells=True)
 
 
 
   # Write final contents.
-  output_labels = ([Cell.ROW_DATA_NAME, Cell.COLUMN_DATA_NAME, 'plant_id'] +
-                   accessions_labels)
   with open(OUTPUT_FILENAME, 'w') as output_file:
     writer = csv.writer(output_file)
-    writer.writerow(output_labels)
+    writer.writerow([x.value for x in DataKeys])
     for cell in cells.sorted():
-      writer.writerow([cell.get_data(x) for x in output_labels])
+      writer.writerow([cell.get_data(x) for x in DataKeys])
 
 
 if __name__ == '__main__':
