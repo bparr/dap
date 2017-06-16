@@ -46,7 +46,6 @@ def read_csv(file_name):
     for line in csv.reader(f):
       lines.append(['' if v in EMPTY_VALUES else v for v in line])
 
-  # TODO quick manual check of these lines error messages.
   num_columns = len(lines[0])
   if len(set(lines[0])) != num_columns:
     raise Exception('Duplicate label in first row of csv: ', file_name)
