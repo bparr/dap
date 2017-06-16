@@ -5,9 +5,11 @@
 import csv
 import os
 
+DATA_DIRECTORY = '2016'
+OUTPUT_FILENAME = DATA_DIRECTORY + '.csv'
+
 # TODO don't ignore Check/CHECK values in BAP16_PlotMap_Plant_IDs.csv?
 EMPTY_VALUES = ['', ' ', 'FILL', 'NA', 'CHECK', 'Check']
-DATA_DIRECTORY = '2016'
 
 
 # Simple container of all cells.
@@ -19,9 +21,9 @@ class Cells(object):
   # Ra = column (case insensitive).
   # TODO What does "Ra3" stand for? I'm using column now. Rename if needed.
   def add(self, row, column):
-    # TODO keep lower()? If remove, fix doc removing "(case insensitive)".
-    row = row.lower()
-    column = column.lower()
+    # TODO keep upper()? If remove, fix doc removing "(case insensitive)".
+    row = row.upper()
+    column = column.upper()
 
     columns =  self._cells.setdefault(row, {})
     if column in columns:
@@ -33,20 +35,42 @@ class Cells(object):
 
 
   def get(self, row, column):
-    return self._cells[row.lower()][column.lower()]
+    return self._cells[row.upper()][column.upper()]
+
+
+  def sorted(self):
+    cells = []
+    for columns in self._cells.values():
+      cells.extend(columns.values())
+    cells.sort(key=lambda cell: cell.get_sort_key())
+    return cells
 
 
 # Subplot in field containing all genetic siblings.
 class Cell(object):
+  ROW_DATA_NAME = 'plot_row'
+  COLUMN_DATA_NAME = 'plot_column'
+
   def __init__(self, row, column):
     self._row = row
     self._column = column
-    self._data = {}
+    self._data = {
+        Cell.ROW_DATA_NAME: row,
+        Cell.COLUMN_DATA_NAME: column,
+    }
 
   def add_data(self, name, value):
     if name in self._data:
       raise Exception('Unexpected existing value with name: ', name)
     self._data[name] = value
+
+  def get_data(self, name):
+    return self._data.get(name, '')
+
+  # List cells in a deterministic order using this.
+  def get_sort_key(self):
+    # TODO improve??
+    return (self._row, self._column)
 
 
 def read_csv(file_name):
@@ -79,6 +103,8 @@ def parse_panel_accessions(lines):
       accession[labels[i]] = value
     accessions[plant_id] = accession
 
+  # Drop label that was for the plant id.
+  labels = labels[1:]
   return accessions, labels
 
 
@@ -103,6 +129,16 @@ def main():
 
       for accession_key, accession_value in accessions[value].items():
         cell.add_data(accession_key, accession_value)
+
+
+  # Write final contents.
+  output_labels = ([Cell.ROW_DATA_NAME, Cell.COLUMN_DATA_NAME, 'plant_id'] +
+                   accessions_labels)
+  with open(OUTPUT_FILENAME, 'w') as output_file:
+    writer = csv.writer(output_file)
+    writer.writerow(output_labels)
+    for cell in cells.sorted():
+      writer.writerow([cell.get_data(x) for x in output_labels])
 
 
 if __name__ == '__main__':
