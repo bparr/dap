@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 
+# TODO add file header docs.
+
 import csv
 import os
 
-EMPTY_VALUES = ['', ' ', 'FILL', 'NA']
+# TODO don't ignore Check/CHECK values in BAP16_PlotMap_Plant_IDs.csv?
+EMPTY_VALUES = ['', ' ', 'FILL', 'NA', 'CHECK', 'Check']
 DATA_DIRECTORY = '2016'
 
-# TODO add file header docs.
 
 # Simple container of all cells.
 class Cells(object):
@@ -16,19 +18,27 @@ class Cells(object):
   # Rw = row (case insensitive).
   # Ra = column (case insensitive).
   # TODO What does "Ra3" stand for? I'm using column now. Rename if needed.
-  def get(self, row, column):
-    # TODO keep? If remove, fix method doc too removing "(case insensitive)".
+  def add(self, row, column):
+    # TODO keep lower()? If remove, fix doc removing "(case insensitive)".
     row = row.lower()
     column = column.lower()
 
     columns =  self._cells.setdefault(row, {})
-    # TODO is it ok to create so many Cell objects?
-    return columns.setdefault(column, Cell(row, column))
+    if column in columns:
+      raise Exception('Existing cell when adding: ', row, column)
+
+    cell = Cell(row, column)
+    columns[column] = cell
+    return cell
+
+
+  def get(self, row, column):
+    return self._cells[row.lower()][column.lower()]
 
 
 # Subplot in field containing all genetic siblings.
 class Cell(object):
-  def __init(self, row, column):
+  def __init__(self, row, column):
     self._row = row
     self._column = column
     self._data = {}
@@ -58,6 +68,7 @@ def read_csv(file_name):
 
 def parse_panel_accessions(lines):
   accessions = {}
+  labels = ['accession_' + v for v in lines[0]]
   for line in lines[1:]:
     plant_id = line[0]  # File has plant id in first column.
     if plant_id in accessions:
@@ -65,15 +76,33 @@ def parse_panel_accessions(lines):
 
     accession = {}
     for i, value in enumerate(line[1:], start=1):
-      accession[lines[0][i]] = value
+      accession[labels[i]] = value
     accessions[plant_id] = accession
 
-  return accessions
+  return accessions, labels
 
 
 def main():
-  accessions = parse_panel_accessions(read_csv('PanelAccessions-BAP.csv'))
-  print(accessions['PI_63715'])
+  accessions, accessions_labels = parse_panel_accessions(
+      read_csv('PanelAccessions-BAP.csv'))
+  plot_map_plant_ids = read_csv('BAP16_PlotMap_Plant_IDs.csv')
+
+  cells = Cells()
+  for line in plot_map_plant_ids[1:]:
+    for i, value in enumerate(line[1:], start=1):
+      if value == '':
+        continue
+
+      cell = cells.add(line[0], plot_map_plant_ids[0][i])
+      cell.add_data('plant_id', value)
+
+      if value not in accessions:
+        print('WARNING: No panel accessions for plant id: ',
+              value, line[0], plot_map_plant_ids[0][i])
+        continue
+
+      for accession_key, accession_value in accessions[value].items():
+        cell.add_data(accession_key, accession_value)
 
 
 if __name__ == '__main__':
