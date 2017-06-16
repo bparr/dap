@@ -9,9 +9,7 @@ import os
 DATA_DIRECTORY = '2016'
 OUTPUT_FILENAME = DATA_DIRECTORY + '.csv'
 
-# TODO don't ignore Check/CHECK values in BAP16_PlotMap_Plant_IDs.csv?
-#      Ignoring avoids warning about missing accessions for that plant id.
-EMPTY_VALUES = ['', ' ', 'FILL', 'NA', 'CHECK', 'Check']
+EMPTY_VALUES = ['', ' ', 'FILL', 'NA']
 
 
 # Simple container of all cells.
