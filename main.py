@@ -10,6 +10,7 @@ DATA_DIRECTORY = '2016'
 OUTPUT_FILENAME = DATA_DIRECTORY + '.csv'
 
 # TODO don't ignore Check/CHECK values in BAP16_PlotMap_Plant_IDs.csv?
+#      Ignoring avoids warning about missing accessions for that plant id.
 EMPTY_VALUES = ['', ' ', 'FILL', 'NA', 'CHECK', 'Check']
 
 
@@ -34,6 +35,10 @@ class Cells(object):
     columns[column] = cell
     return cell
 
+  def exists(self, row, column):
+    row = row.upper()
+    column = column.upper()
+    return row in self._cells and column in self._cells[row]
 
   def get(self, row, column):
     return self._cells[row.upper()][column.upper()]
@@ -107,8 +112,9 @@ def parse_panel_accessions(lines):
   return accessions
 
 
-def parse_rw_by_ra(lines, data_key, cells, get_extra_data_fn=None,
+def parse_rw_by_ra(csv_filepath, data_key, cells, get_extra_data_fn=None,
                    add_cells=False):
+  lines = read_csv(csv_filepath)
   for line in lines[1:]:
     row = line[0]
 
@@ -117,8 +123,11 @@ def parse_rw_by_ra(lines, data_key, cells, get_extra_data_fn=None,
         continue
 
       column = lines[0][i]
-      if add_cells:
+      if not cells.exists(row, column):
         cells.add(row, column)
+        if not add_cells:
+          # TODO this error message could easily become defunct. Improve.
+          print('WARNING: Adding cell with no known plant id: ', row, column)
       cell = cells.get(row, column)
       cell.add_data(data_key, value)
 
@@ -131,6 +140,7 @@ class DataKeys(Enum):
   ROW = Cell.ROW_DATA_NAME
   COLUMN = Cell.COLUMN_DATA_NAME
   PLANT_ID = 'plant_id'
+  PLOT_ID = 'plot_id'
   # parse_panel_accessions depends on these exact ACCESSION_* string values.
   ACCESSION_PHOTOPERIOD = 'accession_PHOTOPERIOD'
   ACCESSION_TYPE = 'accession_Type'
@@ -153,8 +163,9 @@ def main():
 
 
   cells = Cells()
-  parse_rw_by_ra(read_csv('BAP16_PlotMap_Plant_IDs.csv'), DataKeys.PLANT_ID,
-                 cells, get_extra_data_fn=get_accessions_fn, add_cells=True)
+  parse_rw_by_ra('BAP16_PlotMap_Plant_IDs.csv', DataKeys.PLANT_ID, cells,
+                 get_extra_data_fn=get_accessions_fn, add_cells=True)
+  parse_rw_by_ra('BAP16_PlotMap_Plot_IDs.csv', DataKeys.PLOT_ID, cells)
 
 
 
