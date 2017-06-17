@@ -5,6 +5,8 @@ import unittest
 import main
 
 
+# TODO check uses of main are small.
+
 def _read_csv_file(filepath):
   with open(filepath, 'r') as csv_file:
     return list(csv.DictReader(csv_file))
@@ -43,9 +45,23 @@ class TestOutput(unittest.TestCase):
         self.assertEqual(v, get_actual_value(d[' '], k, data_key.value))
 
 
-  def test_2016_07_13_14_Leaf_Necrosis(self):
+  def test_robot_files(self):
     self._assert_input('2016_07_13-14_Leaf_Necrosis.csv',
                        main.DataKeys.LEAF_NECROSIS_07)
+    self._assert_input('2016_07_13-14_vegetation_index.csv',
+                       main.DataKeys.VEGETATION_INDEX_07)
+    self._assert_input('2016_08_05-08_vegetation_index.csv',
+                       main.DataKeys.VEGETATION_INDEX_08)
+    self._assert_input('2016_07_13_BAP_Leaf_Area.csv',
+                       main.DataKeys.LEAF_AREA_07)
+    self._assert_input('2016_07_13_laser_plant_height.csv',
+                       main.DataKeys.LASER_PLANT_HEIGHT_07)
+    self._assert_input('2016_07_light_interception.csv',
+                       main.DataKeys.LIGHT_INTERCEPTION_07)
+    self._assert_input('2016_08_light_interception.csv',
+                       main.DataKeys.LIGHT_INTERCEPTION_08)
+    self._assert_input('2016_09_light_interception.csv',
+                       main.DataKeys.LIGHT_INTERCEPTION_09)
 
 
 if __name__ == '__main__':
