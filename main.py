@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 # TODO add file header docs.
+# TODO note the Rw 4 offset for PlotPlan and Harvest(?) files.
 
 import csv
 from enum import Enum
@@ -116,9 +117,8 @@ def parse_panel_accessions(lines):
   return accessions
 
 
-def parse_rw_by_ra(csv_filepath, data_key, cells, get_extra_data_fn=None,
+def parse_rw_by_ra(lines, data_key, cells, get_extra_data_fn=None,
                    add_cells=False):
-  lines = read_csv(csv_filepath)
   added_cells = []
   for line in lines[1:]:
     row = line[0]
@@ -168,9 +168,10 @@ def main():
 
 
   cells = Cells()
-  parse_rw_by_ra('BAP16_PlotMap_Plant_IDs.csv', DataKeys.PLANT_ID, cells,
-                 get_extra_data_fn=get_accessions_fn, add_cells=True)
-  parse_rw_by_ra('BAP16_PlotMap_Plot_IDs.csv', DataKeys.PLOT_ID, cells)
+  parse_rw_by_ra(read_csv('BAP16_PlotMap_Plant_IDs.csv'), DataKeys.PLANT_ID,
+                 cells, get_extra_data_fn=get_accessions_fn, add_cells=True)
+  parse_rw_by_ra(read_csv('BAP16_PlotMap_Plot_IDs.csv'),
+                 DataKeys.PLOT_ID, cells)
 
 
 
