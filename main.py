@@ -97,6 +97,8 @@ class Cell(object):
     key = DataKeys(key)  # Ensure key is a DataKey instance.
     if key in self._data and value != self._data[key]:
       if append_if_mismatch:
+        if value in self._data[key].split(MISMATCH_DELIMETER):
+          return
         self._data[key] += MISMATCH_DELIMETER + value
         return
 
@@ -181,6 +183,16 @@ def parse_harvest_data(lines, cells):
       cell.add_data(labels[i], value)
 
 
+def parse_plot_plan(lines, cells):
+  lines = lines[1:]  # Ignore labels.
+  for plot_id, plant_id, column, row, x_of_y in lines:
+    row = parse_coordinate(row) + NO_FILL_ROW_OFFSET
+    cell = cells.get(row, column)
+    cell.add_data(DataKeys.PLOT_ID, plot_id, append_if_mismatch=True)
+    cell.add_data(DataKeys.PLANT_ID, plant_id)
+    cell.add_data(DataKeys.X_OF_Y, x_of_y)
+
+
 def parse_plot_plan_tags(lines, cells):
   lines = lines[1:]  # Ignore labels.
   for plot_id, plant_id, column, row, x_of_y, tag, con, barcode, end in lines:
@@ -247,6 +259,7 @@ def main():
   parse_rw_by_ra(read_csv('BAP16_PlotMap_Plot_IDs.csv'),
                  DataKeys.PLOT_ID, cells)
   parse_harvest_data(read_csv('BAP16_HarvestData.csv'), cells)
+  parse_plot_plan(read_csv('BAP16_PlotPlan_Plot_IDs.csv'), cells)
   parse_plot_plan_tags(read_csv('BAP16_PlotPlan_Plot_IDs_Tags.csv'), cells)
 
 
