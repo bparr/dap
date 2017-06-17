@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 # TODO add file header docs.
-# TODO note the Rw 4 offset for PlotPlan and Harvest(?) files.
 
 import csv
 from enum import Enum
@@ -11,6 +10,25 @@ DATA_DIRECTORY = '2016'
 OUTPUT_FILENAME = DATA_DIRECTORY + '.csv'
 
 EMPTY_VALUES = ['', ' ', 'FILL', 'NA']
+# TODO note the Rw 4 offset for PlotPlan and Harvest(?) files.
+# TODO consider switching rw to use plotplan's offset?? so same as harvest.
+NO_FILL_ROW_OFFSET = 4
+
+
+def parse_coordinate(coordinate):
+  if isinstance(coordinate, int):
+    return coordinate
+  if len(coordinate) < 3:
+    return int(coordinate)
+
+  coordinate_prefix = coordinate.upper()[:2]
+  if coordinate_prefix == 'RW' or coordinate_prefix == 'RA':
+    coordinate = coordinate[2:]
+  return int(coordinate)
+
+
+def parse_coordinates(row, column):
+  return parse_coordinate(row), parse_coordinate(column)
 
 
 # Simple container of all cells.
@@ -18,14 +36,11 @@ class Cells(object):
   def __init__(self):
     self._cells = {}
 
-  # Rw = row (case insensitive).
-  # Ra = column (case insensitive).
+  # Row = Rw### (case insensitive).
+  # Column = Ra### (case insensitive).
   # TODO What does "Ra3" stand for? I'm using column now. Rename if needed.
   def add(self, row, column):
-    # TODO keep upper()? If remove, fix doc removing "(case insensitive)".
-    row = row.upper()
-    column = column.upper()
-
+    row, column = parse_coordinates(row, column)
     columns =  self._cells.setdefault(row, {})
     if column in columns:
       raise Exception('Existing cell when adding: ', row, column)
@@ -35,13 +50,12 @@ class Cells(object):
     return cell
 
   def exists(self, row, column):
-    row = row.upper()
-    column = column.upper()
+    row, column = parse_coordinates(row, column)
     return row in self._cells and column in self._cells[row]
 
   def get(self, row, column):
-    return self._cells[row.upper()][column.upper()]
-
+    row, column = parse_coordinates(row, column)
+    return self._cells[row][column]
 
   def sorted(self):
     cells = []
@@ -56,6 +70,7 @@ class Cell(object):
   ROW_DATA_NAME = 'plot_row'
   COLUMN_DATA_NAME = 'plot_column'
 
+  # row and column are both ints.
   def __init__(self, row, column):
     self._row = row
     self._column = column
@@ -65,7 +80,7 @@ class Cell(object):
     }
 
   def __str__(self):
-    return self._row + ' ' + self._column
+    return str(self._row) + ' ' + str(self._column)
 
   def __repr__(self):
     return self.__str__()
@@ -141,6 +156,14 @@ def parse_rw_by_ra(lines, data_key, cells, get_extra_data_fn=None,
     print('WARNING: Added cell(s) that were missing: ', data_key, added_cells)
 
 
+def parse_plot_plan_tags(lines, cells):
+  lines = lines[1:]  # Ignore labels.
+  for plot_id, plant_id, column, row, x_of_y, tag, con, barcode, end in lines:
+    row = parse_coordinate(row) + NO_FILL_ROW_OFFSET
+    if not cells.exists(row, column):
+      raise Exception('Unknown cell in PlotPlan: ', row, column)
+
+
 class DataKeys(Enum):
   ROW = Cell.ROW_DATA_NAME
   COLUMN = Cell.COLUMN_DATA_NAME
@@ -172,6 +195,8 @@ def main():
                  cells, get_extra_data_fn=get_accessions_fn, add_cells=True)
   parse_rw_by_ra(read_csv('BAP16_PlotMap_Plot_IDs.csv'),
                  DataKeys.PLOT_ID, cells)
+
+  parse_plot_plan_tags(read_csv('BAP16_PlotPlan_Plot_IDs_Tags.csv'), cells)
 
 
 
