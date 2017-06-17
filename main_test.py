@@ -25,7 +25,7 @@ def read_output_file():
   return output
 
 
-_OUTPUT_CONTENTS = read_output_file()
+OUTPUT_CONTENTS = read_output_file()
 
 def get_actual_value(row, column, key, has_fill_rows=True):
   row, column = main.parse_coordinates(row, column)
@@ -33,7 +33,7 @@ def get_actual_value(row, column, key, has_fill_rows=True):
     row += main.NO_FILL_ROW_OFFSET
   # Handle both a string key and a DataKeys key.
   key = main.DataKeys(key).value
-  return _OUTPUT_CONTENTS.get(row, {}).get(column, {}).get(key, '')
+  return OUTPUT_CONTENTS.get(row, {}).get(column, {}).get(key, '')
 
 
 class TestOutput(unittest.TestCase):
@@ -124,6 +124,27 @@ class TestOutput(unittest.TestCase):
           has_fill_rows=False))
       self._assert_values_equal(d['End'], get_actual_value(
           d['Rw'], d['Ra'], main.DataKeys.PLOT_PLAN_END, has_fill_rows=False))
+
+  def test_PanelAccessions_BAP(self):
+    dict_lines = read_input_file('PanelAccessions-BAP.csv')
+    accessions = dict((x['Taxa'], x) for x in dict_lines)
+    for output_columns in OUTPUT_CONTENTS.values():
+      for output_line in output_columns.values():
+        plant_id = output_line[main.DataKeys.PLANT_ID.value]
+        if plant_id not in accessions:
+          continue
+
+        accession = accessions[plant_id]
+        row = output_line[main.DataKeys.ROW.value]
+        column = output_line[main.DataKeys.COLUMN.value]
+        self._assert_values_equal(accession['PHOTOPERIOD'], get_actual_value(
+            row, column, main.DataKeys.ACCESSION_PHOTOPERIOD))
+        self._assert_values_equal(accession['Type'], get_actual_value(
+            row, column, main.DataKeys.ACCESSION_TYPE))
+        self._assert_values_equal(accession['Origin'], get_actual_value(
+            row, column, main.DataKeys.ACCESSION_ORIGIN))
+        self._assert_values_equal(accession['Race'], get_actual_value(
+            row, column, main.DataKeys.ACCESSION_RACE))
 
 
 if __name__ == '__main__':
