@@ -27,10 +27,12 @@ def read_output_file():
 
 _OUTPUT_CONTENTS = read_output_file()
 
-def get_actual_value(row, column, key, include_fill_rows=True):
+def get_actual_value(row, column, key, has_fill_rows=True):
   row, column = main.parse_coordinates(row, column)
-  if not include_fill_rows:
+  if not has_fill_rows:
     row += main.NO_FILL_ROW_OFFSET
+  # Handle both a string key and a DataKeys key.
+  key = main.DataKeys(key).value
   return _OUTPUT_CONTENTS.get(row, {}).get(column, {}).get(key, '')
 
 
@@ -83,16 +85,45 @@ class TestOutput(unittest.TestCase):
         if k == 'RA1' or k == 'RW':
           continue
         if k == 'Plot ID':
-          k = 'plot_id'
+          k = main.DataKeys.PLOT_ID
 
         self._assert_values_equal(v, get_actual_value(
-            d['RW'], d['RA1'], k, include_fill_rows=False))
+            d['RW'], d['RA1'], k, has_fill_rows=False))
 
   def test_plot_map_files(self):
     self._assert_input('BAP16_PlotMap_Plant_IDs.csv',
                        main.DataKeys.PLANT_ID, first_column_key='')
     self._assert_input('BAP16_PlotMap_Plot_IDs.csv',
                        main.DataKeys.PLOT_ID, first_column_key='')
+
+  def test_BAP16_PlotPlan_Plot_IDs(self):
+    dict_lines = read_input_file('BAP16_PlotPlan_Plot_IDs.csv')
+    for d in dict_lines:
+      self._assert_values_equal(d['Plot ID'], get_actual_value(
+          d['RW'], d['RA1'], main.DataKeys.PLOT_ID, has_fill_rows=False))
+      self._assert_values_equal(d['PI'], get_actual_value(
+          d['RW'], d['RA1'], main.DataKeys.PLANT_ID, has_fill_rows=False))
+      self._assert_values_equal(d['XofY'], get_actual_value(
+          d['RW'], d['RA1'], main.DataKeys.X_OF_Y, has_fill_rows=False))
+
+  def test_BAP16_PlotPlan_Plot_IDs_Tags(self):
+    dict_lines = read_input_file('BAP16_PlotPlan_Plot_IDs_Tags.csv')
+    for d in dict_lines:
+      self._assert_values_equal(d['PlotID'], get_actual_value(
+          d['Rw'], d['Ra'], main.DataKeys.PLOT_ID, has_fill_rows=False))
+      self._assert_values_equal(d['PI'], get_actual_value(
+          d['Rw'], d['Ra'], main.DataKeys.PLANT_ID, has_fill_rows=False))
+      self._assert_values_equal(d['XofY'], get_actual_value(
+          d['Rw'], d['Ra'], main.DataKeys.X_OF_Y, has_fill_rows=False))
+      self._assert_values_equal(d['TAG'], get_actual_value(
+          d['Rw'], d['Ra'], main.DataKeys.PLOT_PLAN_TAG, has_fill_rows=False))
+      self._assert_values_equal(d['Con'], get_actual_value(
+          d['Rw'], d['Ra'], main.DataKeys.PLOT_PLAN_CON, has_fill_rows=False))
+      self._assert_values_equal(d['Barcode'], get_actual_value(
+          d['Rw'], d['Ra'], main.DataKeys.PLOT_PLAN_BARCODE,
+          has_fill_rows=False))
+      self._assert_values_equal(d['End'], get_actual_value(
+          d['Rw'], d['Ra'], main.DataKeys.PLOT_PLAN_END, has_fill_rows=False))
 
 
 if __name__ == '__main__':
