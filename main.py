@@ -17,7 +17,9 @@ import os
 DATA_DIRECTORY = '2016'
 OUTPUT_FILENAME = DATA_DIRECTORY + '.csv'
 
+# Values in original csv files that are interpreted as empty strings.
 EMPTY_VALUES = ['', ' ', 'FILL', 'NA']
+
 # The field begins and ends with 4 "FILL" rows that are not part of the
 # experiement. They are used to avoid edge effects in the experiment. The
 # PlotPlan and HarvestData files index their rows by excluding these rows. All
@@ -32,6 +34,7 @@ NO_FILL_ROW_OFFSET = 4
 MISMATCH_DELIMETER = ' && '
 
 
+# Parse a single row or column cell coordinate to an int.
 def parse_coordinate(coordinate):
   if isinstance(coordinate, int):
     return coordinate
@@ -44,6 +47,7 @@ def parse_coordinate(coordinate):
   return int(coordinate)
 
 
+# Parse both the row and column cell coordinates to (int, int).
 def parse_coordinates(row, column):
   return parse_coordinate(row), parse_coordinate(column)
 
@@ -67,7 +71,7 @@ class Cells(object):
 
   def exists(self, row, column):
     row, column = parse_coordinates(row, column)
-    return row in self._cells and column in self._cells[row]
+    return (row in self._cells and column in self._cells[row])
 
   def get(self, row, column):
     row, column = parse_coordinates(row, column)
@@ -104,9 +108,9 @@ class Cell(object):
   def __repr__(self):
     return self.__str__()
 
-  # Some plot IDs are inconsistent, and PLOT_PLAN_* seem to have multiple
-  # values. So store all these values if append_if_mismatch is set to True,
-  # instead of raising an error.
+  # If there is already a different value stored for the key, then this method
+  # will raise an Exception, unless append_if_mismatch is True (in which case
+  # the given value is appended to the existing value).
   def add_data(self, key, value, append_if_mismatch=False):
     key = DataKeys(key)  # Ensure key is a DataKey instance.
     if key in self._data and value != self._data[key]:
@@ -121,6 +125,7 @@ class Cell(object):
                       key, self._data[key], value)
     self._data[key] = value
 
+  # Returns an empty string if there is no value for the given key.
   def get_data(self, key):
     return self._data.get(key, '')
 
@@ -129,6 +134,8 @@ class Cell(object):
     return (self._row, self._column)
 
 
+# Use this to read a *.csv file. Includes sanity checks and converts values in
+# EMPTY_VALUES to ''.
 def read_csv(file_name):
   file_path = os.path.join(DATA_DIRECTORY, file_name)
   with open(file_path, 'r') as f:
