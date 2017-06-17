@@ -1,37 +1,37 @@
 #!/usr/bin/env python3
 
 import csv
-import unittest
 import main
+import os
+import unittest
 
 
 # TODO check uses of main are small.
 
-def read_csv_file(filepath):
-  with open(filepath, 'r') as csv_file:
-    return list(csv.DictReader(csv_file))
+def read_input_file(filename):
+  with open(os.path.join(main.DATA_DIRECTORY, filename), 'r') as input_file:
+    return list(csv.DictReader(input_file))
 
-def read_output_file(filepath):
-  dict_lines = read_csv_file(filepath)
+def read_output_file():
   output = {}
-  for d in dict_lines:
-    row = int(d[main.Cell.ROW_DATA_NAME])
-    column = int(d[main.Cell.COLUMN_DATA_NAME])
-    if column in output.setdefault(row, {}):
-      raise Exception('Duplicate row/column: ', row, column)
-    output[row][column] = d
+  with open(main.OUTPUT_FILENAME, 'r') as output_file:
+    for d in csv.DictReader(output_file):
+      row = int(d[main.Cell.ROW_DATA_NAME])
+      column = int(d[main.Cell.COLUMN_DATA_NAME])
+      if column in output.setdefault(row, {}):
+        raise Exception('Duplicate row/column: ', row, column)
+      output[row][column] = d
 
   return output
 
 
-OUTPUT_FILE = '2016.csv'
-OUTPUT_CONTENTS = read_output_file(OUTPUT_FILE)
+_OUTPUT_CONTENTS = read_output_file()
 
 def get_actual_value(row, column, key, include_fill_rows=True):
   row, column = main.parse_coordinates(row, column)
   if not include_fill_rows:
     row += main.NO_FILL_ROW_OFFSET
-  return OUTPUT_CONTENTS.get(row, {}).get(column, {}).get(key, '')
+  return _OUTPUT_CONTENTS.get(row, {}).get(column, {}).get(key, '')
 
 
 class TestOutput(unittest.TestCase):
@@ -41,7 +41,7 @@ class TestOutput(unittest.TestCase):
 
   # Test values in an input file were correctly copied over to output file.
   def _assert_input(self, filename, data_key):
-    dict_lines = read_csv_file('2016/' + filename)
+    dict_lines = read_input_file(filename)
     for d in dict_lines:
       for k, v in d.items():
         if d[' '] in main.EMPTY_VALUES or k in main.EMPTY_VALUES:
@@ -70,7 +70,7 @@ class TestOutput(unittest.TestCase):
                        main.DataKeys.LIGHT_INTERCEPTION_09)
 
   def test_harvest_data(self):
-    dict_lines = read_csv_file('2016/BAP16_HarvestData.csv')
+    dict_lines = read_input_file('BAP16_HarvestData.csv')
     for d in dict_lines:
       for k, v in d.items():
         if k == 'RA1' or k == 'RW':
