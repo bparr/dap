@@ -8,7 +8,6 @@ cell is located by its row (Rw###) and column (Ra###). Note that in the data
 files, Ra### stands for "rank" which is called a "column" in this code to avoid
 confusion with linear algebra ranks.
 """
-# TODO add tests!
 
 import csv
 from enum import Enum
@@ -228,9 +227,10 @@ def parse_plot_plan_tags(lines, cells):
     cell.add_data(DataKeys.PLOT_PLAN_END, end, append_if_mismatch=True)
 
 
-# TODO 2016_09_penetrometer_robot_Large_Stalks.csv has two lines for Rw22 Ra32
-#      which seem to describe completely different plants. So ignoring.
-# TODO reconsider using these row94 files?
+# TODO(bparr): 2016_09_penetrometer_robot_Large_Stalks.csv has two lines for
+#              Rw22 Ra32 which seem to describe completely different plants. So
+#              ignoring.
+# TODO(bparr): Reconsider using these row94 files?
 #      - 2016_07_13_leaf_segmentation_leaf_fill_row94.csv
 #      - 2016_09_penetrometer_manual_Row_94.csv
 class DataKeys(Enum):
