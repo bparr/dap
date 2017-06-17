@@ -186,13 +186,13 @@ def parse_plot_plan_tags(lines, cells):
   for plot_id, plant_id, column, row, x_of_y, tag, con, barcode, end in lines:
     row = parse_coordinate(row) + NO_FILL_ROW_OFFSET
     cell = cells.get(row, column)
-    cell.add_data(DataKeys.PLOT_ID, plot_id)
+    cell.add_data(DataKeys.PLOT_ID, plot_id, append_if_mismatch=True)
     cell.add_data(DataKeys.PLANT_ID, plant_id)
     cell.add_data(DataKeys.X_OF_Y, x_of_y)
-    #cell.add_data(DataKeys.PLOT_PLAN_TAG, tag)
-    #cell.add_data(DataKeys.PLOT_PLAN_CON, con)
-    #cell.add_data(DataKeys.PLOT_PLAN_BARCODE, barcode)
-    #cell.add_data(DataKeys.PLOT_PLAN_END, end)
+    cell.add_data(DataKeys.PLOT_PLAN_TAG, tag, append_if_mismatch=True)
+    cell.add_data(DataKeys.PLOT_PLAN_CON, con, append_if_mismatch=True)
+    cell.add_data(DataKeys.PLOT_PLAN_BARCODE, barcode, append_if_mismatch=True)
+    cell.add_data(DataKeys.PLOT_PLAN_END, end, append_if_mismatch=True)
 
 
 
@@ -214,18 +214,17 @@ class DataKeys(Enum):
   SF16h_PAN3_120 = 'SF16h_PAN3_120'
   HARVEST_NOTES = 'Notes'
 
-  #X_OF_Y = 'x_of_y'
-
   # parse_panel_accessions depends on these exact ACCESSION_* string values.
   ACCESSION_PHOTOPERIOD = 'accession_photoperiod'
   ACCESSION_TYPE = 'accession_type'
   ACCESSION_ORIGIN = 'accession_origin'
   ACCESSION_RACE = 'accession_race'
 
-  #PLOT_PLAN_TAG = 'plot_plan_tag'
-  #PLOT_PLAN_CON = 'plot_plan_con'
-  #PLOT_PLAN_BARCODE = 'plot_plan_barcode'
-  #PLOT_PLAN_END = 'plot_plan_end'
+  X_OF_Y = 'x_of_y'
+  PLOT_PLAN_TAG = 'plot_plan_tag'
+  PLOT_PLAN_CON = 'plot_plan_con'
+  PLOT_PLAN_BARCODE = 'plot_plan_barcode'
+  PLOT_PLAN_END = 'plot_plan_end'
 
 
 def main():
@@ -248,8 +247,7 @@ def main():
   parse_rw_by_ra(read_csv('BAP16_PlotMap_Plot_IDs.csv'),
                  DataKeys.PLOT_ID, cells)
   parse_harvest_data(read_csv('BAP16_HarvestData.csv'), cells)
-
-  #parse_plot_plan_tags(read_csv('BAP16_PlotPlan_Plot_IDs_Tags.csv'), cells)
+  parse_plot_plan_tags(read_csv('BAP16_PlotPlan_Plot_IDs_Tags.csv'), cells)
 
 
 
