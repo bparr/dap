@@ -161,20 +161,30 @@ def parse_rw_by_ra(lines, data_key, cells, get_extra_data_fn=None,
     print('WARNING: Added cell(s) that were missing: ', data_key, added_cells)
 
 
+def parse_harvest_data(lines, cells):
+  labels = [DataKeys(v) for v in lines[0][3:]]
+  for line in lines[1:]:
+    row, column = line[2], line[1]
+    row = parse_coordinate(row) + NO_FILL_ROW_OFFSET
+    cell = cells.get(row, column)
+    # TODO reenable after figuring out mismatch issue.
+    #cell.add_data(DataKeys.PLOT_ID, line[0])
+    for i, value in enumerate(line[3:]):
+      cell.add_data(labels[i], value)
+
+
 def parse_plot_plan_tags(lines, cells):
   lines = lines[1:]  # Ignore labels.
   for plot_id, plant_id, column, row, x_of_y, tag, con, barcode, end in lines:
     row = parse_coordinate(row) + NO_FILL_ROW_OFFSET
     cell = cells.get(row, column)
-    """
     cell.add_data(DataKeys.PLOT_ID, plot_id)
     cell.add_data(DataKeys.PLANT_ID, plant_id)
     cell.add_data(DataKeys.X_OF_Y, x_of_y)
-    cell.add_data(DataKeys.PLOT_PLAN_TAG, tag)
-    cell.add_data(DataKeys.PLOT_PLAN_CON, con)
-    cell.add_data(DataKeys.PLOT_PLAN_BARCODE, barcode)
-    cell.add_data(DataKeys.PLOT_PLAN_END, end)
-    """
+    #cell.add_data(DataKeys.PLOT_PLAN_TAG, tag)
+    #cell.add_data(DataKeys.PLOT_PLAN_CON, con)
+    #cell.add_data(DataKeys.PLOT_PLAN_BARCODE, barcode)
+    #cell.add_data(DataKeys.PLOT_PLAN_END, end)
 
 
 
@@ -183,6 +193,19 @@ class DataKeys(Enum):
   COLUMN = Cell.COLUMN_DATA_NAME
   PLANT_ID = 'plant_id'
   PLOT_ID = 'plot_id'
+
+  # Harvest Data.
+  SF16h_HGT1_120 = 'SF16h_HGT1_120'
+  SF16h_HGT2_120 = 'SF16h_HGT2_120'
+  SF16h_HGT3_120 = 'SF16h_HGT3_120'
+  SF16h_TWT_120 = 'SF16h_TWT_120'
+  SF16h_WTP_120 = 'SF16h_WTP_120'
+  SF16h_WTL_120 = 'SF16h_WTL_120'
+  SF16h_PAN1_120 = 'SF16h_PAN1_120'
+  SF16h_PAN2_120 = 'SF16h_PAN2_120'
+  SF16h_PAN3_120 = 'SF16h_PAN3_120'
+  HARVEST_NOTES = 'Notes'
+
   #X_OF_Y = 'x_of_y'
 
   # parse_panel_accessions depends on these exact ACCESSION_* string values.
@@ -216,8 +239,9 @@ def main():
                  cells, get_extra_data_fn=get_accessions_fn, add_cells=True)
   parse_rw_by_ra(read_csv('BAP16_PlotMap_Plot_IDs.csv'),
                  DataKeys.PLOT_ID, cells)
+  parse_harvest_data(read_csv('BAP16_HarvestData.csv'), cells)
 
-  parse_plot_plan_tags(read_csv('BAP16_PlotPlan_Plot_IDs_Tags.csv'), cells)
+  #parse_plot_plan_tags(read_csv('BAP16_PlotPlan_Plot_IDs_Tags.csv'), cells)
 
 
 
