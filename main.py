@@ -214,7 +214,7 @@ class DataKeys(Enum):
   PLANT_ID = 'plant_id'
   PLOT_ID = 'plot_id'
 
-  # Harvest Data.
+  # Harvest data.
   SF16h_HGT1_120 = 'SF16h_HGT1_120'
   SF16h_HGT2_120 = 'SF16h_HGT2_120'
   SF16h_HGT3_120 = 'SF16h_HGT3_120'
@@ -224,7 +224,23 @@ class DataKeys(Enum):
   SF16h_PAN1_120 = 'SF16h_PAN1_120'
   SF16h_PAN2_120 = 'SF16h_PAN2_120'
   SF16h_PAN3_120 = 'SF16h_PAN3_120'
-  HARVEST_NOTES = 'Notes'
+
+  # Robot data.
+  LEAF_NECROSIS_07 = '2016_07_13-14_Leaf_Necrosis'
+  VEGETATION_INDEX_07 = '2016_07_13-14_vegetation_index'
+  VEGETATION_INDEX_08 = '2016_08_05-08_vegetation_index'
+  LEAF_AREA_07 = '2016_07_13_BAP_Leaf_Area'
+  LASER_PLANT_HEIGHT_07 = '2016_07_13_laser_plant_height'
+  # TODO reconsider using this data.
+  #LEAF_SEGMENTATION_ROW94_07 = '2016_07_13_leaf_segmentation_leaf_fill_row94'
+  LIGHT_INTERCEPTION_07 = '2016_07_light_interception'
+  LIGHT_INTERCEPTION_08 = '2016_08_light_interception'
+  LIGHT_INTERCEPTION_09 = '2016_09_light_interception'
+
+  # TODO
+  # 2016_09_penetrometer_manual_Large_Stalks.csv
+  # 2016_09_penetrometer_manual_Row_94.csv
+  # 2016_09_penetrometer_robot_Large_Stalks.csv
 
   # parse_panel_accessions depends on these exact ACCESSION_* string values.
   ACCESSION_PHOTOPERIOD = 'accession_photoperiod'
@@ -232,6 +248,7 @@ class DataKeys(Enum):
   ACCESSION_ORIGIN = 'accession_origin'
   ACCESSION_RACE = 'accession_race'
 
+  HARVEST_NOTES = 'Notes'
   X_OF_Y = 'x_of_y'
   PLOT_PLAN_TAG = 'plot_plan_tag'
   PLOT_PLAN_CON = 'plot_plan_con'
@@ -262,7 +279,22 @@ def main():
   parse_plot_plan(read_csv('BAP16_PlotPlan_Plot_IDs.csv'), cells)
   parse_plot_plan_tags(read_csv('BAP16_PlotPlan_Plot_IDs_Tags.csv'), cells)
 
-
+  parse_rw_by_ra(read_csv('2016_07_13-14_Leaf_Necrosis.csv'),
+                 DataKeys.LEAF_NECROSIS_07, cells)
+  parse_rw_by_ra(read_csv('2016_07_13-14_vegetation_index.csv'),
+                 DataKeys.VEGETATION_INDEX_07, cells)
+  parse_rw_by_ra(read_csv('2016_08_05-08_vegetation_index.csv'),
+                 DataKeys.VEGETATION_INDEX_08, cells)
+  parse_rw_by_ra(read_csv('2016_07_13_BAP_Leaf_Area.csv'),
+                 DataKeys.LEAF_AREA_07, cells)
+  parse_rw_by_ra(read_csv('2016_07_13_laser_plant_height.csv'),
+                 DataKeys.LASER_PLANT_HEIGHT_07, cells)
+  parse_rw_by_ra(read_csv('2016_07_light_interception.csv'),
+                 DataKeys.LIGHT_INTERCEPTION_07, cells)
+  parse_rw_by_ra(read_csv('2016_08_light_interception.csv'),
+                 DataKeys.LIGHT_INTERCEPTION_08, cells)
+  parse_rw_by_ra(read_csv('2016_09_light_interception.csv'),
+                 DataKeys.LIGHT_INTERCEPTION_09, cells)
 
   # Write final contents.
   with open(OUTPUT_FILENAME, 'w') as output_file:
