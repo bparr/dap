@@ -14,6 +14,9 @@ EMPTY_VALUES = ['', ' ', 'FILL', 'NA']
 # TODO consider switching rw to use plotplan's offset?? so same as harvest.
 NO_FILL_ROW_OFFSET = 4
 
+# TODO comment.
+MISMATCH_DELIMETER = ' && '
+
 
 def parse_coordinate(coordinate):
   if isinstance(coordinate, int):
@@ -88,9 +91,15 @@ class Cell(object):
   def __repr__(self):
     return self.__str__()
 
-  def add_data(self, key, value):
+  # TODO review when append_if_mismatch is in effect.
+  #      If MISMATCH_DELIMETER only in unused columns, then eh.
+  def add_data(self, key, value, append_if_mismatch=False):
     key = DataKeys(key)  # Ensure key is a DataKey instance.
     if key in self._data and value != self._data[key]:
+      if append_if_mismatch:
+        self._data[key] += MISMATCH_DELIMETER + value
+        return
+
       raise Exception('Unexpected mismatch in existing value: ',
                       key, self._data[key], value)
     self._data[key] = value
@@ -167,8 +176,7 @@ def parse_harvest_data(lines, cells):
     row, column = line[2], line[1]
     row = parse_coordinate(row) + NO_FILL_ROW_OFFSET
     cell = cells.get(row, column)
-    # TODO reenable after figuring out mismatch issue.
-    #cell.add_data(DataKeys.PLOT_ID, line[0])
+    cell.add_data(DataKeys.PLOT_ID, line[0], append_if_mismatch=True)
     for i, value in enumerate(line[3:]):
       cell.add_data(labels[i], value)
 
