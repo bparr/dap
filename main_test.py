@@ -51,6 +51,13 @@ class TestOutput(unittest.TestCase):
             d[' '], k, data_key.value))
 
 
+  def test_parse_coordinates(self):
+    self.assertEqual((1,2), main.parse_coordinates(1, 2))
+    self.assertEqual((12, 32), main.parse_coordinates(12, 32))
+    self.assertEqual((12, 32), main.parse_coordinates('Rw12', 'Ra32'))
+    self.assertEqual((12, 32), main.parse_coordinates('RW12', 'RA32'))
+    self.assertEqual((12, 32), main.parse_coordinates('rw12', 'ra32'))
+
   def test_robot_files(self):
     self._assert_input('2016_07_13-14_Leaf_Necrosis.csv',
                        main.DataKeys.LEAF_NECROSIS_07)
