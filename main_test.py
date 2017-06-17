@@ -31,16 +31,22 @@ def get_actual_value(row, column, key):
 
 
 class TestOutput(unittest.TestCase):
-  def test_2016_07_13_14_Leaf_Necrosis(self):
-    dict_lines = _read_csv_file('2016/2016_07_13-14_Leaf_Necrosis.csv')
+  # Test values in an input file were correctly copied over to output file.
+  def _assert_input(self, filename, data_key):
+    dict_lines = _read_csv_file('2016/' + filename)
     for d in dict_lines:
       for k, v in d.items():
         if d[' '] in main.EMPTY_VALUES or k in main.EMPTY_VALUES:
           continue
+
         v = '' if v in main.EMPTY_VALUES else v
-        row, column = main.parse_coordinates(d[' '], k)
-        self.assertEqual(v, get_actual_value(
-            d[' '], k, main.DataKeys.LEAF_NECROSIS_07.value))
+        self.assertEqual(v, get_actual_value(d[' '], k, data_key.value))
+
+
+  def test_2016_07_13_14_Leaf_Necrosis(self):
+    self._assert_input('2016_07_13-14_Leaf_Necrosis.csv',
+                       main.DataKeys.LEAF_NECROSIS_07)
+
 
 if __name__ == '__main__':
     unittest.main()
