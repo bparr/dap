@@ -40,15 +40,15 @@ class TestOutput(unittest.TestCase):
     self.assertIn(expected, actual.split(main.MISMATCH_DELIMETER))
 
   # Test values in an input file were correctly copied over to output file.
-  def _assert_input(self, filename, data_key):
+  def _assert_input(self, filename, data_key, first_column_key=' '):
     dict_lines = read_input_file(filename)
     for d in dict_lines:
       for k, v in d.items():
-        if d[' '] in main.EMPTY_VALUES or k in main.EMPTY_VALUES:
+        if d[first_column_key] in main.EMPTY_VALUES or k in main.EMPTY_VALUES:
           continue
 
         self._assert_values_equal(v, get_actual_value(
-            d[' '], k, data_key.value))
+            d[first_column_key], k, data_key.value))
 
 
   def test_parse_coordinates(self):
@@ -87,6 +87,12 @@ class TestOutput(unittest.TestCase):
 
         self._assert_values_equal(v, get_actual_value(
             d['RW'], d['RA1'], k, include_fill_rows=False))
+
+  def test_plot_map_files(self):
+    self._assert_input('BAP16_PlotMap_Plant_IDs.csv',
+                       main.DataKeys.PLANT_ID, first_column_key='')
+    self._assert_input('BAP16_PlotMap_Plot_IDs.csv',
+                       main.DataKeys.PLOT_ID, first_column_key='')
 
 
 if __name__ == '__main__':
