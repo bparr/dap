@@ -1,4 +1,4 @@
-plot_row,plot_column,plant_id,plot_id,accession_PHOTOPERIOD,accession_Type,accession_Origin,accession_Race
+plot_row,plot_column,plant_id,plot_id,accession_photoperiod,accession_type,accession_origin,accession_race
 5,1,PI_534120,SF-BE-r1-p0001,PHOTOPERIOD_INSENSITIVE,GRAIN,Ethiopia,
 5,2,PI_365512,SF-BE-r1-p0049,PHOTOPERIOD_INSENSITIVE,Cellulosic,South Africa,Caudatum
 5,3,PI_535783,SF-BE-r1-p0097,PHOTOPERIOD_INSENSITIVE,Sweet,,

@@ -55,6 +55,9 @@ class Cells(object):
 
   def get(self, row, column):
     row, column = parse_coordinates(row, column)
+    if not self.exists(row, column):
+      raise Exception('Unknown cell: ', row, column)
+
     return self._cells[row][column]
 
   def sorted(self):
@@ -86,8 +89,10 @@ class Cell(object):
     return self.__str__()
 
   def add_data(self, key, value):
-    if key in self._data:
-      raise Exception('Unexpected existing value with key: ', key)
+    key = DataKeys(key)  # Ensure key is a DataKey instance.
+    if key in self._data and value != self._data[key]:
+      raise Exception('Unexpected mismatch in existing value: ',
+                      key, self._data[key], value)
     self._data[key] = value
 
   def get_data(self, key):
@@ -118,7 +123,7 @@ def read_csv(file_name):
 
 def parse_panel_accessions(lines):
   accessions = {}
-  labels = [DataKeys('accession_' + v) for v in lines[0][1:]]
+  labels = [DataKeys('accession_' + v.lower()) for v in lines[0][1:]]
   for line in lines[1:]:
     plant_id = line[0]  # File has plant id in first column.
     if plant_id in accessions:
@@ -160,8 +165,17 @@ def parse_plot_plan_tags(lines, cells):
   lines = lines[1:]  # Ignore labels.
   for plot_id, plant_id, column, row, x_of_y, tag, con, barcode, end in lines:
     row = parse_coordinate(row) + NO_FILL_ROW_OFFSET
-    if not cells.exists(row, column):
-      raise Exception('Unknown cell in PlotPlan: ', row, column)
+    cell = cells.get(row, column)
+    """
+    cell.add_data(DataKeys.PLOT_ID, plot_id)
+    cell.add_data(DataKeys.PLANT_ID, plant_id)
+    cell.add_data(DataKeys.X_OF_Y, x_of_y)
+    cell.add_data(DataKeys.PLOT_PLAN_TAG, tag)
+    cell.add_data(DataKeys.PLOT_PLAN_CON, con)
+    cell.add_data(DataKeys.PLOT_PLAN_BARCODE, barcode)
+    cell.add_data(DataKeys.PLOT_PLAN_END, end)
+    """
+
 
 
 class DataKeys(Enum):
@@ -169,11 +183,18 @@ class DataKeys(Enum):
   COLUMN = Cell.COLUMN_DATA_NAME
   PLANT_ID = 'plant_id'
   PLOT_ID = 'plot_id'
+  #X_OF_Y = 'x_of_y'
+
   # parse_panel_accessions depends on these exact ACCESSION_* string values.
-  ACCESSION_PHOTOPERIOD = 'accession_PHOTOPERIOD'
-  ACCESSION_TYPE = 'accession_Type'
-  ACCESSION_ORIGIN = 'accession_Origin'
-  ACCESSION_RACE = 'accession_Race'
+  ACCESSION_PHOTOPERIOD = 'accession_photoperiod'
+  ACCESSION_TYPE = 'accession_type'
+  ACCESSION_ORIGIN = 'accession_origin'
+  ACCESSION_RACE = 'accession_race'
+
+  #PLOT_PLAN_TAG = 'plot_plan_tag'
+  #PLOT_PLAN_CON = 'plot_plan_con'
+  #PLOT_PLAN_BARCODE = 'plot_plan_barcode'
+  #PLOT_PLAN_END = 'plot_plan_end'
 
 
 def main():
