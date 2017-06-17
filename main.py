@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 
-# TODO add file header docs.
+"""
+Combine all data files into a single one with each row describing a cell.
+
+The field of sorghum is partitioned into cells of genetically siblings. Each
+cell is located by its row (Rw###) and column (Ra###). Note that in the data
+files, Ra### stands for "rank" which is called a "column" in this code to avoid
+confusion with linear algebra ranks.
+"""
 # TODO add tests!
 
 import csv
@@ -11,11 +18,17 @@ DATA_DIRECTORY = '2016'
 OUTPUT_FILENAME = DATA_DIRECTORY + '.csv'
 
 EMPTY_VALUES = ['', ' ', 'FILL', 'NA']
-# TODO note the Rw 4 offset for PlotPlan and Harvest(?) files.
-# TODO consider switching rw to use plotplan's offset?? so same as harvest.
+# The field begins and ends with 4 "FILL" rows that are not part of the
+# experiement. They are used to avoid edge effects in the experiment. The
+# PlotPlan and HarvestData files index their rows by excluding these rows. All
+# other files include them. So, this code includes the FILL rows when indexing
+# rows, and uses this offset to reindex rows in the PlotPlan and HarvestData.
 NO_FILL_ROW_OFFSET = 4
 
-# TODO comment.
+# Store all values for a specific entry in output csv by delimitting them with
+# this. For example, some plot ids are inconsistent across PlotMap and
+# PlotPlan, so just store all the ones encountered in the single plot id entry
+# for the inconsistent cells.  Some plot ids are inconsistent.
 MISMATCH_DELIMETER = ' && '
 
 
@@ -40,9 +53,8 @@ class Cells(object):
   def __init__(self):
     self._cells = {}
 
-  # Row = Rw### (case insensitive).
-  # Column = Ra### (case insensitive).
-  # TODO What does "Ra3" stand for? I'm using column now. Rename if needed.
+  # Row represented as an int or 'Rw###' (case insensitive).
+  # Column represented as an int or 'Ra###' (case insensitive).
   def add(self, row, column):
     row, column = parse_coordinates(row, column)
     columns =  self._cells.setdefault(row, {})
@@ -92,12 +104,14 @@ class Cell(object):
   def __repr__(self):
     return self.__str__()
 
-  # TODO review when append_if_mismatch is in effect.
-  #      If MISMATCH_DELIMETER only in unused columns, then eh.
+  # Some plot IDs are inconsistent, and PLOT_PLAN_* seem to have multiple
+  # values. So store all these values if append_if_mismatch is set to True,
+  # instead of raising an error.
   def add_data(self, key, value, append_if_mismatch=False):
     key = DataKeys(key)  # Ensure key is a DataKey instance.
     if key in self._data and value != self._data[key]:
       if append_if_mismatch:
+        # Don't re-append a single value over and over.
         if value in self._data[key].split(MISMATCH_DELIMETER):
           return
         self._data[key] += MISMATCH_DELIMETER + value
@@ -112,7 +126,6 @@ class Cell(object):
 
   # List cells in a deterministic order using this.
   def get_sort_key(self):
-    # TODO improve??
     return (self._row, self._column)
 
 
