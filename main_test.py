@@ -7,12 +7,12 @@ import main
 
 # TODO check uses of main are small.
 
-def _read_csv_file(filepath):
+def read_csv_file(filepath):
   with open(filepath, 'r') as csv_file:
     return list(csv.DictReader(csv_file))
 
-def _read_output_file(filepath):
-  dict_lines = _read_csv_file(filepath)
+def read_output_file(filepath):
+  dict_lines = read_csv_file(filepath)
   output = {}
   for d in dict_lines:
     row = int(d[main.Cell.ROW_DATA_NAME])
@@ -25,24 +25,30 @@ def _read_output_file(filepath):
 
 
 OUTPUT_FILE = '2016.csv'
-OUTPUT_CONTENTS = _read_output_file(OUTPUT_FILE)
+OUTPUT_CONTENTS = read_output_file(OUTPUT_FILE)
 
-def get_actual_value(row, column, key):
+def get_actual_value(row, column, key, include_fill_rows=True):
   row, column = main.parse_coordinates(row, column)
+  if not include_fill_rows:
+    row += main.NO_FILL_ROW_OFFSET
   return OUTPUT_CONTENTS.get(row, {}).get(column, {}).get(key, '')
 
 
 class TestOutput(unittest.TestCase):
+  def _assert_values_equal(self, expected, actual):
+    expected = '' if expected in main.EMPTY_VALUES else expected
+    self.assertIn(expected, actual.split(main.MISMATCH_DELIMETER))
+
   # Test values in an input file were correctly copied over to output file.
   def _assert_input(self, filename, data_key):
-    dict_lines = _read_csv_file('2016/' + filename)
+    dict_lines = read_csv_file('2016/' + filename)
     for d in dict_lines:
       for k, v in d.items():
         if d[' '] in main.EMPTY_VALUES or k in main.EMPTY_VALUES:
           continue
 
-        v = '' if v in main.EMPTY_VALUES else v
-        self.assertEqual(v, get_actual_value(d[' '], k, data_key.value))
+        self._assert_values_equal(v, get_actual_value(
+            d[' '], k, data_key.value))
 
 
   def test_robot_files(self):
@@ -62,6 +68,18 @@ class TestOutput(unittest.TestCase):
                        main.DataKeys.LIGHT_INTERCEPTION_08)
     self._assert_input('2016_09_light_interception.csv',
                        main.DataKeys.LIGHT_INTERCEPTION_09)
+
+  def test_harvest_data(self):
+    dict_lines = read_csv_file('2016/BAP16_HarvestData.csv')
+    for d in dict_lines:
+      for k, v in d.items():
+        if k == 'RA1' or k == 'RW':
+          continue
+        if k == 'Plot ID':
+          k = 'plot_id'
+
+        self._assert_values_equal(v, get_actual_value(
+            d['RW'], d['RA1'], k, include_fill_rows=False))
 
 
 if __name__ == '__main__':
