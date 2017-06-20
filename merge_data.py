@@ -10,14 +10,12 @@ confusion with linear algebra ranks.
 """
 
 import csv
+import csv_utils
 from enum import Enum
 import os
 
 DATA_DIRECTORY = '2016'
 OUTPUT_FILENAME = DATA_DIRECTORY + '.csv'
-
-# Values in original csv files that are interpreted as empty strings.
-EMPTY_VALUES = ['', ' ', 'FILL', 'NA']
 
 # The field begins and ends with 4 "FILL" rows that are not part of the
 # experiement. They are used to avoid edge effects in the experiment. The
@@ -133,23 +131,8 @@ class Cell(object):
     return (self._row, self._column)
 
 
-# Use this to read a *.csv file. Includes sanity checks and converts values in
-# EMPTY_VALUES to ''.
 def read_csv(file_name):
-  file_path = os.path.join(DATA_DIRECTORY, file_name)
-  with open(file_path, 'r') as f:
-    lines = []
-    for line in csv.reader(f):
-      lines.append(['' if v in EMPTY_VALUES else v for v in line])
-
-  num_columns = len(lines[0])
-  if len(set(lines[0])) != num_columns:
-    raise Exception('Duplicate label in first row of csv: ', file_name)
-  for i, line in enumerate(lines):
-    if len(line) != num_columns:
-      raise Exception('Unexpected amount of values in line: ',
-                      i, len(line), num_columns)
-  return lines
+  return csv_utils.read_csv(os.path.join(DATA_DIRECTORY, file_name))
 
 
 def parse_panel_accessions(lines):

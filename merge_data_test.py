@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import csv
+import csv_utils
 import merge_data
 import os
 import unittest
@@ -36,7 +37,7 @@ def get_actual_value(row, column, key, has_fill_rows=True):
 
 class TestOutput(unittest.TestCase):
   def _assert_values_equal(self, expected, actual):
-    expected = '' if expected in merge_data.EMPTY_VALUES else expected
+    expected = '' if expected in csv_utils.EMPTY_VALUES else expected
     self.assertIn(expected, actual.split(merge_data.MISMATCH_DELIMETER))
 
   # Test values in an input file were correctly copied over to output file.
@@ -44,8 +45,8 @@ class TestOutput(unittest.TestCase):
     dict_lines = read_input_file(filename)
     for d in dict_lines:
       for k, v in d.items():
-        if (d[first_column_key] in merge_data.EMPTY_VALUES or
-            k in merge_data.EMPTY_VALUES):
+        if (d[first_column_key] in csv_utils.EMPTY_VALUES or
+            k in csv_utils.EMPTY_VALUES):
           continue
 
         self._assert_values_equal(v, get_actual_value(
