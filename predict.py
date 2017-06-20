@@ -22,6 +22,7 @@ TRAINING_SIZE = 0.8
 
 DATA_PATH = '2014/2014_Pheotypic_Data_FileS2.csv'
 
+# TODO allow using dry weight for predictions? When is it known?
 #INPUT_LABELS = 'Anthesis date (days),Harvest date (days),Total fresh weight (kg),Brix (maturity),Brix (milk),Dry weight (kg),Stalk height (cm),Dry tons per acre'.split(',')
 INPUT_LABELS = 'Anthesis date (days),Harvest date (days),Total fresh weight (kg),Brix (maturity),Brix (milk),Stalk height (cm)'.split(',')
 
@@ -59,7 +60,8 @@ def is_missing(value):
   return np.isnan(value) or value == MISSING_VALUE
 
 
-# Returns result of two percent values subtracted and multiplied by dry weight.
+# Returns result of percent DM value multiplied by dry weight.
+# If given, the minus label's value is subtracted from label's value.
 def get_weight(sample, label, minus=None):
   value = float_or_missing(sample[label])
   minus_value = 0.0 if minus is None else float_or_missing(sample[minus])
@@ -85,10 +87,12 @@ def parse_data(lines, input_labels, output_generator):
   for sample in samples:
     output = float_or_missing(output_generator(sample))
     if is_missing(output):
+      # Ignore samples with missing output value.
       continue
 
     X.append([float_or_missing(sample[x]) for x in input_labels])
     y.append(output)
+
   return np.array(X), np.array(y)
 
 
@@ -119,8 +123,8 @@ def main():
   lines = csv_utils.read_csv(DATA_PATH)
   regressors = collections.OrderedDict([
       # TODO tune max_depth.
-      ('boosted trees', lambda: GradientBoostingRegressor(max_depth=1, random_state=0)),
-      ('random forests', lambda: RandomForestRegressor(n_estimators=100, random_state=0)),
+      ('boosted trees', lambda: GradientBoostingRegressor(max_depth=1, random_state=RANDOM_SEED)),
+      ('random forests', lambda: RandomForestRegressor(n_estimators=100, random_state=RANDOM_SEED)),
   ])
 
   outputs = collections.OrderedDict([
