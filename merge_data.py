@@ -16,6 +16,7 @@ import os
 
 DATA_DIRECTORY = '2016'
 OUTPUT_FILENAME = DATA_DIRECTORY + '.csv'
+MERGED_OUTPUT_FILENAME = DATA_DIRECTORY + '.merged.csv'
 
 # The field begins and ends with 4 "FILL" rows that are not part of the
 # experiement. They are used to avoid edge effects in the experiment. The
@@ -29,6 +30,10 @@ NO_FILL_ROW_OFFSET = 4
 # PlotPlan, so just store all the ones encountered in the single plot id entry
 # for the inconsistent cells.  Some plot ids are inconsistent.
 MISMATCH_DELIMETER = ' && '
+
+# The amount of rows a single cell contains.
+# TODO better name than Cell?
+ROWS_IN_CELL = 4
 
 
 # Parse a single row or column cell coordinate to an int.
@@ -264,6 +269,15 @@ class DataKeys(Enum):
   PLOT_PLAN_END = 'plot_plan_end'
 
 
+# Write output file.
+def write_csv(file_path, cell_list):
+  with open(file_path, 'w') as f:
+    writer = csv.writer(f)
+    writer.writerow([x.value for x in DataKeys])
+    for cell in cell_list:
+      writer.writerow([cell.get_data(x) for x in DataKeys])
+
+
 def main():
   accessions = parse_panel_accessions(read_csv('PanelAccessions-BAP.csv'))
 
@@ -305,28 +319,35 @@ def main():
                  DataKeys.LIGHT_INTERCEPTION_09, cells)
 
   sorted_cells = cells.sorted()
+  write_csv(OUTPUT_FILENAME, sorted_cells)
 
-  # Write final contents.
-  with open(OUTPUT_FILENAME, 'w') as output_file:
-    writer = csv.writer(output_file)
-    writer.writerow([x.value for x in DataKeys])
-    for cell in sorted_cells:
-      writer.writerow([cell.get_data(x) for x in DataKeys])
-
-  # TODO assert that the length of merge is 4 * len(sorted_cells).
   append_if_mismatch_keys = set([
       DataKeys.ROW, DataKeys.PLOT_ID, DataKeys.X_OF_Y,
+      DataKeys.LASER_PLANT_HEIGHT_07, # TODO :(
+      DataKeys.LIGHT_INTERCEPTION_08, # TODO :(
+      DataKeys.VEGETATION_INDEX_08, # TODO :(
+      DataKeys.LIGHT_INTERCEPTION_07, # TODO :(
+      DataKeys.LIGHT_INTERCEPTION_09, # TODO :(
+      DataKeys.LEAF_AREA_07, # TODO :(
+      DataKeys.LEAF_NECROSIS_07, # TODO :(
       DataKeys.PLOT_PLAN_BARCODE])
+  merged_cells = []
   for cell in sorted_cells:
     row = parse_coordinate(cell.get_data(DataKeys.ROW))
-    if row % 4 != 1:
+    if row % ROWS_IN_CELL != 1:
       continue
 
     column = parse_coordinate(cell.get_data(DataKeys.COLUMN))
     merged_cell = Cell(row, column)
-    for i in range(4):
+    for i in range(ROWS_IN_CELL):
       cells.get(row + i, column).add_all_data_to_cell(
           merged_cell, append_if_mismatch_keys)
+    merged_cells.append(merged_cell)
+
+  if ROWS_IN_CELL * len(merged_cells) != len(sorted_cells):
+    raise Exception('Unexpected number of merged cells: ',
+                    len(merged_cells), len(sorted_cells))
+  write_csv(MERGED_OUTPUT_FILENAME, merged_cells)
 
 
 if __name__ == '__main__':

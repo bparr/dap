@@ -37,7 +37,8 @@ def get_actual_value(row, column, key, has_fill_rows=True):
 
 class TestOutput(unittest.TestCase):
   def _assert_values_equal(self, expected, actual):
-    expected = '' if expected in csv_utils.EMPTY_VALUES else expected
+    if expected in csv_utils.EMPTY_VALUES:
+      return
     self.assertIn(expected, actual.split(merge_data.MISMATCH_DELIMETER))
 
   # Test values in an input file were correctly copied over to output file.
