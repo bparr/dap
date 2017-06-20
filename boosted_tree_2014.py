@@ -72,7 +72,7 @@ def parse_data(output_label):
   return np.array(X), np.array(y)
 
 
-def predict(X, y):
+def predict(X, y, regressor_generator):
   #X_train, X_nontrain, y_train, y_nontrain = train_test_split(
   #    X, y, test_size=(1 - TRAINING_SIZE), random_state=RANDOM_SEED)
   #X_validation, X_test, y_validation, y_test = train_test_split(
@@ -92,9 +92,7 @@ def predict(X, y):
     #X_validation = imp.transform(X_validation)
     X_test = imp.transform(X_test)
 
-    # TODO tune max_depth.
-    regressor = GradientBoostingRegressor(max_depth=1, random_state=0)
-    #regressor = RandomForestRegressor(n_estimators=num_samples, random_state=0)
+    regressor = regressor_generator().fit(X_train, y_train)
     regressor.fit(X_train, y_train)
     y_true.extend(y_test)
     y_pred.extend(regressor.predict(X_test))
@@ -106,13 +104,21 @@ def main():
   random.seed(RANDOM_SEED)
   np.random.seed(RANDOM_SEED)
 
-  for output_label in OUTPUT_LABELS:
-    X, y = parse_data(output_label)
-    num_samples = X.shape[0]
-    print('Total number of %s samples: %s' % (output_label, num_samples))
+  regressors = {
+      # TODO tune max_depth.
+      'boosted trees': lambda: GradientBoostingRegressor(max_depth=1, random_state=0),
+      'random forests': lambda: RandomForestRegressor(n_estimators=100, random_state=0),
+  }
 
-    y_true, y_pred = predict(X, y)
-    print('r2 score: ', r2_score(y_true, y_pred))
+  for regressor_name, regressor_generator in regressors.items():
+    print('\n\n' + regressor_name)
+    for output_label in OUTPUT_LABELS:
+      X, y = parse_data(output_label)
+      num_samples = X.shape[0]
+      print('Total number of %s samples: %s' % (output_label, num_samples))
+
+      y_true, y_pred = predict(X, y, regressor_generator)
+      print('r2 score: ', r2_score(y_true, y_pred))
 
 
 
