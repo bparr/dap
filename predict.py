@@ -26,27 +26,21 @@ DATA_PATH = '2014/2014_Pheotypic_Data_FileS2.csv'
 
 INPUT_LABELS = 'Anthesis date (days),Harvest date (days),Total fresh weight (kg),Brix (maturity),Brix (milk),Dry weight (kg),Stalk height (cm),Dry tons per acre'.split(',')
 
-
-ADF_LABEL = 'ADF (% DM)'
-NDF_LABEL = 'NDF (% DM)'
-NFC_LABEL = 'NFC (% DM)'
-LIGNIN_LABEL = 'Lignin (% DM)'
-OUTPUTS = collections.OrderedDict([
-    ('adf', lambda sample: sample[ADF_LABEL]),
-    ('ndf', lambda sample: sample[NDF_LABEL]),
-    ('nfc', lambda sample: sample[NFC_LABEL]),
-    ('lignin', lambda sample: sample[LIGNIN_LABEL]),
-])
-
-
 RANDOM_SEED = 10611
 
 # TODO include in INPUT_LABELS? Is it known before harvest?
 PERICARP_LABEL = 'Pericarp pigmentation'
 
+ADF_LABEL = 'ADF (% DM)'
+NDF_LABEL = 'NDF (% DM)'
+NFC_LABEL = 'NFC (% DM)'
+LIGNIN_LABEL = 'Lignin (% DM)'
+
 # TODO tune??
 MISSING_VALUE = np.nan
 #MISSING_VALUE = -1
+
+
 
 # TODO keep?
 def pretty_label(label):
@@ -59,6 +53,20 @@ def float_or_missing(s):
     return np.float(s)
   except:
     return MISSING_VALUE
+
+def is_missing(value):
+  # Unfortunately np.nan == np.nan is False, so check both isnan and equality.
+  return np.isnan(value) or value == MISSING_VALUE
+
+
+def subtract_or_missing(value1, value2):
+  value1 = float_or_missing(value1)
+  value2 = float_or_missing(value2)
+  if is_missing(value1) or is_missing(value2):
+    return MISSING_VALUE
+  return value1 - value2
+
+
 
 
 def parse_data(lines, input_labels, output_generator):
@@ -76,7 +84,7 @@ def parse_data(lines, input_labels, output_generator):
   y = []
   for sample in samples:
     output = float_or_missing(output_generator(sample))
-    if np.isnan(output) or output == MISSING_VALUE:
+    if is_missing(output):
       continue
 
     X.append([float_or_missing(sample[x]) for x in input_labels])
@@ -123,9 +131,17 @@ def main():
       ('random forests', lambda: RandomForestRegressor(n_estimators=100, random_state=0)),
   ])
 
+  outputs = collections.OrderedDict([
+      ('adf', lambda sample: sample[ADF_LABEL]),
+      ('ndf', lambda sample: sample[NDF_LABEL]),
+      ('nfc', lambda sample: sample[NFC_LABEL]),
+      ('lignin', lambda sample: sample[LIGNIN_LABEL]),
+      ('c6', lambda x: subtract_or_missing(x[ADF_LABEL], x[LIGNIN_LABEL])),
+  ])
+
   for regressor_name, regressor_generator in regressors.items():
     print('\n\n' + regressor_name)
-    for output_name, output_generator in OUTPUTS.items():
+    for output_name, output_generator in outputs.items():
       X, y = parse_data(lines, INPUT_LABELS, output_generator)
       num_samples = X.shape[0]
       print('Total number of %s samples: %s' % (output_name, num_samples))
