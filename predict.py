@@ -17,10 +17,8 @@ from sklearn.preprocessing import Imputer
 
 
 # What percent of the whole dataset to use as the training set.
+# TODO split test set into validation and test sets!?
 TRAINING_SIZE = 0.8
-# What percent of the *NON*-training set to use for test (vs. validation).
-# TODO keep?
-NON_TRAINING_SET_TEST_SIZE = 0.5
 
 DATA_PATH = '2014/2014_Pheotypic_Data_FileS2.csv'
 
@@ -42,7 +40,6 @@ MISSING_VALUE = np.nan
 
 
 
-# TODO keep?
 def pretty_label(label):
   label = label.replace('%', 'percent').replace('(', 'in ').replace(')', '')
   return label.replace(' ', '_')
@@ -92,12 +89,6 @@ def parse_data(lines, input_labels, output_generator):
 
 
 def predict(X, y, regressor_generator):
-  #X_train, X_nontrain, y_train, y_nontrain = train_test_split(
-  #    X, y, test_size=(1 - TRAINING_SIZE), random_state=RANDOM_SEED)
-  #X_validation, X_test, y_validation, y_test = train_test_split(
-  #    X_nontrain, y_nontrain, test_size=NON_TRAINING_SET_TEST_SIZE,
-  #    random_state=RANDOM_SEED)
-
   y_true = []
   y_pred = []
 
@@ -108,7 +99,6 @@ def predict(X, y, regressor_generator):
 
     imp = Imputer()
     X_train = imp.fit_transform(X_train)
-    #X_validation = imp.transform(X_validation)
     X_test = imp.transform(X_test)
 
     regressor = regressor_generator().fit(X_train, y_train)
