@@ -7,13 +7,12 @@ EMPTY_VALUES = ['', ' ', 'FILL', 'NA']
 
 # Use this to read a *.csv file. Includes sanity checks and converts values in
 # EMPTY_VALUES to ''.
-def read_csv(file_path, ignore_first_lines=0):
+def read_csv(file_path):
   with open(file_path, 'r') as f:
     lines = []
     for line in csv.reader(f):
       lines.append(['' if v in EMPTY_VALUES else v for v in line])
 
-  lines = lines[ignore_first_lines:]
   num_columns = len(lines[0])
   if len(set(lines[0])) != num_columns:
     raise Exception('Duplicate label in first row of csv: ', file_name)

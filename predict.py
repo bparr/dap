@@ -113,7 +113,7 @@ def main():
   random.seed(RANDOM_SEED)
   np.random.seed(RANDOM_SEED)
 
-  lines = csv_utils.read_csv(DATA_PATH, ignore_first_lines=2)
+  lines = csv_utils.read_csv(DATA_PATH)
   regressors = collections.OrderedDict([
       # TODO tune max_depth.
       ('boosted trees', lambda: GradientBoostingRegressor(max_depth=1, random_state=0)),
