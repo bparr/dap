@@ -92,8 +92,7 @@ def parse_data(lines, input_labels, output_generator):
   return np.array(X), np.array(y)
 
 
-def predict(X, y, regressor_generator):
-  y_true = []
+def kfold_predict(X, y, regressor_generator):
   y_pred = []
 
   kf = KFold(n_splits=10)
@@ -102,15 +101,15 @@ def predict(X, y, regressor_generator):
     y_train, y_test = y[train_indexes], y[test_indexes]
 
     imp = Imputer()
+    # Parser ignores rows with missing y, so no need to impute y.
     X_train = imp.fit_transform(X_train)
     X_test = imp.transform(X_test)
 
     regressor = regressor_generator().fit(X_train, y_train)
-    regressor.fit(X_train, y_train)
-    y_true.extend(y_test)
-    y_pred.extend(regressor.predict(X_test))
+    y_pred.extend(zip(test_indexes, regressor.predict(X_test)))
 
-  return y_true, y_pred
+  y_pred = dict(y_pred)
+  return [y_pred[i] for i in range(len(X))]
 
 
 def main():
@@ -140,8 +139,8 @@ def main():
       num_samples = X.shape[0]
       print('Total number of %s samples: %s' % (output_name, num_samples))
 
-      y_true, y_pred = predict(X, y, regressor_generator)
-      print('r2 score: ', r2_score(y_true, y_pred))
+      y_pred = kfold_predict(X, y, regressor_generator)
+      print('r2 score: ', r2_score(y, y_pred))
 
 
 
