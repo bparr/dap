@@ -54,6 +54,7 @@ def float_or_missing(s):
   except:
     return MISSING_VALUE
 
+
 def is_missing(value):
   # Unfortunately np.nan == np.nan is False, so check both isnan and equality.
   return np.isnan(value) or value == MISSING_VALUE
@@ -65,8 +66,6 @@ def subtract_or_missing(value1, value2):
   if is_missing(value1) or is_missing(value2):
     return MISSING_VALUE
   return value1 - value2
-
-
 
 
 def parse_data(lines, input_labels, output_generator):
@@ -137,6 +136,7 @@ def main():
       ('nfc', lambda sample: sample[NFC_LABEL]),
       ('lignin', lambda sample: sample[LIGNIN_LABEL]),
       ('c6', lambda x: subtract_or_missing(x[ADF_LABEL], x[LIGNIN_LABEL])),
+      ('c5', lambda x: subtract_or_missing(x[NDF_LABEL], x[ADF_LABEL])),
   ])
 
   for regressor_name, regressor_generator in regressors.items():
