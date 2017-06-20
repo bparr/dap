@@ -33,6 +33,7 @@ ADF_LABEL = 'ADF (% DM)'
 NDF_LABEL = 'NDF (% DM)'
 NFC_LABEL = 'NFC (% DM)'
 LIGNIN_LABEL = 'Lignin (% DM)'
+DRY_WEIGHT_LABEL = 'Dry weight (kg)'
 
 # TODO tune??
 MISSING_VALUE = np.nan
@@ -57,12 +58,14 @@ def is_missing(value):
   return np.isnan(value) or value == MISSING_VALUE
 
 
-def subtract_or_missing(value1, value2):
-  value1 = float_or_missing(value1)
-  value2 = float_or_missing(value2)
-  if is_missing(value1) or is_missing(value2):
+# Returns result of two percent values subtracted and multiplied by dry weight.
+def compute_c(sample, label1, label2):
+  value1 = float_or_missing(sample[label1])
+  value2 = float_or_missing(sample[label2])
+  dry_weight = float_or_missing(sample[DRY_WEIGHT_LABEL])
+  if is_missing(value1) or is_missing(value2) or is_missing(dry_weight):
     return MISSING_VALUE
-  return value1 - value2
+  return dry_weight * (value1 - value2) / 100.0
 
 
 def parse_data(lines, input_labels, output_generator):
@@ -125,8 +128,8 @@ def main():
       ('ndf', lambda sample: sample[NDF_LABEL]),
       ('nfc', lambda sample: sample[NFC_LABEL]),
       ('lignin', lambda sample: sample[LIGNIN_LABEL]),
-      ('c6', lambda x: subtract_or_missing(x[ADF_LABEL], x[LIGNIN_LABEL])),
-      ('c5', lambda x: subtract_or_missing(x[NDF_LABEL], x[ADF_LABEL])),
+      ('c6', lambda sample: compute_c(sample, ADF_LABEL, LIGNIN_LABEL)),
+      ('c5', lambda sample: compute_c(sample, NDF_LABEL, ADF_LABEL)),
   ])
 
   for regressor_name, regressor_generator in regressors.items():

@@ -9,10 +9,10 @@ Total number of nfc samples: 365
 r2 score:  0.481024657036
 Total number of lignin samples: 363
 r2 score:  0.47906349235
-Total number of c6 samples: 363
-r2 score:  0.520752902546
-Total number of c5 samples: 365
-r2 score:  0.113545251728
+Total number of c6 samples: 361
+r2 score:  0.934084826124
+Total number of c5 samples: 363
+r2 score:  0.835784461522
 
 
 random forests
@@ -24,7 +24,7 @@ Total number of nfc samples: 365
 r2 score:  0.416799632613
 Total number of lignin samples: 363
 r2 score:  0.448191517884
-Total number of c6 samples: 363
-r2 score:  0.512512849149
-Total number of c5 samples: 365
-r2 score:  -0.0842892173503
+Total number of c6 samples: 361
+r2 score:  0.939742849479
+Total number of c5 samples: 363
+r2 score:  0.829656134031
