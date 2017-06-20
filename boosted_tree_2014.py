@@ -24,10 +24,7 @@ DATA_PATH = '2014/2014_Pheotypic_Data_FileS2.csv'
 
 INPUT_LABELS = 'Anthesis date (days),Harvest date (days),Total fresh weight (kg),Brix (maturity),Brix (milk),Dry weight (kg),Stalk height (cm),Dry tons per acre'.split(',')
 
-#OUTPUT_LABEL = 'ADF (% DM)'
-#OUTPUT_LABEL = 'NDF (% DM)'
-#OUTPUT_LABEL = 'NFC (% DM)'
-OUTPUT_LABEL = 'Lignin (% DM)'
+OUTPUT_LABELS = 'ADF (% DM),NDF (% DM),NFC (% DM),Lignin (% DM)'.split(',')
 
 
 RANDOM_SEED = 10611
@@ -52,7 +49,7 @@ def float_or_missing(s):
     return MISSING_VALUE
 
 
-def parse_data():
+def parse_data(output_label):
   labels, *samples = csv_utils.read_csv(DATA_PATH, ignore_first_lines=2)
   samples = [dict(zip(labels, line)) for line in samples]
   random.shuffle(samples)
@@ -66,7 +63,7 @@ def parse_data():
   X = []
   y = []
   for sample in samples:
-    output = float_or_missing(sample[OUTPUT_LABEL])
+    output = float_or_missing(sample[output_label])
     if np.isnan(output) or output == MISSING_VALUE:
       continue
 
@@ -75,14 +72,7 @@ def parse_data():
   return np.array(X), np.array(y)
 
 
-def main():
-  random.seed(RANDOM_SEED)
-  np.random.seed(RANDOM_SEED)
-
-  X, y = parse_data()
-  num_samples = X.shape[0]
-  print('Total number of samples: ', num_samples)
-
+def predict(X, y):
   #X_train, X_nontrain, y_train, y_nontrain = train_test_split(
   #    X, y, test_size=(1 - TRAINING_SIZE), random_state=RANDOM_SEED)
   #X_validation, X_test, y_validation, y_test = train_test_split(
@@ -109,8 +99,23 @@ def main():
     y_true.extend(y_test)
     y_pred.extend(regressor.predict(X_test))
 
+  return y_true, y_pred
 
-  print(r2_score(y_true, y_pred))
+
+def main():
+  random.seed(RANDOM_SEED)
+  np.random.seed(RANDOM_SEED)
+
+  for output_label in OUTPUT_LABELS:
+    X, y = parse_data(output_label)
+    num_samples = X.shape[0]
+    print('Total number of %s samples: %s' % (output_label, num_samples))
+
+    y_true, y_pred = predict(X, y)
+    print('r2 score: ', r2_score(y_true, y_pred))
+
+
+
 
 
 if __name__ == '__main__':
