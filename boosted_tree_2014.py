@@ -8,7 +8,7 @@ import csv_utils
 import numpy as np
 import os
 import random
-from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import KFold
 from sklearn.model_selection import train_test_split
@@ -23,7 +23,11 @@ NON_TRAINING_SET_TEST_SIZE = 0.5
 DATA_PATH = '2014/2014_Pheotypic_Data_FileS2.csv'
 
 INPUT_LABELS = 'Anthesis date (days),Harvest date (days),Total fresh weight (kg),Brix (maturity),Brix (milk),Dry weight (kg),Stalk height (cm),Dry tons per acre'.split(',')
-OUTPUT_LABEL = 'NFC (% DM)'
+
+#OUTPUT_LABEL = 'ADF (% DM)'
+#OUTPUT_LABEL = 'NDF (% DM)'
+#OUTPUT_LABEL = 'NFC (% DM)'
+OUTPUT_LABEL = 'Lignin (% DM)'
 
 
 RANDOM_SEED = 10611
@@ -31,17 +35,21 @@ RANDOM_SEED = 10611
 # TODO include in INPUT_LABELS? Is it known before harvest?
 PERICARP_LABEL = 'Pericarp pigmentation'
 
+# TODO tune??
+MISSING_VALUE = np.nan
+#MISSING_VALUE = -1
+
 # TODO keep?
 def pretty_label(label):
   label = label.replace('%', 'percent').replace('(', 'in ').replace(')', '')
   return label.replace(' ', '_')
 
 
-def float_or_nan(s):
+def float_or_missing(s):
   try:
     return np.float(s)
   except:
-    return np.nan
+    return MISSING_VALUE
 
 
 def parse_data():
@@ -58,11 +66,11 @@ def parse_data():
   X = []
   y = []
   for sample in samples:
-    output = float_or_nan(sample[OUTPUT_LABEL])
-    if np.isnan(output):
+    output = float_or_missing(sample[OUTPUT_LABEL])
+    if np.isnan(output) or output == MISSING_VALUE:
       continue
 
-    X.append([float_or_nan(sample[x]) for x in INPUT_LABELS])
+    X.append([float_or_missing(sample[x]) for x in INPUT_LABELS])
     y.append(output)
   return np.array(X), np.array(y)
 
@@ -86,17 +94,17 @@ def main():
 
   kf = KFold(n_splits=10)
   for train_indexes, test_indexes in kf.split(X):
-    imp = Imputer()
     X_train, X_test = X[train_indexes], X[test_indexes]
     y_train, y_test = y[train_indexes], y[test_indexes]
 
-
+    imp = Imputer()
     X_train = imp.fit_transform(X_train)
     #X_validation = imp.transform(X_validation)
     X_test = imp.transform(X_test)
 
     # TODO tune max_depth.
     regressor = GradientBoostingRegressor(max_depth=1, random_state=0)
+    #regressor = RandomForestRegressor(n_estimators=num_samples, random_state=0)
     regressor.fit(X_train, y_train)
     y_true.extend(y_test)
     y_pred.extend(regressor.predict(X_test))
