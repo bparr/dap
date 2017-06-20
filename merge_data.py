@@ -137,10 +137,9 @@ class Cell(object):
     return (int(self._data[DataKeys(Cell.ROW_DATA_NAME)]),
             int(self._data[DataKeys(Cell.COLUMN_DATA_NAME)]))
 
-  def add_all_data_to_cell(self, cell_to_copy_to, append_if_mismatch_keys):
+  def add_all_data_to_cell(self, cell_to_copy_to):
     for key, value in self._data.items():
-      cell_to_copy_to.add_data(
-          key, value, append_if_mismatch=(key in append_if_mismatch_keys))
+      cell_to_copy_to.add_data(key, value, append_if_mismatch=True)
 
 
 def read_csv(file_name):
@@ -321,16 +320,12 @@ def main():
   sorted_cells = cells.sorted()
   write_csv(OUTPUT_FILENAME, sorted_cells)
 
-  append_if_mismatch_keys = set([
-      DataKeys.ROW, DataKeys.PLOT_ID, DataKeys.X_OF_Y,
-      DataKeys.LASER_PLANT_HEIGHT_07, # TODO :(
-      DataKeys.LIGHT_INTERCEPTION_08, # TODO :(
-      DataKeys.VEGETATION_INDEX_08, # TODO :(
-      DataKeys.LIGHT_INTERCEPTION_07, # TODO :(
-      DataKeys.LIGHT_INTERCEPTION_09, # TODO :(
-      DataKeys.LEAF_AREA_07, # TODO :(
-      DataKeys.LEAF_NECROSIS_07, # TODO :(
-      DataKeys.PLOT_PLAN_BARCODE])
+  # TODO all but one of the robot data has merge mismatch values.
+  #      Try both averaging them and handling them deterministically seperately
+  #      (low value = ROBOT_VALUE1, high value = ROBOT_VALUE2)? Sorting like
+  #      thus will intermix the robot values so VALUE1 values might not always
+  #      refer to same part of cell. Hmm. That seems bad. So no sorting if
+  #      treating as two separate values?
   merged_cells = []
   for cell in sorted_cells:
     row = parse_coordinate(cell.get_data(DataKeys.ROW))
@@ -340,8 +335,7 @@ def main():
     column = parse_coordinate(cell.get_data(DataKeys.COLUMN))
     merged_cell = Cell(row, column)
     for i in range(ROWS_IN_CELL):
-      cells.get(row + i, column).add_all_data_to_cell(
-          merged_cell, append_if_mismatch_keys)
+      cells.get(row + i, column).add_all_data_to_cell(merged_cell)
     merged_cells.append(merged_cell)
 
   if ROWS_IN_CELL * len(merged_cells) != len(sorted_cells):
