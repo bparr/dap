@@ -232,7 +232,6 @@ class DataKeys(Enum):
   ROW = Cell.ROW_DATA_NAME
   COLUMN = Cell.COLUMN_DATA_NAME
   PLANT_ID = 'plant_id'
-  PLOT_ID = 'plot_id'
 
   # Harvest data.
   SF16h_HGT1_120 = 'SF16h_HGT1_120'
@@ -261,6 +260,7 @@ class DataKeys(Enum):
   ACCESSION_ORIGIN = 'accession_origin'
   ACCESSION_RACE = 'accession_race'
 
+  PLOT_ID = 'plot_id'
   HARVEST_NOTES = 'Notes'
   X_OF_Y = 'x_of_y'
   PLOT_PLAN_TAG = 'plot_plan_tag'
