@@ -60,13 +60,13 @@ def is_missing(value):
 
 
 # Returns result of two percent values subtracted and multiplied by dry weight.
-def compute_c(sample, label1, label2):
-  value1 = float_or_missing(sample[label1])
-  value2 = float_or_missing(sample[label2])
+def get_weight(sample, label, minus=None):
+  value = float_or_missing(sample[label])
+  minus_value = 0.0 if minus is None else float_or_missing(sample[minus])
   dry_weight = float_or_missing(sample[DRY_WEIGHT_LABEL])
-  if is_missing(value1) or is_missing(value2) or is_missing(dry_weight):
+  if is_missing(value) or is_missing(minus_value) or is_missing(dry_weight):
     return MISSING_VALUE
-  return dry_weight * (value1 - value2) / 100.0
+  return dry_weight * (value - minus_value) / 100.0
 
 
 def parse_data(lines, input_labels, output_generator):
@@ -129,8 +129,8 @@ def main():
       ('ndf', lambda sample: sample[NDF_LABEL]),
       ('nfc', lambda sample: sample[NFC_LABEL]),
       ('lignin', lambda sample: sample[LIGNIN_LABEL]),
-      ('c6', lambda sample: compute_c(sample, ADF_LABEL, LIGNIN_LABEL)),
-      ('c5', lambda sample: compute_c(sample, NDF_LABEL, ADF_LABEL)),
+      ('c6', lambda sample: get_weight(sample, ADF_LABEL, minus=LIGNIN_LABEL)),
+      ('c5', lambda sample: get_weight(sample, NDF_LABEL, minus=ADF_LABEL)),
   ])
 
   for regressor_name, regressor_generator in regressors.items():
