@@ -22,7 +22,8 @@ TRAINING_SIZE = 0.8
 
 DATA_PATH = '2014/2014_Pheotypic_Data_FileS2.csv'
 
-INPUT_LABELS = 'Anthesis date (days),Harvest date (days),Total fresh weight (kg),Brix (maturity),Brix (milk),Dry weight (kg),Stalk height (cm),Dry tons per acre'.split(',')
+#INPUT_LABELS = 'Anthesis date (days),Harvest date (days),Total fresh weight (kg),Brix (maturity),Brix (milk),Dry weight (kg),Stalk height (cm),Dry tons per acre'.split(',')
+INPUT_LABELS = 'Anthesis date (days),Harvest date (days),Total fresh weight (kg),Brix (maturity),Brix (milk),Stalk height (cm)'.split(',')
 
 RANDOM_SEED = 10611
 
