@@ -1,0 +1,22 @@
+
+
+boosted trees
+Total number of ADF (% DM) samples: 365
+r2 score:  0.511694213613
+Total number of NDF (% DM) samples: 365
+r2 score:  0.436170688131
+Total number of NFC (% DM) samples: 365
+r2 score:  0.481024657036
+Total number of Lignin (% DM) samples: 363
+r2 score:  0.47906349235
+
+
+random forests
+Total number of ADF (% DM) samples: 365
+r2 score:  0.498290612739
+Total number of NDF (% DM) samples: 365
+r2 score:  0.348698644144
+Total number of NFC (% DM) samples: 365
+r2 score:  0.441510322878
+Total number of Lignin (% DM) samples: 363
+r2 score:  0.441884925863
