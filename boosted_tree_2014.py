@@ -9,8 +9,12 @@ import numpy as np
 import os
 
 DATA_PATH = '2014/2014_Pheotypic_Data_FileS2.csv'
-PERICARP_LABEL = 'Pericarp_pigmentation'
 
+INPUT_LABELS = 'Anthesis date (days),Harvest date (days),Total fresh weight (kg),Brix (maturity),Brix (milk),Dry weight (kg),Stalk height (cm),Dry tons per acre'.split(',')
+OUTPUT_LABEL = 'NFC (% DM)'
+
+
+PERICARP_LABEL = 'Pericarp pigmentation'
 
 # TODO keep?
 def pretty_label(label):
@@ -26,13 +30,8 @@ def float_or_nan(s):
 
 
 def parse_data():
-  lines = csv_utils.read_csv(DATA_PATH, ignore_first_lines=2)
-  labels = [pretty_label(x) for x in lines[0]]
-  samples = [dict(zip(labels, line)) for line in lines[1:]]
-
-  for sample in samples:
-    del sample[labels[0]]  # Ignore plant id.
-  labels = labels[1:]
+  labels, *samples = csv_utils.read_csv(DATA_PATH, ignore_first_lines=2)
+  samples = [dict(zip(labels, line)) for line in samples]
 
   # Convert pericarp string to a number.
   pericarps = sorted(set([x[PERICARP_LABEL] for x in samples]))  # Includes ''.
@@ -40,15 +39,18 @@ def parse_data():
     if sample[PERICARP_LABEL]:
       sample[PERICARP_LABEL] = pericarps.index(sample[PERICARP_LABEL])
 
-  result = []
+  X = []
+  y = []
   for sample in samples:
-    result.append([float_or_nan(sample[x]) for x in labels])
-  return np.array(result)
+    X.append([float_or_nan(sample[x]) for x in INPUT_LABELS])
+    y.append(float_or_nan(sample[OUTPUT_LABEL]))
+  return np.array(X), np.array(y)
 
 
 def main():
-  samples = parse_data()
-  print(samples)
+  X, y = parse_data()
+  print(X.shape)
+  print(y.shape)
 
 
 
