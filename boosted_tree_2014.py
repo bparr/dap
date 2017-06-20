@@ -49,7 +49,7 @@ def float_or_missing(s):
     return MISSING_VALUE
 
 
-def parse_data(lines, output_label):
+def parse_data(lines, input_labels, output_label):
   labels, *samples = lines
   samples = [dict(zip(labels, line)) for line in samples]
   random.shuffle(samples)
@@ -67,7 +67,7 @@ def parse_data(lines, output_label):
     if np.isnan(output) or output == MISSING_VALUE:
       continue
 
-    X.append([float_or_missing(sample[x]) for x in INPUT_LABELS])
+    X.append([float_or_missing(sample[x]) for x in input_labels])
     y.append(output)
   return np.array(X), np.array(y)
 
@@ -114,14 +114,12 @@ def main():
   for regressor_name, regressor_generator in regressors.items():
     print('\n\n' + regressor_name)
     for output_label in OUTPUT_LABELS:
-      X, y = parse_data(lines, output_label)
+      X, y = parse_data(lines, INPUT_LABELS, output_label)
       num_samples = X.shape[0]
       print('Total number of %s samples: %s' % (output_label, num_samples))
 
       y_true, y_pred = predict(X, y, regressor_generator)
       print('r2 score: ', r2_score(y_true, y_pred))
-
-
 
 
 
