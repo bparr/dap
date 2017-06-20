@@ -92,13 +92,13 @@ class Cell(object):
 
   def __init__(self, row, column):
     self._data = {
-        DataKeys(Cell.ROW_DATA_NAME): row,
-        DataKeys(Cell.COLUMN_DATA_NAME): column,
+        DataKeys(Cell.ROW_DATA_NAME): str(row),
+        DataKeys(Cell.COLUMN_DATA_NAME): str(column),
     }
 
   def __str__(self):
-    return (str(self._data[DataKeys(Cell.ROW_DATA_NAME)]) + ' ' +
-            str(self._data[DataKeys(Cell.COLUMN_DATA_NAME)]))
+    return (self._data[DataKeys(Cell.ROW_DATA_NAME)] + ' ' +
+            self._data[DataKeys(Cell.COLUMN_DATA_NAME)])
 
   def __repr__(self):
     return self.__str__()
@@ -107,6 +107,9 @@ class Cell(object):
   # will raise an Exception, unless append_if_mismatch is True (in which case
   # the given value is appended to the existing value).
   def add_data(self, key, value, append_if_mismatch=False):
+    if value == '':
+      return
+
     key = DataKeys(key)  # Ensure key is a DataKey instance.
     if key in self._data and value != self._data[key]:
       if append_if_mismatch:
@@ -126,8 +129,13 @@ class Cell(object):
 
   # List cells in a deterministic order using this.
   def get_sort_key(self):
-    return (self._data[DataKeys(Cell.ROW_DATA_NAME)],
-            self._data[DataKeys(Cell.COLUMN_DATA_NAME)])
+    return (int(self._data[DataKeys(Cell.ROW_DATA_NAME)]),
+            int(self._data[DataKeys(Cell.COLUMN_DATA_NAME)]))
+
+  def add_all_data_to_cell(self, cell_to_copy_to, append_if_mismatch_keys):
+    for key, value in self._data.items():
+      cell_to_copy_to.add_data(
+          key, value, append_if_mismatch=(key in append_if_mismatch_keys))
 
 
 def read_csv(file_name):
@@ -296,25 +304,30 @@ def main():
   parse_rw_by_ra(read_csv('2016_09_light_interception.csv'),
                  DataKeys.LIGHT_INTERCEPTION_09, cells)
 
+  sorted_cells = cells.sorted()
+
   # Write final contents.
   with open(OUTPUT_FILENAME, 'w') as output_file:
     writer = csv.writer(output_file)
     writer.writerow([x.value for x in DataKeys])
-    for cell in cells.sorted():
+    for cell in sorted_cells:
       writer.writerow([cell.get_data(x) for x in DataKeys])
 
-  for cell in cells.sorted():
-    row = cell.get_data(DataKeys.ROW)
+  # TODO assert that the length of merge is 4 * len(sorted_cells).
+  append_if_mismatch_keys = set([
+      DataKeys.ROW, DataKeys.PLOT_ID, DataKeys.X_OF_Y,
+      DataKeys.PLOT_PLAN_BARCODE])
+  for cell in sorted_cells:
+    row = parse_coordinate(cell.get_data(DataKeys.ROW))
     if row % 4 != 1:
       continue
 
-    column = cell.get_data(DataKeys.COLUMN)
-    plant_ids = set()
+    column = parse_coordinate(cell.get_data(DataKeys.COLUMN))
+    merged_cell = Cell(row, column)
     for i in range(4):
-      plant_ids.add(cells.get(row + i, column).get_data(DataKeys.PLANT_ID))
-    if len(plant_ids) > 1:
-      raise Exception('Unexpected mismatch in plant ids.')
-    #merged_cell = Cell(cell.get_data(DataKeys.ROW), cell.get_data(DataKeys.COLUMN))
+      cells.get(row + i, column).add_all_data_to_cell(
+          merged_cell, append_if_mismatch_keys)
+
 
 if __name__ == '__main__':
     main()
