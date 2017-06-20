@@ -42,15 +42,18 @@ def parse_data():
   X = []
   y = []
   for sample in samples:
+    output = float_or_nan(sample[OUTPUT_LABEL])
+    if np.isnan(output):
+      continue
+
     X.append([float_or_nan(sample[x]) for x in INPUT_LABELS])
-    y.append(float_or_nan(sample[OUTPUT_LABEL]))
+    y.append(output)
   return np.array(X), np.array(y)
 
 
 def main():
   X, y = parse_data()
-  print(X.shape)
-  print(y.shape)
+  print('Total number of samples: ', X.shape[0])
 
 
 
