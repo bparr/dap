@@ -303,6 +303,18 @@ def main():
     for cell in cells.sorted():
       writer.writerow([cell.get_data(x) for x in DataKeys])
 
+  for cell in cells.sorted():
+    row = cell.get_data(DataKeys.ROW)
+    if row % 4 != 1:
+      continue
+
+    column = cell.get_data(DataKeys.COLUMN)
+    plant_ids = set()
+    for i in range(4):
+      plant_ids.add(cells.get(row + i, column).get_data(DataKeys.PLANT_ID))
+    if len(plant_ids) > 1:
+      raise Exception('Unexpected mismatch in plant ids.')
+    #merged_cell = Cell(cell.get_data(DataKeys.ROW), cell.get_data(DataKeys.COLUMN))
 
 if __name__ == '__main__':
     main()
