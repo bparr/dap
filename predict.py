@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Parse and run boosted tree learner on 2014 data.
+Parse full csv and predict harvest data.
 """
 
 import csv_utils
