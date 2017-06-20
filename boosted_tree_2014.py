@@ -8,8 +8,9 @@ import csv_utils
 import numpy as np
 import os
 import random
-from sklearn.metrics import mean_squared_error
 from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.model_selection import KFold
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import Imputer
 
@@ -46,6 +47,7 @@ def float_or_nan(s):
 def parse_data():
   labels, *samples = csv_utils.read_csv(DATA_PATH, ignore_first_lines=2)
   samples = [dict(zip(labels, line)) for line in samples]
+  random.shuffle(samples)
 
   # Convert pericarp string to a number.
   pericarps = sorted(set([x[PERICARP_LABEL] for x in samples]))  # Includes ''.
@@ -73,27 +75,34 @@ def main():
   num_samples = X.shape[0]
   print('Total number of samples: ', num_samples)
 
-  X_train, X_nontrain, y_train, y_nontrain = train_test_split(
-      X, y, test_size=(1 - TRAINING_SIZE), random_state=RANDOM_SEED)
-  X_validation, X_test, y_validation, y_test = train_test_split(
-      X_nontrain, y_nontrain, test_size=NON_TRAINING_SET_TEST_SIZE,
-      random_state=RANDOM_SEED)
+  #X_train, X_nontrain, y_train, y_nontrain = train_test_split(
+  #    X, y, test_size=(1 - TRAINING_SIZE), random_state=RANDOM_SEED)
+  #X_validation, X_test, y_validation, y_test = train_test_split(
+  #    X_nontrain, y_nontrain, test_size=NON_TRAINING_SET_TEST_SIZE,
+  #    random_state=RANDOM_SEED)
 
-  print('Training set size: ', len(y_train))
-  print('Validation set size: ', len(y_validation))
-  print('Test set size: ', len(y_test))
+  y_true = []
+  y_pred = []
 
-  imp = Imputer()
-  X_train = imp.fit_transform(X_train)
-  X_validation = imp.transform(X_validation)
-  X_test = imp.transform(X_test)
+  kf = KFold(n_splits=10)
+  for train_indexes, test_indexes in kf.split(X):
+    imp = Imputer()
+    X_train, X_test = X[train_indexes], X[test_indexes]
+    y_train, y_test = y[train_indexes], y[test_indexes]
 
-  # TODO tune max_depth.
-  regressor = GradientBoostingRegressor(max_depth=1, random_state=0)
-  regressor.fit(X_train, y_train)
-  error = mean_squared_error(y_test, regressor.predict(X_test))
-  print(error)
 
+    X_train = imp.fit_transform(X_train)
+    #X_validation = imp.transform(X_validation)
+    X_test = imp.transform(X_test)
+
+    # TODO tune max_depth.
+    regressor = GradientBoostingRegressor(max_depth=1, random_state=0)
+    regressor.fit(X_train, y_train)
+    y_true.extend(y_test)
+    y_pred.extend(regressor.predict(X_test))
+
+
+  print(r2_score(y_true, y_pred))
 
 
 if __name__ == '__main__':
