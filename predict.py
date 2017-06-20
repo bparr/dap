@@ -31,12 +31,12 @@ ADF_LABEL = 'ADF (% DM)'
 NDF_LABEL = 'NDF (% DM)'
 NFC_LABEL = 'NFC (% DM)'
 LIGNIN_LABEL = 'Lignin (% DM)'
-OUTPUT_LABELS = [
-    ADF_LABEL,
-    NDF_LABEL,
-    NFC_LABEL,
-    LIGNIN_LABEL,
-]
+OUTPUTS = collections.OrderedDict([
+    ('adf', lambda sample: sample[ADF_LABEL]),
+    ('ndf', lambda sample: sample[NDF_LABEL]),
+    ('nfc', lambda sample: sample[NFC_LABEL]),
+    ('lignin', lambda sample: sample[LIGNIN_LABEL]),
+])
 
 
 RANDOM_SEED = 10611
@@ -61,7 +61,7 @@ def float_or_missing(s):
     return MISSING_VALUE
 
 
-def parse_data(lines, input_labels, output_label):
+def parse_data(lines, input_labels, output_generator):
   labels, *samples = lines
   samples = [dict(zip(labels, line)) for line in samples]
   random.shuffle(samples)
@@ -75,7 +75,7 @@ def parse_data(lines, input_labels, output_label):
   X = []
   y = []
   for sample in samples:
-    output = float_or_missing(sample[output_label])
+    output = float_or_missing(output_generator(sample))
     if np.isnan(output) or output == MISSING_VALUE:
       continue
 
@@ -125,10 +125,10 @@ def main():
 
   for regressor_name, regressor_generator in regressors.items():
     print('\n\n' + regressor_name)
-    for output_label in OUTPUT_LABELS:
-      X, y = parse_data(lines, INPUT_LABELS, output_label)
+    for output_name, output_generator in OUTPUTS.items():
+      X, y = parse_data(lines, INPUT_LABELS, output_generator)
       num_samples = X.shape[0]
-      print('Total number of %s samples: %s' % (output_label, num_samples))
+      print('Total number of %s samples: %s' % (output_name, num_samples))
 
       y_true, y_pred = predict(X, y, regressor_generator)
       print('r2 score: ', r2_score(y_true, y_pred))
