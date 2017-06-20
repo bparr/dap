@@ -5,6 +5,7 @@ Parse and run boosted tree learner on 2014 data.
 """
 
 import csv_utils
+import numpy as np
 import os
 
 DATA_PATH = '2014/2014_Pheotypic_Data_FileS2.csv'
@@ -17,9 +18,11 @@ def pretty_label(label):
   return label.replace(' ', '_')
 
 
-# TODO replace with Imputer.
-def float_or_empty(s):
-  return None if s == '' else float(s)
+def float_or_nan(s):
+  try:
+    return np.float(s)
+  except:
+    return np.nan
 
 
 def parse_data():
@@ -40,15 +43,14 @@ def parse_data():
 
   result = []
   for sample in samples:
-    result.append(dict((k, float_or_empty(v)) for k, v in sample.items()))
-  return labels, result
+    result.append([float_or_nan(sample[x]) for x in labels])
+  return np.array(result)
 
 
 def main():
-  labels, samples = parse_data()
+  samples = parse_data()
+  print(samples)
 
-  for sample in samples:
-    print(','.join([str(sample[x]) for x in labels]))
 
 
 if __name__ == '__main__':
