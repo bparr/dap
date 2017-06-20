@@ -34,9 +34,8 @@ def parse_data():
     del sample[labels[0]]  # Ignore plant id.
   labels = labels[1:]
 
-  # Includes the empty string.
-  pericarps = sorted(set([x[PERICARP_LABEL] for x in samples]))
-
+  # Convert pericarp string to a number.
+  pericarps = sorted(set([x[PERICARP_LABEL] for x in samples]))  # Includes ''.
   for sample in samples:
     if sample[PERICARP_LABEL]:
       sample[PERICARP_LABEL] = pericarps.index(sample[PERICARP_LABEL])
