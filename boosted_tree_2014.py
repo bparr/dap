@@ -10,14 +10,14 @@ import os
 import random
 from sklearn.metrics import mean_squared_error
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.model_selection import train_test_spli
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import Imputer
 
 
 # What percent of the whole dataset to use as the training set.
-TRAINING_SET_RATIO = 0.8
+TRAINING_SIZE = 0.8
 # What percent of the *NON*-training set to use for test (vs. validation).
-NON_TRAINING_SET_TEST_RATIO = 0.5
+NON_TRAINING_SET_TEST_SIZE = 0.5
 
 DATA_PATH = '2014/2014_Pheotypic_Data_FileS2.csv'
 
@@ -71,22 +71,22 @@ def main():
 
   X, y = parse_data()
   num_samples = X.shape[0]
-  training_set_size = int(num_samples * TRAINING_SET_RATIO)
   print('Total number of samples: ', num_samples)
 
-  X_train, X_nontrain = X[:training_set_size], X[training_set_size:]
-  y_train, y_nontrain = y[:training_set_size], y[training_set_size:]
-  test_set_size = int(len(y_nontrain) * NON_TRAINING_SET_TEST_RATIO)
-  X_validation, X_test = X_nontrain[test_set_size:], X[:test_set_size]
-  y_validation, y_test = y_nontrain[test_set_size:], y[:test_set_size]
+  X_train, X_nontrain, y_train, y_nontrain = train_test_split(
+      X, y, test_size=(1 - TRAINING_SIZE), random_state=RANDOM_SEED)
+  X_validation, X_test, y_validation, y_test = train_test_split(
+      X_nontrain, y_nontrain, test_size=NON_TRAINING_SET_TEST_SIZE,
+      random_state=RANDOM_SEED)
+
   print('Training set size: ', len(y_train))
   print('Validation set size: ', len(y_validation))
   print('Test set size: ', len(y_test))
 
   imp = Imputer()
   X_train = imp.fit_transform(X_train)
-  X_validation
-  print(X_train)
+  X_validation = imp.transform(X_validation)
+  X_test = imp.transform(X_test)
 
   # TODO tune max_depth.
   regressor = GradientBoostingRegressor(max_depth=1, random_state=0)
