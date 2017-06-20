@@ -125,10 +125,10 @@ def main():
   ])
 
   outputs = collections.OrderedDict([
-      ('adf', lambda sample: sample[ADF_LABEL]),
-      ('ndf', lambda sample: sample[NDF_LABEL]),
-      ('nfc', lambda sample: sample[NFC_LABEL]),
-      ('lignin', lambda sample: sample[LIGNIN_LABEL]),
+      ('adf', lambda sample: get_weight(sample, ADF_LABEL)),
+      ('ndf', lambda sample: get_weight(sample, NDF_LABEL)),
+      ('nfc', lambda sample: get_weight(sample, NFC_LABEL)),
+      ('lignin', lambda sample: get_weight(sample, LIGNIN_LABEL)),
       ('c6', lambda sample: get_weight(sample, ADF_LABEL, minus=LIGNIN_LABEL)),
       ('c5', lambda sample: get_weight(sample, NDF_LABEL, minus=ADF_LABEL)),
   ])

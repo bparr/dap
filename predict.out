@@ -1,14 +1,14 @@
 
 
 boosted trees
-Total number of adf samples: 365
-r2 score:  0.493836209711
-Total number of ndf samples: 365
-r2 score:  0.432340426539
-Total number of nfc samples: 365
-r2 score:  0.479063709497
-Total number of lignin samples: 363
-r2 score:  0.479064886738
+Total number of adf samples: 363
+r2 score:  0.648404207668
+Total number of ndf samples: 363
+r2 score:  0.646569044426
+Total number of nfc samples: 363
+r2 score:  0.516515000248
+Total number of lignin samples: 361
+r2 score:  0.622116472916
 Total number of c6 samples: 361
 r2 score:  0.648228954754
 Total number of c5 samples: 363
@@ -16,14 +16,14 @@ r2 score:  0.530281361019
 
 
 random forests
-Total number of adf samples: 365
-r2 score:  0.459564856312
-Total number of ndf samples: 365
-r2 score:  0.384125251949
-Total number of nfc samples: 365
-r2 score:  0.402632378642
-Total number of lignin samples: 363
-r2 score:  0.450569769848
+Total number of adf samples: 363
+r2 score:  0.618010135812
+Total number of ndf samples: 363
+r2 score:  0.618044684526
+Total number of nfc samples: 363
+r2 score:  0.577869771363
+Total number of lignin samples: 361
+r2 score:  0.577680675352
 Total number of c6 samples: 361
 r2 score:  0.610184364247
 Total number of c5 samples: 363
