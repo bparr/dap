@@ -90,17 +90,15 @@ class Cell(object):
   ROW_DATA_NAME = 'plot_row'
   COLUMN_DATA_NAME = 'plot_column'
 
-  # row and column are both ints.
   def __init__(self, row, column):
-    self._row = row
-    self._column = column
     self._data = {
         DataKeys(Cell.ROW_DATA_NAME): row,
         DataKeys(Cell.COLUMN_DATA_NAME): column,
     }
 
   def __str__(self):
-    return str(self._row) + ' ' + str(self._column)
+    return (str(self._data[DataKeys(Cell.ROW_DATA_NAME)]) + ' ' +
+            str(self._data[DataKeys(Cell.COLUMN_DATA_NAME)]))
 
   def __repr__(self):
     return self.__str__()
@@ -128,7 +126,8 @@ class Cell(object):
 
   # List cells in a deterministic order using this.
   def get_sort_key(self):
-    return (self._row, self._column)
+    return (self._data[DataKeys(Cell.ROW_DATA_NAME)],
+            self._data[DataKeys(Cell.COLUMN_DATA_NAME)])
 
 
 def read_csv(file_name):
