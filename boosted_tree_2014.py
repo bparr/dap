@@ -49,8 +49,8 @@ def float_or_missing(s):
     return MISSING_VALUE
 
 
-def parse_data(output_label):
-  labels, *samples = csv_utils.read_csv(DATA_PATH, ignore_first_lines=2)
+def parse_data(lines, output_label):
+  labels, *samples = lines
   samples = [dict(zip(labels, line)) for line in samples]
   random.shuffle(samples)
 
@@ -104,6 +104,7 @@ def main():
   random.seed(RANDOM_SEED)
   np.random.seed(RANDOM_SEED)
 
+  lines = csv_utils.read_csv(DATA_PATH, ignore_first_lines=2)
   regressors = {
       # TODO tune max_depth.
       'boosted trees': lambda: GradientBoostingRegressor(max_depth=1, random_state=0),
@@ -113,7 +114,7 @@ def main():
   for regressor_name, regressor_generator in regressors.items():
     print('\n\n' + regressor_name)
     for output_label in OUTPUT_LABELS:
-      X, y = parse_data(output_label)
+      X, y = parse_data(lines, output_label)
       num_samples = X.shape[0]
       print('Total number of %s samples: %s' % (output_label, num_samples))
 
