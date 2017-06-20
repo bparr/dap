@@ -4,6 +4,7 @@
 Parse full csv and predict harvest data.
 """
 
+import collections
 import csv_utils
 import numpy as np
 import os
@@ -18,13 +19,24 @@ from sklearn.preprocessing import Imputer
 # What percent of the whole dataset to use as the training set.
 TRAINING_SIZE = 0.8
 # What percent of the *NON*-training set to use for test (vs. validation).
+# TODO keep?
 NON_TRAINING_SET_TEST_SIZE = 0.5
 
 DATA_PATH = '2014/2014_Pheotypic_Data_FileS2.csv'
 
 INPUT_LABELS = 'Anthesis date (days),Harvest date (days),Total fresh weight (kg),Brix (maturity),Brix (milk),Dry weight (kg),Stalk height (cm),Dry tons per acre'.split(',')
 
-OUTPUT_LABELS = 'ADF (% DM),NDF (% DM),NFC (% DM),Lignin (% DM)'.split(',')
+
+ADF_LABEL = 'ADF (% DM)'
+NDF_LABEL = 'NDF (% DM)'
+NFC_LABEL = 'NFC (% DM)'
+LIGNIN_LABEL = 'Lignin (% DM)'
+OUTPUT_LABELS = [
+    ADF_LABEL,
+    NDF_LABEL,
+    NFC_LABEL,
+    LIGNIN_LABEL,
+]
 
 
 RANDOM_SEED = 10611
@@ -105,11 +117,11 @@ def main():
   np.random.seed(RANDOM_SEED)
 
   lines = csv_utils.read_csv(DATA_PATH, ignore_first_lines=2)
-  regressors = {
+  regressors = collections.OrderedDict([
       # TODO tune max_depth.
-      'boosted trees': lambda: GradientBoostingRegressor(max_depth=1, random_state=0),
-      'random forests': lambda: RandomForestRegressor(n_estimators=100, random_state=0),
-  }
+      ('boosted trees', lambda: GradientBoostingRegressor(max_depth=1, random_state=0)),
+      ('random forests', lambda: RandomForestRegressor(n_estimators=100, random_state=0)),
+  ])
 
   for regressor_name, regressor_generator in regressors.items():
     print('\n\n' + regressor_name)
