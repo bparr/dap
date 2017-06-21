@@ -3,7 +3,7 @@
 import csv
 
 # Values in original csv files that are interpreted as empty strings.
-EMPTY_VALUES = ['', ' ', 'FILL', 'NA']
+EMPTY_VALUES = ['', ' ', 'FILL', 'NA', ' NA']
 
 # Use this to read a *.csv file. Includes sanity checks and converts values in
 # EMPTY_VALUES to ''.
