@@ -40,7 +40,7 @@ DRY_WEIGHT_LABEL = 'Dry weight (kg)'
 
 # TODO tune??
 MISSING_VALUE = np.nan
-#MISSING_VALUE = -1
+#MISSING_VALUE = -1  # Disables Imputer.
 
 
 
