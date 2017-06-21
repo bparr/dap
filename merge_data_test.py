@@ -11,20 +11,28 @@ def read_input_file(filename):
   with open(os.path.join(merge_data.DATA_DIRECTORY, filename), 'r') as f:
     return list(csv.DictReader(f))
 
-def read_output_file():
+def read_output_file(file_path, merged=False):
   output = {}
-  with open(merge_data.OUTPUT_FILENAME, 'r') as output_file:
+  with open(file_path, 'r') as output_file:
     for d in csv.DictReader(output_file):
-      row = int(d[merge_data.Cell.ROW_DATA_NAME])
-      column = int(d[merge_data.Cell.COLUMN_DATA_NAME])
-      if column in output.setdefault(row, {}):
-        raise Exception('Duplicate row/column: ', row, column)
-      output[row][column] = d
+      row_str = d[merge_data.Cell.ROW_DATA_NAME]
+      row_list = [row_str]
+      if merged:
+        row_list = row_str.split(merge_data.MISMATCH_DELIMETER)
+
+      for row in row_list:
+        row = int(row)
+        column = int(d[merge_data.Cell.COLUMN_DATA_NAME])
+        if column in output.setdefault(row, {}):
+          raise Exception('Duplicate row/column: ', row, column)
+        output[row][column] = d
 
   return output
 
 
-OUTPUT_CONTENTS = read_output_file()
+OUTPUT_CONTENTS = read_output_file(merge_data.OUTPUT_FILENAME)
+MERGED_OUTPUT_CONTENTS = read_output_file(
+    merge_data.MERGED_OUTPUT_FILENAME, merged=True)
 
 def get_actual_value(row, column, key, has_fill_rows=True):
   row, column = merge_data.parse_coordinates(row, column)
@@ -39,7 +47,9 @@ class TestOutput(unittest.TestCase):
   def _assert_values_equal(self, expected, actual):
     if expected in csv_utils.EMPTY_VALUES:
       return
-    self.assertIn(expected, actual.split(merge_data.MISMATCH_DELIMETER))
+    actual_subentries = actual.split(merge_data.MISMATCH_DELIMETER)
+    for expected_subentry in expected.split(merge_data.MISMATCH_DELIMETER):
+      self.assertIn(expected_subentry, actual_subentries)
 
   # Test values in an input file were correctly copied over to output file.
   def _assert_input(self, filename, data_key, first_column_key=' '):
@@ -150,6 +160,14 @@ class TestOutput(unittest.TestCase):
         self._assert_values_equal(accession['Race'], get_actual_value(
             row, column, merge_data.DataKeys.ACCESSION_RACE))
 
+  def test_mergeContentsIsSupersetOfNonMergedOutput(self):
+    for output_columns in OUTPUT_CONTENTS.values():
+      for output_line in output_columns.values():
+        row = int(output_line[merge_data.DataKeys.ROW.value])
+        column = int(output_line[merge_data.DataKeys.COLUMN.value])
+        merged_output_line = MERGED_OUTPUT_CONTENTS[row][column]
+        for k, v in output_line.items():
+          self._assert_values_equal(v, merged_output_line[k])
 
 if __name__ == '__main__':
     unittest.main()
