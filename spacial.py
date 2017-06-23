@@ -47,8 +47,9 @@ def get_spacial_correlation(arg):
   data_distances = DistanceMatrix(squareform(pdist(data)))
   coeff, p_value, n = mantel(gps_distances, data_distances,
                              permutations=MANTEL_PERMUTATIONS)
+  is_significant = (p_value <= MAXIMUM_SIGNIFICANT_P_VALUE)
 
-  return (data_key.value, n, coeff, p_value)
+  return (data_key.value, n, coeff, p_value, is_significant)
 
 
 def main():
@@ -60,30 +61,22 @@ def main():
 
     args = []
     for data_key in merge_data.DataKeys:
+      # This is a bit hacky way to skip remaining values that are all text
+      # values. But it works nicely right now.
       if data_key == merge_data.DataKeys.PLANT_ID:
-        print('Skipping:', data_key.value)
         continue
       if data_key == merge_data.DataKeys.ACCESSION_PHOTOPERIOD:
-        # This is a bit hacky way to skip remaining values that are all text
-        # values. But it works nicely right now.
-        break
+        break  # Ignore all DataKeys after this one.
 
       args.append((samples, data_key))
 
 
-
     results = pool.map(get_spacial_correlation, args)
-
     with open(output_path, 'w') as f:
       csv_writer = csv.writer(f)
-      csv_writer.writerow(['label', 'num_data_points', 'corr_coeff', 'p_value'])
-      for result in results:
-        csv_writer.writerow(result)
-        significant_str = 'Significant P Value'
-        p_value = result[-1]
-        if p_value > MAXIMUM_SIGNIFICANT_P_VALUE:
-          significant_str = 'NOT ' + significant_str
-        print(significant_str + ':', data_key.value, '=', p_value)
+      csv_writer.writerow(['label', 'num_data_points', 'corr_coeff',
+                           'p_value', 'is_significant'])
+      csv_writer.writerows(results)
 
 
 if __name__ == '__main__':
