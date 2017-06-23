@@ -24,7 +24,7 @@ NORTHINGS_LABEL = merge_data.DataKeys.GPS_NORTHINGS.value
 MAXIMUM_SIGNIFICANT_P_VALUE = 0.01
 
 # Manly says 5000 is minimum number to estimate a significance level of 0.01.
-MANTEL_PERMUTATIONS = 10#000
+MANTEL_PERMUTATIONS = 10000
 
 
 # Averge multiple numeric values, caused by mismatched data merging.
