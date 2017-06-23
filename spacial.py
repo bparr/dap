@@ -17,6 +17,8 @@ OUTPUT_FILE_PATH = 'spacial.' + INPUT_FILE_PATH
 EASTINGS_LABEL = merge_data.DataKeys.GPS_EASTINGS.value
 NORTHINGS_LABEL = merge_data.DataKeys.GPS_NORTHINGS.value
 
+MAXIMUM_SIGNIFICANT_P_VALUE = 0.01
+
 # Manly says 5000 is minimum number to estimate a significance level of 0.01.
 MANTEL_PERMUTATIONS = 10000
 
@@ -40,6 +42,11 @@ def write_spacial_correlation(csv_writer, samples, data_key):
 
   csv_writer.writerow([data_key.value, n, coeff, p_value])
 
+  significant_str = 'Significant P Value'
+  if p_value > MAXIMUM_SIGNIFICANT_P_VALUE:
+    significant_str = 'NOT ' + significant_str
+  print(significant_str + ':', data_key.value, '=', p_value)
+
 
 def main():
   labels, *samples = csv_utils.read_csv(INPUT_FILE_PATH)
@@ -49,8 +56,15 @@ def main():
     csv_writer = csv.writer(f)
     csv_writer.writerow(['label', 'num_data_points', 'corr_coeff', 'p_value'])
 
-    data_keys = [merge_data.DataKeys.SF16h_HGT1_120]
-    for data_key in data_keys:
+    for data_key in merge_data.DataKeys:
+      if data_key == merge_data.DataKeys.PLANT_ID:
+        print('Skipping:', data_key.value)
+        continue
+      if data_key == merge_data.DataKeys.ACCESSION_PHOTOPERIOD:
+        # This is a bit hacky way to skip remaining values that are all text
+        # values. But it works nicely right now.
+        break
+
       write_spacial_correlation(csv_writer, samples, data_key)
 
 
