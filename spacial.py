@@ -21,7 +21,7 @@ NORTHINGS_LABEL = merge_data.DataKeys.GPS_NORTHINGS.value
 MAXIMUM_SIGNIFICANT_P_VALUE = 0.01
 
 # Manly says 5000 is minimum number to estimate a significance level of 0.01.
-MANTEL_PERMUTATIONS = 10000
+MANTEL_PERMUTATIONS = 10# TODO revert10000
 
 
 def average_mismatch(value):
@@ -30,8 +30,8 @@ def average_mismatch(value):
 
 def write_spacial_correlation(csv_writer, samples, data_key):
   samples = [x for x in samples if x[data_key.value] != '']
-  eastings = [float(x[EASTINGS_LABEL]) for x in samples]
-  northings= [float(x[EASTINGS_LABEL]) for x in samples]
+  eastings = [average_mismatch(x[EASTINGS_LABEL]) for x in samples]
+  northings= [average_mismatch(x[EASTINGS_LABEL]) for x in samples]
   gps = list(zip(eastings, northings))
   # Add required second dimension, but set to 0.0, so no affect on distances.
   data = [(average_mismatch(x[data_key.value]), 0.0) for x in samples]
