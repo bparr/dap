@@ -14,7 +14,9 @@ from skbio import DistanceMatrix
 from skbio.stats.distance import mantel
 from scipy.spatial.distance import pdist, squareform
 
-INPUT_PATHS = ['2016.csv', '2016.merged.csv']
+# The non-merged file already has GPS for all cells, so merging the cells does
+# not increase coverage.
+INPUT_PATHS = ['2016.csv'] #, '2016.merged.csv']
 OUTPUT_PATHS = ['spacial.' + x for x in INPUT_PATHS]
 EASTINGS_LABEL = merge_data.DataKeys.GPS_EASTINGS.value
 NORTHINGS_LABEL = merge_data.DataKeys.GPS_NORTHINGS.value
@@ -22,7 +24,7 @@ NORTHINGS_LABEL = merge_data.DataKeys.GPS_NORTHINGS.value
 MAXIMUM_SIGNIFICANT_P_VALUE = 0.01
 
 # Manly says 5000 is minimum number to estimate a significance level of 0.01.
-MANTEL_PERMUTATIONS = 10000
+MANTEL_PERMUTATIONS = 10#000
 
 
 # Averge multiple numeric values, caused by mismatched data merging.
@@ -67,9 +69,11 @@ def main():
     for data_key in merge_data.DataKeys:
       # This is a bit hacky way to skip remaining values that are all text
       # values. But it works nicely right now.
-      if data_key == merge_data.DataKeys.PLANT_ID:
+      if (data_key == merge_data.DataKeys.ROW or
+          data_key == merge_data.DataKeys.COLUMN or
+          data_key == merge_data.DataKeys.PLANT_ID):
         continue
-      if data_key == merge_data.DataKeys.ACCESSION_PHOTOPERIOD:
+      if data_key == merge_data.DataKeys.GPS_EASTINGS:
         break  # Ignore all DataKeys after this one.
 
       args.append((samples, data_key))
