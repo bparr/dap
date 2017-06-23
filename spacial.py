@@ -4,6 +4,7 @@
 Compute spacial correlations and their significance.
 """
 
+import csv
 import csv_utils
 import merge_data
 import random
@@ -12,6 +13,7 @@ from skbio.stats.distance import mantel
 from scipy.spatial.distance import pdist, squareform
 
 INPUT_FILE_PATH = '2016.csv'
+OUTPUT_FILE_PATH = 'spacial.' + INPUT_FILE_PATH
 EASTINGS_LABEL = merge_data.DataKeys.GPS_EASTINGS.value
 NORTHINGS_LABEL = merge_data.DataKeys.GPS_NORTHINGS.value
 
@@ -19,7 +21,7 @@ NORTHINGS_LABEL = merge_data.DataKeys.GPS_NORTHINGS.value
 MANTEL_PERMUTATIONS = 10000
 
 
-def compute_spacial_correlation(samples, data_key):
+def write_spacial_correlation(csv_writer, samples, data_key):
   samples = [x for x in samples if x[data_key.value] != '']
   eastings = [float(x[EASTINGS_LABEL]) for x in samples]
   northings= [float(x[EASTINGS_LABEL]) for x in samples]
@@ -33,14 +35,23 @@ def compute_spacial_correlation(samples, data_key):
 
   gps_distances = DistanceMatrix(squareform(pdist(gps)))
   data_distances = DistanceMatrix(squareform(pdist(data)))
-  return mantel(gps_distances, data_distances, permutations=MANTEL_PERMUTATIONS)
+  coeff, p_value, n = mantel(gps_distances, data_distances,
+                             permutations=MANTEL_PERMUTATIONS)
+
+  csv_writer.writerow([data_key.value, n, coeff, p_value])
 
 
 def main():
   labels, *samples = csv_utils.read_csv(INPUT_FILE_PATH)
   samples = [dict(zip(labels, line)) for line in samples]
 
-  print(compute_spacial_correlation(samples, merge_data.DataKeys.SF16h_HGT1_120))
+  with open(OUTPUT_FILE_PATH, 'w') as f:
+    csv_writer = csv.writer(f)
+    csv_writer.writerow(['label', 'num_data_points', 'corr_coeff', 'p_value'])
+
+    data_keys = [merge_data.DataKeys.SF16h_HGT1_120]
+    for data_key in data_keys:
+      write_spacial_correlation(csv_writer, samples, data_key)
 
 
 if __name__ == '__main__':
