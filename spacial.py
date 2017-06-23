@@ -7,6 +7,7 @@ Compute spacial correlations and their significance.
 import csv
 import csv_utils
 import merge_data
+from multiprocessing import Pool
 import numpy as np
 import random
 from skbio import DistanceMatrix
@@ -28,7 +29,8 @@ def average_mismatch(value):
   return np.mean([float(x) for x in value.split(merge_data.MISMATCH_DELIMETER)])
 
 
-def get_spacial_correlation(samples, data_key):
+def get_spacial_correlation(arg):
+  samples, data_key = arg
   samples = [x for x in samples if x[data_key.value] != '']
   eastings = [average_mismatch(x[EASTINGS_LABEL]) for x in samples]
   northings= [average_mismatch(x[EASTINGS_LABEL]) for x in samples]
@@ -50,11 +52,13 @@ def get_spacial_correlation(samples, data_key):
 
 
 def main():
+  pool = Pool()
+
   for input_path, output_path in zip(INPUT_PATHS, OUTPUT_PATHS):
     labels, *samples = csv_utils.read_csv(input_path)
     samples = [dict(zip(labels, line)) for line in samples]
 
-    results = []
+    args = []
     for data_key in merge_data.DataKeys:
       if data_key == merge_data.DataKeys.PLANT_ID:
         print('Skipping:', data_key.value)
@@ -64,23 +68,22 @@ def main():
         # values. But it works nicely right now.
         break
 
-      result = get_spacial_correlation(samples, data_key)
-      results.append(result)
+      args.append((samples, data_key))
 
-      significant_str = 'Significant P Value'
-      p_value = result[-1]
-      if p_value > MAXIMUM_SIGNIFICANT_P_VALUE:
-        significant_str = 'NOT ' + significant_str
-      print(significant_str + ':', data_key.value, '=', p_value)
 
+
+    results = pool.map(get_spacial_correlation, args)
 
     with open(output_path, 'w') as f:
       csv_writer = csv.writer(f)
       csv_writer.writerow(['label', 'num_data_points', 'corr_coeff', 'p_value'])
       for result in results:
         csv_writer.writerow(result)
-
-
+        significant_str = 'Significant P Value'
+        p_value = result[-1]
+        if p_value > MAXIMUM_SIGNIFICANT_P_VALUE:
+          significant_str = 'NOT ' + significant_str
+        print(significant_str + ':', data_key.value, '=', p_value)
 
 
 if __name__ == '__main__':
