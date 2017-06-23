@@ -28,7 +28,7 @@ def average_mismatch(value):
   return np.mean([float(x) for x in value.split(merge_data.MISMATCH_DELIMETER)])
 
 
-def write_spacial_correlation(csv_writer, samples, data_key):
+def get_spacial_correlation(samples, data_key):
   samples = [x for x in samples if x[data_key.value] != '']
   eastings = [average_mismatch(x[EASTINGS_LABEL]) for x in samples]
   northings= [average_mismatch(x[EASTINGS_LABEL]) for x in samples]
@@ -46,12 +46,7 @@ def write_spacial_correlation(csv_writer, samples, data_key):
   coeff, p_value, n = mantel(gps_distances, data_distances,
                              permutations=MANTEL_PERMUTATIONS)
 
-  csv_writer.writerow([data_key.value, n, coeff, p_value])
-
-  significant_str = 'Significant P Value'
-  if p_value > MAXIMUM_SIGNIFICANT_P_VALUE:
-    significant_str = 'NOT ' + significant_str
-  print(significant_str + ':', data_key.value, '=', p_value)
+  return (data_key.value, n, coeff, p_value)
 
 
 def main():
@@ -59,20 +54,33 @@ def main():
     labels, *samples = csv_utils.read_csv(input_path)
     samples = [dict(zip(labels, line)) for line in samples]
 
+    results = []
+    for data_key in merge_data.DataKeys:
+      if data_key == merge_data.DataKeys.PLANT_ID:
+        print('Skipping:', data_key.value)
+        continue
+      if data_key == merge_data.DataKeys.ACCESSION_PHOTOPERIOD:
+        # This is a bit hacky way to skip remaining values that are all text
+        # values. But it works nicely right now.
+        break
+
+      result = get_spacial_correlation(samples, data_key)
+      results.append(result)
+
+      significant_str = 'Significant P Value'
+      p_value = result[-1]
+      if p_value > MAXIMUM_SIGNIFICANT_P_VALUE:
+        significant_str = 'NOT ' + significant_str
+      print(significant_str + ':', data_key.value, '=', p_value)
+
+
     with open(output_path, 'w') as f:
       csv_writer = csv.writer(f)
       csv_writer.writerow(['label', 'num_data_points', 'corr_coeff', 'p_value'])
+      for result in results:
+        csv_writer.writerow(result)
 
-      for data_key in merge_data.DataKeys:
-        if data_key == merge_data.DataKeys.PLANT_ID:
-          print('Skipping:', data_key.value)
-          continue
-        if data_key == merge_data.DataKeys.ACCESSION_PHOTOPERIOD:
-          # This is a bit hacky way to skip remaining values that are all text
-          # values. But it works nicely right now.
-          break
 
-        write_spacial_correlation(csv_writer, samples, data_key)
 
 
 if __name__ == '__main__':
