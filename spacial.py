@@ -22,13 +22,17 @@ NORTHINGS_LABEL = merge_data.DataKeys.GPS_NORTHINGS.value
 MAXIMUM_SIGNIFICANT_P_VALUE = 0.01
 
 # Manly says 5000 is minimum number to estimate a significance level of 0.01.
-MANTEL_PERMUTATIONS = 10# TODO revert10000
+MANTEL_PERMUTATIONS = 10000
 
 
+# Averge multiple numeric values, caused by mismatched data merging.
 def average_mismatch(value):
   return np.mean([float(x) for x in value.split(merge_data.MISMATCH_DELIMETER)])
 
 
+# Computes spacial correlation relative to each cell's GPS location.
+# Returns (key name, number of data points, correlation coefficient, p value,
+#          whether there is a significant correlation with GPS location)
 def get_spacial_correlation(arg):
   samples, data_key = arg
   samples = [x for x in samples if x[data_key.value] != '']
