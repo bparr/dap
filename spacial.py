@@ -75,6 +75,7 @@ def main():
       args.append((samples, data_key))
 
 
+    print('Spawning jobs for:', input_path)
     results = pool.map(get_spacial_correlation, args)
     with open(output_path, 'w') as f:
       csv_writer = csv.writer(f)
