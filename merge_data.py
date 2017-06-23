@@ -12,6 +12,7 @@ confusion with linear algebra ranks.
 import csv
 import csv_utils
 from enum import Enum
+import numpy as np
 import os
 
 DATA_DIRECTORY = '2016'
@@ -86,7 +87,7 @@ class Cells(object):
     cells = []
     for columns in self._cells.values():
       cells.extend(columns.values())
-    cells.sort(key=lambda cell: cell.get_sort_key())
+    cells.sort(key=lambda cell: cell.get_coordinates())
     return cells
 
 
@@ -133,7 +134,7 @@ class Cell(object):
     return self._data.get(key, '')
 
   # List cells in a deterministic order using this.
-  def get_sort_key(self):
+  def get_coordinates(self):
     return (int(self._data[DataKeys(Cell.ROW_DATA_NAME)]),
             int(self._data[DataKeys(Cell.COLUMN_DATA_NAME)]))
 
@@ -221,6 +222,22 @@ def parse_plot_plan_tags(lines, cells):
     cell.add_data(DataKeys.PLOT_PLAN_END, end, append_if_mismatch=True)
 
 
+def add_gps_to_cells(lines, cells):
+  lines = lines[1:]  # Ignore labels.
+  gps = {}
+  for row, column, eastings, northings in lines:
+    gps.setdefault(row, {})[column] = (float(eastings), float(northings))
+
+  for cell in cells.sorted():
+    row, column = cell.get_coordinates()
+    eastings1, northings1 = gps[str(row - 1) + '.5'][str(column)]
+    eastings2, northings2 = gps[str(row) + '.5'][str(column)]
+    eastings = str(np.mean([eastings1, eastings2]))
+    northings = str(np.mean([northings1, northings2]))
+    cell.add_data(DataKeys.GPS_EASTINGS, eastings)
+    cell.add_data(DataKeys.GPS_NORTHINGS, northings)
+
+
 # TODO(bparr): 2016_09_penetrometer_robot_Large_Stalks.csv has two lines for
 #              Rw22 Ra32 which seem to describe completely different plants. So
 #              ignoring.
@@ -252,6 +269,10 @@ class DataKeys(Enum):
   LIGHT_INTERCEPTION_07 = '2016_07_light_interception'
   LIGHT_INTERCEPTION_08 = '2016_08_light_interception'
   LIGHT_INTERCEPTION_09 = '2016_09_light_interception'
+
+  # GPS location, in UTM format.
+  GPS_EASTINGS = 'gps_eastings_UTMzone17N'
+  GPS_NORTHINGS = 'gps_northings_UTMzone17N'
 
   # parse_panel_accessions depends on these exact ACCESSION_* string values.
   ACCESSION_PHOTOPERIOD = 'accession_photoperiod'
@@ -316,6 +337,7 @@ def main():
                  DataKeys.LIGHT_INTERCEPTION_08, cells)
   parse_rw_by_ra(read_csv('2016_09_light_interception.csv'),
                  DataKeys.LIGHT_INTERCEPTION_09, cells)
+  add_gps_to_cells(read_csv('2016_all_BAP_gps_coords.csv'), cells)
 
   sorted_cells = cells.sorted()
   write_csv(OUTPUT_FILENAME, sorted_cells)
@@ -328,11 +350,10 @@ def main():
   #      treating as two separate values?
   merged_cells = []
   for cell in sorted_cells:
-    row = parse_coordinate(cell.get_data(DataKeys.ROW))
+    row, column = cell.get_coordinates()
     if row % ROWS_IN_CELL != 1:
       continue
 
-    column = parse_coordinate(cell.get_data(DataKeys.COLUMN))
     merged_cell = Cell(row, column)
     for i in range(ROWS_IN_CELL):
       cells.get(row + i, column).add_all_data_to_cell(merged_cell)

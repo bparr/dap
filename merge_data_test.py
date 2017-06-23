@@ -160,6 +160,33 @@ class TestOutput(unittest.TestCase):
         self._assert_values_equal(accession['Race'], get_actual_value(
             row, column, merge_data.DataKeys.ACCESSION_RACE))
 
+
+  def test_GPS(self):
+    dict_lines = read_input_file('2016_all_BAP_gps_coords.csv')
+    gps = dict((x['Row'], {}) for x in dict_lines)
+    for line in dict_lines:
+      gps[line['Row']][line['Range']] = line
+
+    for output_columns in OUTPUT_CONTENTS.values():
+      for output_line in output_columns.values():
+        row = output_line[merge_data.DataKeys.ROW.value]
+        column = output_line[merge_data.DataKeys.COLUMN.value]
+        gps1 = gps[str(int(row) - 1) + '.5'][column]
+        gps2 = gps[row + '.5'][column]
+
+        expected_eastings = (0.5 * (float(gps1['Eastings(UTMzone17N)']) +
+                                    float(gps2['Eastings(UTMzone17N)'])))
+        actual_eastings = float(
+            output_line[merge_data.DataKeys.GPS_EASTINGS.value])
+        self.assertAlmostEqual(expected_eastings, actual_eastings)
+
+        expected_northings = (0.5 * (float(gps1['Northings(UTMzone17N)']) +
+                                     float(gps2['Northings(UTMzone17N)'])))
+        actual_northings = float(
+            output_line[merge_data.DataKeys.GPS_NORTHINGS.value])
+        self.assertAlmostEqual(expected_northings, actual_northings)
+
+
   def test_mergeContentsIsSupersetOfNonMergedOutput(self):
     for output_columns in OUTPUT_CONTENTS.values():
       for output_line in output_columns.values():
