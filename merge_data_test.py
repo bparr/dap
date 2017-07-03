@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# Usage: ./merge_data_test.py
+
 import csv
 import csv_utils
 import merge_data

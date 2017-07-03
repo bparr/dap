@@ -2,6 +2,10 @@
 
 """
 Compute spatial correlations and their significance.
+Usage:
+  ./spatial.py
+
+This file uses 2016.csv and writes its results to spatial.2016.csv.
 """
 
 import csv

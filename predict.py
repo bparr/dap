@@ -2,6 +2,9 @@
 
 """
 Parse full csv and predict harvest data.
+
+Usage:
+  ./predict.py > predict.out
 """
 # TODO tests?
 

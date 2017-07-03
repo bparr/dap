@@ -7,6 +7,12 @@ The field of sorghum is partitioned into cells of genetically siblings. Each
 cell is located by its row (Rw###) and column (Ra###). Note that in the data
 files, Ra### stands for "rank" which is called a "column" in this code to avoid
 confusion with linear algebra ranks.
+
+Usage:
+  ./merge_data.py && ./merge_data_test.py
+
+Running the merge_data_test file is not required but verifies the results,
+which are written to 2016.csv and 2016.merged.csv.
 """
 
 import csv
