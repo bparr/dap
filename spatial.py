@@ -77,6 +77,7 @@ def main():
 
     print('Spawning jobs for:', input_path)
     results = pool.map(get_spatial_correlation, args)
+    results.sort(key=lambda x: x[-1])  # Sort by p-value.
     with open(output_path, 'w') as f:
       csv_writer = csv.writer(f)
       csv_writer.writerow(['label', 'num_data_points', 'corr_coeff', 'p_value'])
