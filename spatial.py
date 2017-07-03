@@ -76,6 +76,12 @@ def main():
   # Tuples of spatial_key1, spatial_key2, spatial_keys_description).
   mantel_runs = [
     (DataKeys.GPS_EASTINGS, DataKeys.GPS_NORTHINGS, 'eastings_and_northings'),
+    (DataKeys.GPS_EASTINGS, None, 'eastings_only'),
+    (DataKeys.GPS_NORTHINGS, None, 'northings_only'),
+
+    (DataKeys.ROW, DataKeys.COLUMN, 'plot_row_and_column')
+    (DataKeys.ROW, None, 'plot_row_only')
+    (DataKeys.COLUMN, None, 'plot_column_only')
   ]
 
   for spatial_key1, spatial_key2, spatial_keys_description in mantel_runs:
