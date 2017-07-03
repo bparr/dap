@@ -20,8 +20,8 @@ from scipy.spatial.distance import pdist, squareform
 
 # The non-merged file already has GPS for all cells, so merging the cells does
 # not increase coverage.
-INPUT_PATHS = ['2016.csv'] #, '2016.merged.csv']
-OUTPUT_PATHS = ['spatial.' + x for x in INPUT_PATHS]
+INPUT_PATH = '2016.csv'
+OUTPUT_PATH = 'spatial.' + INPUT_PATH
 EASTINGS_LABEL = merge_data.DataKeys.GPS_EASTINGS.value
 NORTHINGS_LABEL = merge_data.DataKeys.GPS_NORTHINGS.value
 
@@ -62,31 +62,30 @@ def get_spatial_correlation(arg):
 def main():
   pool = Pool()
 
-  for input_path, output_path in zip(INPUT_PATHS, OUTPUT_PATHS):
-    labels, *samples = csv_utils.read_csv(input_path)
-    samples = [dict(zip(labels, line)) for line in samples]
+  labels, *samples = csv_utils.read_csv(INPUT_PATH)
+  samples = [dict(zip(labels, line)) for line in samples]
 
-    args = []
-    for data_key in merge_data.DataKeys:
-      # This is a bit hacky way to skip remaining values that are all text
-      # values. But it works nicely right now.
-      if (data_key == merge_data.DataKeys.ROW or
-          data_key == merge_data.DataKeys.COLUMN or
-          data_key == merge_data.DataKeys.PLANT_ID):
-        continue
-      if data_key == merge_data.DataKeys.GPS_EASTINGS:
-        break  # Ignore all DataKeys after this one.
+  args = []
+  for data_key in merge_data.DataKeys:
+    # This is a bit hacky way to skip remaining values that are all text
+    # values. But it works nicely right now.
+    if (data_key == merge_data.DataKeys.ROW or
+        data_key == merge_data.DataKeys.COLUMN or
+        data_key == merge_data.DataKeys.PLANT_ID):
+      continue
+    if data_key == merge_data.DataKeys.GPS_EASTINGS:
+      break  # Ignore all DataKeys after this one.
 
-      args.append((samples, data_key))
+    args.append((samples, data_key))
 
 
-    print('Spawning jobs for:', input_path)
-    results = pool.map(get_spatial_correlation, args)
-    results.sort(key=lambda x: x[-1])  # Sort by p-value.
-    with open(output_path, 'w') as f:
-      csv_writer = csv.writer(f)
-      csv_writer.writerow(['label', 'num_data_points', 'corr_coeff', 'p_value'])
-      csv_writer.writerows(results)
+  print('Spawning jobs for:', INPUT_PATH)
+  results = pool.map(get_spatial_correlation, args)
+  results.sort(key=lambda x: x[-1])  # Sort by p-value.
+  with open(OUTPUT_PATH, 'w') as f:
+    csv_writer = csv.writer(f)
+    csv_writer.writerow(['label', 'num_data_points', 'corr_coeff', 'p_value'])
+    csv_writer.writerows(results)
 
 
 if __name__ == '__main__':
