@@ -18,14 +18,16 @@ from skbio import DistanceMatrix
 from skbio.stats.distance import mantel
 from scipy.spatial.distance import pdist, squareform
 
-# The non-merged file already has GPS for all cells, so merging the cells does
-# not increase coverage.
+# The non-merged file already has GPS, rows and columns for all cells, so
+# merging the cells does not increase coverage.
 INPUT_PATH = '2016.csv'
 OUTPUT_PATH = 'spatial.' + INPUT_PATH
 EASTINGS_LABEL = merge_data.DataKeys.GPS_EASTINGS.value
 NORTHINGS_LABEL = merge_data.DataKeys.GPS_NORTHINGS.value
 
-# Manly says 5000 is minimum number to estimate a significance level of 0.01.
+# Bryan Manly says 5000 is minimum number to estimate a significance level of
+# 0.01 in "Randomization, Bootstrap and Monte Carlo Methods in Biology" at the
+# top of page 208.
 MANTEL_PERMUTATIONS = 10000
 
 
@@ -34,15 +36,21 @@ def average_mismatch(value):
   return np.mean([float(x) for x in value.split(merge_data.MISMATCH_DELIMETER)])
 
 
-# Computes spatial correlation relative to each cell's GPS location.
-# Use a single argument since using pool.map().
+# Computes spatial correlation relative to the two spatial keys provided
+# (e.g. GPS_EASTINGS, GPS_NORTHINGS). To use a single spatial key, set spatial
+# key 2 to None. This will then use 0 for all the corresponding values in that
+# dimension.
 # Returns (key name, number of data points, correlation coefficient, p value)
 def get_spatial_correlation(arg):
-  samples, data_key = arg
+  # Use a single argument since using pool.map().
+  samples, spatial_key1, spatial_key2, data_key = arg
   samples = [x for x in samples if x[data_key.value] != '']
-  eastings = [average_mismatch(x[EASTINGS_LABEL]) for x in samples]
-  northings = [average_mismatch(x[NORTHINGS_LABEL]) for x in samples]
-  gps = list(zip(eastings, northings))
+
+  spatial_data1 = [average_mismatch(x[spatial_key1]) for x in samples]
+  spatial_data2 = [0.0] * len(samples)
+  if spatial_key2 is not None:
+    spatial_data2 = [average_mismatch(x[spatial_key2]) for x in samples]
+  spatial_data = list(zip(spatial_data1, spatial_data2))
   # Add required second dimension, but set to 0.0, so no affect on distances.
   data = [(average_mismatch(x[data_key.value]), 0.0) for x in samples]
 
@@ -51,9 +59,9 @@ def get_spatial_correlation(arg):
   #random.seed(10611)  # Does not seem to contain all randomness unfortunately.
   #data = [(random.random(), 0.0) for x in samples]
 
-  gps_distances = DistanceMatrix(squareform(pdist(gps)))
+  spatial_distances = DistanceMatrix(squareform(pdist(spatial_data)))
   data_distances = DistanceMatrix(squareform(pdist(data)))
-  coeff, p_value, n = mantel(gps_distances, data_distances,
+  coeff, p_value, n = mantel(spatial_distances, data_distances,
                              permutations=MANTEL_PERMUTATIONS)
 
   return (data_key.value, n, coeff, p_value)
@@ -74,7 +82,7 @@ def main():
     if data_key == merge_data.DataKeys.GPS_EASTINGS:
       break  # Ignore this DataKey and all DataKeys after this one.
 
-    args.append((samples, data_key))
+    args.append((samples, EASTINGS_LABEL, NORTHINGS_LABEL, data_key))
 
 
   print('Spawning jobs for:', INPUT_PATH)
