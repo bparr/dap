@@ -65,14 +65,14 @@ def main():
 
   args = []
   for data_key in merge_data.DataKeys:
-    # This is a bit hacky way to skip remaining values that are all text
-    # values. But it works nicely right now.
+    # This is a bit hacky way to skip values that are all text values.
+    # But it works nicely right now.
     if (data_key == merge_data.DataKeys.ROW or
         data_key == merge_data.DataKeys.COLUMN or
         data_key == merge_data.DataKeys.PLANT_ID):
       continue
     if data_key == merge_data.DataKeys.GPS_EASTINGS:
-      break  # Ignore all DataKeys after this one.
+      break  # Ignore this DataKey and all DataKeys after this one.
 
     args.append((samples, data_key))
 
