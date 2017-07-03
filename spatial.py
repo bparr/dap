@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Compute spacial correlations and their significance.
+Compute spatial correlations and their significance.
 """
 
 import csv
@@ -17,7 +17,7 @@ from scipy.spatial.distance import pdist, squareform
 # The non-merged file already has GPS for all cells, so merging the cells does
 # not increase coverage.
 INPUT_PATHS = ['2016.csv'] #, '2016.merged.csv']
-OUTPUT_PATHS = ['spacial.' + x for x in INPUT_PATHS]
+OUTPUT_PATHS = ['spatial.' + x for x in INPUT_PATHS]
 EASTINGS_LABEL = merge_data.DataKeys.GPS_EASTINGS.value
 NORTHINGS_LABEL = merge_data.DataKeys.GPS_NORTHINGS.value
 
@@ -32,10 +32,10 @@ def average_mismatch(value):
   return np.mean([float(x) for x in value.split(merge_data.MISMATCH_DELIMETER)])
 
 
-# Computes spacial correlation relative to each cell's GPS location.
+# Computes spatial correlation relative to each cell's GPS location.
 # Returns (key name, number of data points, correlation coefficient, p value,
 #          whether there is a significant correlation with GPS location)
-def get_spacial_correlation(arg):
+def get_spatial_correlation(arg):
   samples, data_key = arg
   samples = [x for x in samples if x[data_key.value] != '']
   eastings = [average_mismatch(x[EASTINGS_LABEL]) for x in samples]
@@ -80,7 +80,7 @@ def main():
 
 
     print('Spawning jobs for:', input_path)
-    results = pool.map(get_spacial_correlation, args)
+    results = pool.map(get_spatial_correlation, args)
     with open(output_path, 'w') as f:
       csv_writer = csv.writer(f)
       csv_writer.writerow(['label', 'num_data_points', 'corr_coeff',
