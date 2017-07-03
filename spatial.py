@@ -21,8 +21,6 @@ OUTPUT_PATHS = ['spatial.' + x for x in INPUT_PATHS]
 EASTINGS_LABEL = merge_data.DataKeys.GPS_EASTINGS.value
 NORTHINGS_LABEL = merge_data.DataKeys.GPS_NORTHINGS.value
 
-MAXIMUM_SIGNIFICANT_P_VALUE = 0.01
-
 # Manly says 5000 is minimum number to estimate a significance level of 0.01.
 MANTEL_PERMUTATIONS = 10000
 
@@ -33,8 +31,7 @@ def average_mismatch(value):
 
 
 # Computes spatial correlation relative to each cell's GPS location.
-# Returns (key name, number of data points, correlation coefficient, p value,
-#          whether there is a significant correlation with GPS location)
+# Returns (key name, number of data points, correlation coefficient, p value)
 def get_spatial_correlation(arg):
   samples, data_key = arg
   samples = [x for x in samples if x[data_key.value] != '']
@@ -53,9 +50,8 @@ def get_spatial_correlation(arg):
   data_distances = DistanceMatrix(squareform(pdist(data)))
   coeff, p_value, n = mantel(gps_distances, data_distances,
                              permutations=MANTEL_PERMUTATIONS)
-  is_significant = (p_value <= MAXIMUM_SIGNIFICANT_P_VALUE)
 
-  return (data_key.value, n, coeff, p_value, is_significant)
+  return (data_key.value, n, coeff, p_value)
 
 
 def main():
@@ -83,8 +79,7 @@ def main():
     results = pool.map(get_spatial_correlation, args)
     with open(output_path, 'w') as f:
       csv_writer = csv.writer(f)
-      csv_writer.writerow(['label', 'num_data_points', 'corr_coeff',
-                           'p_value', 'is_significant'])
+      csv_writer.writerow(['label', 'num_data_points', 'corr_coeff', 'p_value'])
       csv_writer.writerows(results)
 
 
