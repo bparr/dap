@@ -5,7 +5,8 @@ Compute spatial correlations and their significance.
 Usage:
   ./spatial.py
 
-This file uses 2016.csv and writes its results to [key description].2016.csv.
+This file uses 2016.csv and writes its results in the spatial/ directory with
+the name[key description].2016.csv.
 """
 
 import csv
@@ -29,7 +30,7 @@ MANTEL_PERMUTATIONS = 10000
 
 
 def get_output_path(spatial_keys_description):
-  return 'spatial.' + spatial_keys_description + '.' + INPUT_PATH
+  return 'spatial/' + spatial_keys_description + '.' + INPUT_PATH
 
 
 # Averge multiple numeric values, caused by mismatched data merging.
