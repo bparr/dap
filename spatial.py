@@ -31,12 +31,13 @@ def average_mismatch(value):
 
 
 # Computes spatial correlation relative to each cell's GPS location.
+# Use a single argument since using pool.map().
 # Returns (key name, number of data points, correlation coefficient, p value)
 def get_spatial_correlation(arg):
   samples, data_key = arg
   samples = [x for x in samples if x[data_key.value] != '']
   eastings = [average_mismatch(x[EASTINGS_LABEL]) for x in samples]
-  northings= [average_mismatch(x[EASTINGS_LABEL]) for x in samples]
+  northings = [average_mismatch(x[NORTHINGS_LABEL]) for x in samples]
   gps = list(zip(eastings, northings))
   # Add required second dimension, but set to 0.0, so no affect on distances.
   data = [(average_mismatch(x[data_key.value]), 0.0) for x in samples]
