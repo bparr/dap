@@ -61,9 +61,7 @@ def get_spatial_correlation(arg):
 
 def main():
   pool = Pool()
-
-  labels, *samples = csv_utils.read_csv(INPUT_PATH)
-  samples = [dict(zip(labels, line)) for line in samples]
+  samples = csv_utils.read_csv_as_dicts(INPUT_PATH)
 
   args = []
   for data_key in merge_data.DataKeys:

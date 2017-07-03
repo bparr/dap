@@ -5,7 +5,10 @@ Parse full csv and predict harvest data.
 
 Usage:
   ./predict.py > predict.out
+
+Note that the output is not deterministic, unfortunately.
 """
+# TODO make output deterministic if possible (and remove file doc about it).
 # TODO tests?
 
 import collections
@@ -75,16 +78,15 @@ def get_weight(sample, label, minus=None):
   return dry_weight * (value - minus_value) / 100.0
 
 
-def parse_data(lines, input_labels, output_generator):
-  labels, *samples = lines
-  samples = [dict(zip(labels, line)) for line in samples]
-  random.shuffle(samples)
-
-  # Convert pericarp string to a number.
+def convert_pericarp_to_number(samples):
   pericarps = sorted(set([x[PERICARP_LABEL] for x in samples]))  # Includes ''.
   for sample in samples:
     if sample[PERICARP_LABEL]:
       sample[PERICARP_LABEL] = pericarps.index(sample[PERICARP_LABEL])
+
+
+def parse_data(samples, input_labels, output_generator):
+  random.shuffle(samples)
 
   X = []
   y = []
@@ -124,7 +126,9 @@ def main():
   random.seed(RANDOM_SEED)
   np.random.seed(RANDOM_SEED)
 
-  lines = csv_utils.read_csv(DATA_PATH)
+  samples = csv_utils.read_csv_as_dicts(DATA_PATH)
+  convert_pericarp_to_number(samples)
+
   regressors = collections.OrderedDict([
       # TODO tune max_depth.
       ('boosted trees', lambda: GradientBoostingRegressor(max_depth=1, random_state=RANDOM_SEED)),
@@ -143,7 +147,7 @@ def main():
   for regressor_name, regressor_generator in regressors.items():
     print('\n\n' + regressor_name)
     for output_name, output_generator in outputs.items():
-      X, y = parse_data(lines, INPUT_LABELS, output_generator)
+      X, y = parse_data(samples, INPUT_LABELS, output_generator)
       num_samples = X.shape[0]
       print('Total number of %s samples: %s' % (output_name, num_samples))
 
