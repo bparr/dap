@@ -355,13 +355,15 @@ def main():
   accessions = parse_first_column_indexed(
       read_csv('PanelAccessions-BAP.csv'),
       get_label_fn=lambda x: 'accession_' + x.lower())
-  # No cells yes, so do not warn when adding cells.
+  # No cells yet, so do not warn when adding cells.
   parse_rw_by_ra(read_csv('BAP16_PlotMap_Plant_IDs.csv'), DataKeys.PLANT_ID,
                  cells, extra_data=accessions, warn_if_added_cells=False)
 
   compositions = parse_first_column_indexed(
       read_csv('2016_BAPClemsonGRDBBv2.csv'),
       get_index_fn=lambda x: x.replace('SF16', 'SF'))
+  # Not all cells have composition data, do not warn about missing entries
+  # in the composition dictionary.
   parse_rw_by_ra(read_csv('BAP16_PlotMap_Plot_IDs.csv'), DataKeys.PLOT_ID,
                  cells, extra_data=compositions,
                  warn_if_missing_extra_data=False)
