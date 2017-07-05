@@ -173,7 +173,8 @@ def parse_first_column_indexed(lines, get_label_fn=None, get_index_fn=None):
   return results
 
 
-def parse_rw_by_ra(lines, data_key, cells, extra_data=None, add_cells=False,
+def parse_rw_by_ra(lines, data_key, cells, extra_data=None,
+                   warn_if_added_cells=True,
                    warn_if_missing_extra_data=True):
   added_cells = []
   missing_extra_data = set()
@@ -205,7 +206,7 @@ def parse_rw_by_ra(lines, data_key, cells, extra_data=None, add_cells=False,
       for k, v in extra_data[value].items():
         cell.add_data(k, v)
 
-  if not add_cells and len(added_cells) != 0:
+  if warn_if_added_cells and len(added_cells) != 0:
     print('WARNING: Added cell(s) that were missing:', data_key, added_cells)
 
   if extra_data is not None and len(used_extra_data_keys) != len(extra_data):
@@ -355,7 +356,7 @@ def main():
       read_csv('PanelAccessions-BAP.csv'),
       get_label_fn=lambda x: 'accession_' + x.lower())
   parse_rw_by_ra(read_csv('BAP16_PlotMap_Plant_IDs.csv'), DataKeys.PLANT_ID,
-                 cells, extra_data=accessions, add_cells=True)
+                 cells, extra_data=accessions, warn_if_added_cells=False)
 
   # TODO tests!
   compositions = parse_first_column_indexed(
