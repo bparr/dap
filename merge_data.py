@@ -155,14 +155,17 @@ def read_csv(file_name):
 
 # Return a dictionary whose keys are from the first column, and whose values
 # are dictionaries from DataKey to corresponding value.
-def parse_first_column_indexed(lines, get_label_fn=None):
+def parse_first_column_indexed(lines, get_label_fn=None, get_index_fn=None):
   if get_label_fn is None:
     get_label_fn = lambda x: x
   labels = [DataKeys(get_label_fn(x)) for x in lines[0][1:]]
 
+  if get_index_fn is None:
+    get_index_fn = lambda x: x
+
   results = {}
   for line in lines[1:]:
-    index = line[0]
+    index = get_index_fn(line[0])
     if index in results:
       raise Exception('Duplicate entry for index:', index)
 
@@ -170,7 +173,8 @@ def parse_first_column_indexed(lines, get_label_fn=None):
   return results
 
 
-def parse_rw_by_ra(lines, data_key, cells, extra_data=None, add_cells=False):
+def parse_rw_by_ra(lines, data_key, cells, extra_data=None, add_cells=False,
+                   warn_if_missing_extra_data=True):
   added_cells = []
   missing_extra_data = set()
   used_extra_data_keys = set()
@@ -192,7 +196,7 @@ def parse_rw_by_ra(lines, data_key, cells, extra_data=None, add_cells=False):
         continue
 
       if value not in extra_data:
-        if value not in missing_extra_data:
+        if value not in missing_extra_data and warn_if_missing_extra_data:
           missing_extra_data.add(value)
           print('WARNING: No extra data:', data_key, value)
         continue
@@ -205,7 +209,8 @@ def parse_rw_by_ra(lines, data_key, cells, extra_data=None, add_cells=False):
     print('WARNING: Added cell(s) that were missing:', data_key, added_cells)
 
   if extra_data is not None and len(used_extra_data_keys) != len(extra_data):
-    print('WARNING: Unused extra data:', data_key, sorted(used_extra_data_keys))
+    unused_keys = set(extra_data.keys()) - used_extra_data_keys
+    print('WARNING: Unused extra data:', data_key, sorted(unused_keys))
 
 
 def parse_harvest_data(lines, cells):
@@ -281,6 +286,29 @@ class DataKeys(Enum):
   SF16h_PAN2_120 = 'SF16h_PAN2_120'
   SF16h_PAN3_120 = 'SF16h_PAN3_120'
 
+  # Composition data.
+  COMPOSITION_ADF = 'ADF'
+  COMPOSITION_AD_ICP = 'AD-ICP'
+  COMPOSITION_ADJ_CP = 'Adj_CP'
+  COMPOSITION_ANDFOM = 'aNDFom'
+  COMPOSITION_ASH = 'Ash'
+  COMPOSITION_CRUDE_PROTEIN = 'Crude protein'
+  COMPOSITION_DCAD = 'DCAD'
+  COMPOSITION_DRY_MATTER = 'Dry Matter'
+  COMPOSITION_EE_FAT = 'EE Fat'
+  COMPOSITION_LIGNIN = 'Lignin'
+  COMPOSITION_NEG_OARDC = 'NEG OARDC'
+  COMPOSITION_NEL3X_ADF = 'NEL3x ADF'
+  COMPOSITION_NEL3X_OARDC = 'NEL3x OARDC'
+  COMPOSITION_NEM_OARDC = 'NEM OARDC'
+  COMPOSITION_NFC = 'NFC'
+  COMPOSITION_SPCP = 'SPCP'
+  COMPOSITION_STARCH = 'Starch'
+  COMPOSITION_TDN_OARDC = 'TDN OARDC'
+  COMPOSITION_WSC_SUGAR = 'WSC Sugar'
+  COMPOSITION_CELLULOSE = 'Cellulose'
+  COMPOSITION_HEMICELLULOSE = 'Hemicellulose'
+
   # Robot data.
   LEAF_NECROSIS_07 = '2016_07_13-14_Leaf_Necrosis'
   VEGETATION_INDEX_07 = '2016_07_13-14_vegetation_index'
@@ -321,15 +349,22 @@ def write_csv(file_path, cell_list):
 
 
 def main():
+  cells = Cells()
+
   accessions = parse_first_column_indexed(
       read_csv('PanelAccessions-BAP.csv'),
       get_label_fn=lambda x: 'accession_' + x.lower())
-
-  cells = Cells()
   parse_rw_by_ra(read_csv('BAP16_PlotMap_Plant_IDs.csv'), DataKeys.PLANT_ID,
                  cells, extra_data=accessions, add_cells=True)
-  parse_rw_by_ra(read_csv('BAP16_PlotMap_Plot_IDs.csv'),
-                 DataKeys.PLOT_ID, cells)
+
+  # TODO tests!
+  compositions = parse_first_column_indexed(
+      read_csv('2016_BAPClemsonGRDBBv2.csv'),
+      get_index_fn=lambda x: x.replace('SF16', 'SF'))
+  parse_rw_by_ra(read_csv('BAP16_PlotMap_Plot_IDs.csv'), DataKeys.PLOT_ID,
+                 cells, extra_data=compositions,
+                 warn_if_missing_extra_data=False)
+
   parse_harvest_data(read_csv('BAP16_HarvestData.csv'), cells)
   parse_plot_plan(read_csv('BAP16_PlotPlan_Plot_IDs.csv'), cells)
   parse_plot_plan_tags(read_csv('BAP16_PlotPlan_Plot_IDs_Tags.csv'), cells)
