@@ -161,7 +161,7 @@ def parse_first_column_indexed(lines, get_label_fn=None):
   labels = [DataKeys(get_label_fn(x)) for x in lines[0][1:]]
 
   results = {}
-  for line in lines:
+  for line in lines[1:]:
     index = line[0]
     if index in results:
       raise Exception('Duplicate entry for index:', index)
