@@ -170,9 +170,10 @@ def parse_first_column_indexed(lines, get_label_fn=None):
   return results
 
 
-def parse_rw_by_ra(lines, data_key, cells, get_extra_data_fn=None,
-                   add_cells=False):
+def parse_rw_by_ra(lines, data_key, cells, extra_data=None, add_cells=False):
   added_cells = []
+  missing_extra_data = set()
+
   for line in lines[1:]:
     row = line[0]
 
@@ -186,9 +187,17 @@ def parse_rw_by_ra(lines, data_key, cells, get_extra_data_fn=None,
       cell = cells.get(row, column)
       cell.add_data(data_key, value)
 
-      if get_extra_data_fn is not None:
-        for k, v in get_extra_data_fn(value).items():
-          cell.add_data(k, v)
+      if extra_data is None:
+        continue
+
+      if value not in extra_data:
+        if value not in missing_extra_data:
+          missing_extra_data.add(value)
+          print('WARNING: No extra data: ', value)
+        continue
+
+      for k, v in extra_data[value].items():
+        cell.add_data(k, v)
 
   if not add_cells and len(added_cells) != 0:
     print('WARNING: Added cell(s) that were missing: ', data_key, added_cells)
@@ -311,20 +320,9 @@ def main():
       read_csv('PanelAccessions-BAP.csv'),
       get_label_fn=lambda x: 'accession_' + x.lower())
 
-  missing_accessions = set()
-  def get_accessions_fn(plant_id):
-    if plant_id not in accessions:
-      if plant_id not in missing_accessions:
-        missing_accessions.add(plant_id)
-        print('WARNING: No panel accessions for plant id: ', plant_id)
-      return {}
-
-    return accessions[plant_id]
-
-
   cells = Cells()
   parse_rw_by_ra(read_csv('BAP16_PlotMap_Plant_IDs.csv'), DataKeys.PLANT_ID,
-                 cells, get_extra_data_fn=get_accessions_fn, add_cells=True)
+                 cells, extra_data=accessions, add_cells=True)
   parse_rw_by_ra(read_csv('BAP16_PlotMap_Plot_IDs.csv'),
                  DataKeys.PLOT_ID, cells)
   parse_harvest_data(read_csv('BAP16_HarvestData.csv'), cells)
