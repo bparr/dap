@@ -220,7 +220,7 @@ def parse_harvest_data(lines, cells):
     row, column = line[2], line[1]
     row = parse_coordinate(row) + NO_FILL_ROW_OFFSET
     cell = cells.get(row, column)
-    cell.add_data(DataKeys.PLOT_ID, line[0], append_if_mismatch=True)
+    cell.add_data(DataKeys.PLOT_ID, line[0])
     for i, value in enumerate(line[3:]):
       cell.add_data(labels[i], value)
 
@@ -230,7 +230,7 @@ def parse_plot_plan(lines, cells):
   for plot_id, plant_id, column, row, x_of_y in lines:
     row = parse_coordinate(row) + NO_FILL_ROW_OFFSET
     cell = cells.get(row, column)
-    cell.add_data(DataKeys.PLOT_ID, plot_id, append_if_mismatch=True)
+    cell.add_data(DataKeys.PLOT_ID, plot_id)
     cell.add_data(DataKeys.PLANT_ID, plant_id)
     cell.add_data(DataKeys.X_OF_Y, x_of_y)
 
@@ -240,7 +240,7 @@ def parse_plot_plan_tags(lines, cells):
   for plot_id, plant_id, column, row, x_of_y, tag, con, barcode, end in lines:
     row = parse_coordinate(row) + NO_FILL_ROW_OFFSET
     cell = cells.get(row, column)
-    cell.add_data(DataKeys.PLOT_ID, plot_id, append_if_mismatch=True)
+    cell.add_data(DataKeys.PLOT_ID, plot_id)
     cell.add_data(DataKeys.PLANT_ID, plant_id)
     cell.add_data(DataKeys.X_OF_Y, x_of_y)
     cell.add_data(DataKeys.PLOT_PLAN_TAG, tag, append_if_mismatch=True)
@@ -355,6 +355,7 @@ def main():
   accessions = parse_first_column_indexed(
       read_csv('PanelAccessions-BAP.csv'),
       get_label_fn=lambda x: 'accession_' + x.lower())
+  # No cells yes, so do not warn when adding cells.
   parse_rw_by_ra(read_csv('BAP16_PlotMap_Plant_IDs.csv'), DataKeys.PLANT_ID,
                  cells, extra_data=accessions, warn_if_added_cells=False)
 
