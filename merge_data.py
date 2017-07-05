@@ -153,20 +153,21 @@ def read_csv(file_name):
   return csv_utils.read_csv(os.path.join(DATA_DIRECTORY, file_name))
 
 
-def parse_panel_accessions(lines):
-  accessions = {}
-  labels = [DataKeys('accession_' + v.lower()) for v in lines[0][1:]]
-  for line in lines[1:]:
-    plant_id = line[0]  # File has plant id in first column.
-    if plant_id in accessions:
-      raise Exception('Duplicate entries for plant id: ', line[0])
+# Return a dictionary whose keys are from the first column, and whose values
+# are dictionaries from DataKey to corresponding value.
+def parse_first_column_indexed(lines, get_label_fn=None):
+  if get_label_fn is None:
+    get_label_fn = lambda x: x
+  labels = [DataKeys(get_label_fn(x)) for x in lines[0][1:]]
 
-    accession = {}
-    for i, value in enumerate(line[1:]):
-      accession[labels[i]] = value
-    accessions[plant_id] = accession
+  results = {}
+  for line in lines:
+    index = line[0]
+    if index in results:
+      raise Exception('Duplicate entry for index: ', index)
 
-  return accessions
+    results[index] = dict(zip(labels, line[1:]))
+  return results
 
 
 def parse_rw_by_ra(lines, data_key, cells, get_extra_data_fn=None,
@@ -280,12 +281,13 @@ class DataKeys(Enum):
   GPS_EASTINGS = 'gps_eastings_UTMzone17N'
   GPS_NORTHINGS = 'gps_northings_UTMzone17N'
 
-  # parse_panel_accessions depends on these exact ACCESSION_* string values.
+  # Accessions Data.
   ACCESSION_PHOTOPERIOD = 'accession_photoperiod'
   ACCESSION_TYPE = 'accession_type'
   ACCESSION_ORIGIN = 'accession_origin'
   ACCESSION_RACE = 'accession_race'
 
+  # Other lower priority data.
   PLOT_ID = 'plot_id'
   HARVEST_NOTES = 'Notes'
   X_OF_Y = 'x_of_y'
@@ -305,7 +307,9 @@ def write_csv(file_path, cell_list):
 
 
 def main():
-  accessions = parse_panel_accessions(read_csv('PanelAccessions-BAP.csv'))
+  accessions = parse_first_column_indexed(
+      read_csv('PanelAccessions-BAP.csv'),
+      get_label_fn=lambda x: 'accession_' + x.lower())
 
   missing_accessions = set()
   def get_accessions_fn(plant_id):
