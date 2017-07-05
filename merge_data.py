@@ -359,7 +359,6 @@ def main():
   parse_rw_by_ra(read_csv('BAP16_PlotMap_Plant_IDs.csv'), DataKeys.PLANT_ID,
                  cells, extra_data=accessions, warn_if_added_cells=False)
 
-  # TODO tests!
   compositions = parse_first_column_indexed(
       read_csv('2016_BAPClemsonGRDBBv2.csv'),
       get_index_fn=lambda x: x.replace('SF16', 'SF'))

@@ -103,6 +103,31 @@ class TestOutput(unittest.TestCase):
         self._assert_values_equal(v, get_actual_value(
             d['RW'], d['RA1'], k, has_fill_rows=False))
 
+  def test_composition_data(self):
+    dict_lines = read_input_file('2016_BAPClemsonGRDBBv2.csv')
+    compositions = dict((x['Sample ID'], x) for x in dict_lines)
+    tested_plot_ids = set()
+    for output_columns in OUTPUT_CONTENTS.values():
+      for output_line in output_columns.values():
+        plot_id = output_line[merge_data.DataKeys.PLOT_ID.value]
+        plot_id = 'SF16' + plot_id[2:]
+        if plot_id not in compositions:
+          continue
+
+        tested_plot_ids.add(plot_id)
+        composition = compositions[plot_id]
+        row = output_line[merge_data.DataKeys.ROW.value]
+        column = output_line[merge_data.DataKeys.COLUMN.value]
+        for k, v in composition.items():
+          if k == 'Sample ID':
+            continue
+
+          self._assert_values_equal(v, get_actual_value(
+              row, column, merge_data.DataKeys(k)))
+
+    self.assertSetEqual(tested_plot_ids, set(compositions.keys()))
+
+
   def test_plot_map_files(self):
     self._assert_input('BAP16_PlotMap_Plant_IDs.csv',
                        merge_data.DataKeys.PLANT_ID, first_column_key='')
