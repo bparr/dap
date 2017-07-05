@@ -72,7 +72,7 @@ class Cells(object):
     row, column = parse_coordinates(row, column)
     columns =  self._cells.setdefault(row, {})
     if column in columns:
-      raise Exception('Existing cell when adding: ', row, column)
+      raise Exception('Existing cell when adding:', row, column)
 
     cell = Cell(row, column)
     columns[column] = cell
@@ -85,7 +85,7 @@ class Cells(object):
   def get(self, row, column):
     row, column = parse_coordinates(row, column)
     if not self.exists(row, column):
-      raise Exception('Unknown cell: ', row, column)
+      raise Exception('Unknown cell:', row, column)
 
     return self._cells[row][column]
 
@@ -131,7 +131,7 @@ class Cell(object):
         self._data[key] += MISMATCH_DELIMETER + value
         return
 
-      raise Exception('Unexpected mismatch in existing value: ',
+      raise Exception('Unexpected mismatch in existing value:',
                       key, self._data[key], value)
     self._data[key] = value
 
@@ -164,7 +164,7 @@ def parse_first_column_indexed(lines, get_label_fn=None):
   for line in lines:
     index = line[0]
     if index in results:
-      raise Exception('Duplicate entry for index: ', index)
+      raise Exception('Duplicate entry for index:', index)
 
     results[index] = dict(zip(labels, line[1:]))
   return results
@@ -173,6 +173,7 @@ def parse_first_column_indexed(lines, get_label_fn=None):
 def parse_rw_by_ra(lines, data_key, cells, extra_data=None, add_cells=False):
   added_cells = []
   missing_extra_data = set()
+  used_extra_data_keys = set()
 
   for line in lines[1:]:
     row = line[0]
@@ -193,14 +194,18 @@ def parse_rw_by_ra(lines, data_key, cells, extra_data=None, add_cells=False):
       if value not in extra_data:
         if value not in missing_extra_data:
           missing_extra_data.add(value)
-          print('WARNING: No extra data: ', value)
+          print('WARNING: No extra data:', data_key, value)
         continue
 
+      used_extra_data_keys.add(value)
       for k, v in extra_data[value].items():
         cell.add_data(k, v)
 
   if not add_cells and len(added_cells) != 0:
-    print('WARNING: Added cell(s) that were missing: ', data_key, added_cells)
+    print('WARNING: Added cell(s) that were missing:', data_key, added_cells)
+
+  if extra_data is not None and len(used_extra_data_keys) != len(extra_data):
+    print('WARNING: Unused extra data:', data_key, sorted(used_extra_data_keys))
 
 
 def parse_harvest_data(lines, cells):
@@ -368,7 +373,7 @@ def main():
     merged_cells.append(merged_cell)
 
   if ROWS_IN_CELL * len(merged_cells) != len(sorted_cells):
-    raise Exception('Unexpected number of merged cells: ',
+    raise Exception('Unexpected number of merged cells:',
                     len(merged_cells), len(sorted_cells))
   write_csv(MERGED_OUTPUT_FILENAME, merged_cells)
 
