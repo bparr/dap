@@ -36,6 +36,10 @@ class Dataset(object):
     return samples
 
 
+def new2014Dataset():
+  return Dataset('2014/2014_Pheotypic_Data_FileS2.csv')
+
+
 # TODO allow using dry weight for predictions? When is it known?
 #INPUT_LABELS = 'Anthesis date (days),Harvest date (days),Total fresh weight (kg),Brix (maturity),Brix (milk),Dry weight (kg),Stalk height (cm),Dry tons per acre'.split(',')
 INPUT_LABELS = 'Anthesis date (days),Harvest date (days),Total fresh weight (kg),Brix (maturity),Brix (milk),Stalk height (cm)'.split(',')
@@ -129,8 +133,8 @@ def kfold_predict(X, y, regressor_generator):
 
 
 def main():
-  config = Dataset('2014/2014_Pheotypic_Data_FileS2.csv')
-  samples = config.read_samples()
+  dataset = new2014Dataset()
+  samples = dataset.read_samples()
 
   regressors = collections.OrderedDict([
       ('random forests', lambda: RandomForestRegressor(n_estimators=100)),
