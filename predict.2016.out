@@ -2,14 +2,90 @@ Input labels:, SF16h_HGT1_120, SF16h_HGT2_120, SF16h_HGT3_120, SF16h_TWT_120, SF
 
 
 random forests
-Total number of cellulose samples: 698
-r2 score:  0.376685753456
-Total number of hemicellulose samples: 698
-r2 score:  0.20364351803
+Total number of ADF samples: 698
+r2 score:  0.373508284875
+Total number of AD-ICP samples: 698
+r2 score:  0.371166853002
+Total number of Adj_CP samples: 698
+r2 score:  0.687925637457
+Total number of aNDFom samples: 698
+r2 score:  0.421194752798
+Total number of Ash samples: 698
+r2 score:  0.0316678360198
+Total number of Crude protein samples: 698
+r2 score:  0.649727806353
+Total number of DCAD samples: 698
+r2 score:  0.0496029412635
+Total number of Dry Matter samples: 698
+r2 score:  0.183436066442
+Total number of EE Fat samples: 698
+r2 score:  0.520983279949
+Total number of Lignin samples: 698
+r2 score:  0.380205084738
+Total number of NEG OARDC samples: 698
+r2 score:  0.447788618846
+Total number of NEL3x ADF samples: 698
+r2 score:  0.15870817898
+Total number of NEL3x OARDC samples: 698
+r2 score:  0.401552483549
+Total number of NEM OARDC samples: 698
+r2 score:  0.430502071042
+Total number of NFC samples: 698
+r2 score:  0.482757186463
+Total number of SPCP samples: 698
+r2 score:  0.506883084568
+Total number of Starch samples: 698
+r2 score:  0.196773331049
+Total number of TDN OARDC samples: 698
+r2 score:  0.230853982347
+Total number of WSC Sugar samples: 698
+r2 score:  0.504661706315
+Total number of Cellulose samples: 698
+r2 score:  0.392413143082
+Total number of Hemicellulose samples: 698
+r2 score:  0.197056033544
 
 
 boosted trees
-Total number of cellulose samples: 698
-r2 score:  0.375706643333
-Total number of hemicellulose samples: 698
-r2 score:  0.18099217521
+Total number of ADF samples: 698
+r2 score:  0.361888345342
+Total number of AD-ICP samples: 698
+r2 score:  0.358162277421
+Total number of Adj_CP samples: 698
+r2 score:  0.67715896446
+Total number of aNDFom samples: 698
+r2 score:  0.386578950176
+Total number of Ash samples: 698
+r2 score:  0.0801157564496
+Total number of Crude protein samples: 698
+r2 score:  0.646425192578
+Total number of DCAD samples: 698
+r2 score:  0.0848252697208
+Total number of Dry Matter samples: 698
+r2 score:  0.198111258082
+Total number of EE Fat samples: 698
+r2 score:  0.524291363332
+Total number of Lignin samples: 698
+r2 score:  0.397783278882
+Total number of NEG OARDC samples: 698
+r2 score:  0.405163378432
+Total number of NEL3x ADF samples: 698
+r2 score:  0.194295093608
+Total number of NEL3x OARDC samples: 698
+r2 score:  0.363630788573
+Total number of NEM OARDC samples: 698
+r2 score:  0.398261986469
+Total number of NFC samples: 698
+r2 score:  0.454631919243
+Total number of SPCP samples: 698
+r2 score:  0.504005573735
+Total number of Starch samples: 698
+r2 score:  0.148066188612
+Total number of TDN OARDC samples: 698
+r2 score:  0.270658505782
+Total number of WSC Sugar samples: 698
+r2 score:  0.478211181298
+Total number of Cellulose samples: 698
+r2 score:  0.383710998342
+Total number of Hemicellulose samples: 698
+r2 score:  0.182767246781

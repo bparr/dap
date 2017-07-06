@@ -101,6 +101,9 @@ def new2014Dataset():
 def filter_2016_labels(data_key_starts_with):
   return [x.value for x in DataKeys if x.name.startswith(data_key_starts_with)]
 
+def create_2016_output_generator(key):
+  return lambda sample: sample[key]
+
 def new2016Dataset():
   samples = csv_utils.read_csv_as_dicts('2016.merged.csv')
   for label in filter_2016_labels('ACCESSION_'):
@@ -114,10 +117,10 @@ def new2016Dataset():
       #'ACCESSION_'
   )
   input_labels = filter_2016_labels(input_data_keys_starts_with)
-  output_generators = collections.OrderedDict([
-      ('cellulose', lambda sample: sample['Cellulose']),
-      ('hemicellulose', lambda sample: sample['Hemicellulose']),
-  ])
+  output_labels = filter_2016_labels('COMPOSITION_')
+  output_generators = collections.OrderedDict(
+    [(x, create_2016_output_generator(x)) for x in output_labels]
+  )
 
   return Dataset(samples, input_labels, output_generators)
 
