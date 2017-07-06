@@ -121,12 +121,11 @@ MISSING_VALUE = np.nan
 
 
 def float_or_missing(s):
-  try:
-    return np.float(s)
-    # TODO figure out why this breaks 2014 dataset.
-    #return np.mean([float(x) for x in s.split(MISMATCH_DELIMETER)])
-  except:
-    return MISSING_VALUE
+  if isinstance(s, str):
+    if not s:
+      return MISSING_VALUE
+    return np.mean([float(x) for x in s.split(MISMATCH_DELIMETER)])
+  return np.float(s)
 
 
 def is_missing(value):
