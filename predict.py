@@ -25,7 +25,16 @@ from sklearn.preprocessing import Imputer
 # TODO split test set into validation and test sets!?
 TRAINING_SIZE = 0.8
 
-DATA_PATH = '2014/2014_Pheotypic_Data_FileS2.csv'
+class Dataset(object):
+  def __init__(self, csv_path):
+    self._csv_path = csv_path
+
+  def read_samples(self):
+    samples = csv_utils.read_csv_as_dicts(self._csv_path)
+    # TODO take in PERICARP_LABEL as constructor argument.
+    convert_column_to_number(samples, PERICARP_LABEL)
+    return samples
+
 
 # TODO allow using dry weight for predictions? When is it known?
 #INPUT_LABELS = 'Anthesis date (days),Harvest date (days),Total fresh weight (kg),Brix (maturity),Brix (milk),Dry weight (kg),Stalk height (cm),Dry tons per acre'.split(',')
@@ -120,8 +129,8 @@ def kfold_predict(X, y, regressor_generator):
 
 
 def main():
-  samples = csv_utils.read_csv_as_dicts(DATA_PATH)
-  convert_column_to_number(samples, PERICARP_LABEL)
+  config = Dataset('2014/2014_Pheotypic_Data_FileS2.csv')
+  samples = config.read_samples()
 
   regressors = collections.OrderedDict([
       ('random forests', lambda: RandomForestRegressor(n_estimators=100)),
