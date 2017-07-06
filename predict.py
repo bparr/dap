@@ -26,27 +26,41 @@ from sklearn.preprocessing import Imputer
 TRAINING_SIZE = 0.8
 
 class Dataset(object):
-  def __init__(self, csv_path):
+  def __init__(self, csv_path, input_labels):
     self._csv_path = csv_path
+    self._input_labels = input_labels
 
+  # TODO move to factory functions?
   def read_samples(self):
     samples = csv_utils.read_csv_as_dicts(self._csv_path)
     # TODO take in PERICARP_LABEL as constructor argument.
     convert_column_to_number(samples, PERICARP_LABEL)
     return samples
 
+  # TODO keep?
+  def get_input_labels(self):
+    return self._input_labels
+
 
 def new2014Dataset():
-  return Dataset('2014/2014_Pheotypic_Data_FileS2.csv')
+  input_labels = (
+      'Anthesis date (days)',
+      'Harvest date (days)',
+      'Total fresh weight (kg)',
+      'Brix (maturity)',
+      'Brix (milk)',
+      'Stalk height (cm)',
+      # TODO allow using dry weight for predictions? When is it known?
+      #'Dry weight (kg)',
+      #'Dry tons per acre',
+  )
+  return Dataset('2014/2014_Pheotypic_Data_FileS2.csv', input_labels)
 
 
-# TODO allow using dry weight for predictions? When is it known?
-#INPUT_LABELS = 'Anthesis date (days),Harvest date (days),Total fresh weight (kg),Brix (maturity),Brix (milk),Dry weight (kg),Stalk height (cm),Dry tons per acre'.split(',')
-INPUT_LABELS = 'Anthesis date (days),Harvest date (days),Total fresh weight (kg),Brix (maturity),Brix (milk),Stalk height (cm)'.split(',')
 
 RANDOM_SEED = 10611
 
-# TODO include in INPUT_LABELS? Is it known before harvest?
+# TODO include in input_labels? Is it known before harvest?
 PERICARP_LABEL = 'Pericarp pigmentation'
 
 ADF_LABEL = 'ADF (% DM)'
@@ -157,7 +171,7 @@ def main():
 
     print('\n\n' + regressor_name)
     for output_name, output_generator in outputs.items():
-      X, y = parse_data(samples, INPUT_LABELS, output_generator)
+      X, y = parse_data(samples, dataset.get_input_labels(), output_generator)
       num_samples = X.shape[0]
       print('Total number of %s samples: %s' % (output_name, num_samples))
 
