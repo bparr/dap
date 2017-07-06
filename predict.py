@@ -80,6 +80,10 @@ def new2014Dataset():
       #'Dry tons per acre',
   )
 
+  ADF_LABEL = 'ADF (% DM)'
+  NDF_LABEL = 'NDF (% DM)'
+  NFC_LABEL = 'NFC (% DM)'
+  LIGNIN_LABEL = 'Lignin (% DM)'
   output_generators = collections.OrderedDict([
       ('adf', lambda sample: get_weight(sample, ADF_LABEL)),
       ('ndf', lambda sample: get_weight(sample, NDF_LABEL)),
@@ -94,10 +98,7 @@ def new2014Dataset():
 
 RANDOM_SEED = 10611
 
-ADF_LABEL = 'ADF (% DM)'
-NDF_LABEL = 'NDF (% DM)'
-NFC_LABEL = 'NFC (% DM)'
-LIGNIN_LABEL = 'Lignin (% DM)'
+# TODO is this just for 2014? Seems a bit bleg to be global scope then.
 DRY_WEIGHT_LABEL = 'Dry weight (kg)'
 
 # TODO tune??
