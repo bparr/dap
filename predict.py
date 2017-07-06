@@ -33,11 +33,13 @@ def convert_column_to_number(samples, column_label):
 
 
 class Dataset(object):
-  def __init__(self, samples, input_labels):
+  def __init__(self, samples, input_labels, output_generators):
     # Order modified (shuffled) by self.generate().
     self._samples = samples
     self._input_labels = input_labels
+    self._output_generators = output_generators
 
+  # output_generator must be one returned by get_output_generators().
   def generate(self, output_generator):
     # TODO double check ok to modify
     random.shuffle(self._samples)
@@ -54,6 +56,9 @@ class Dataset(object):
       y.append(output)
 
     return np.array(X), np.array(y)
+
+  def get_output_generators(self):
+    return self._output_generators.items()
 
 
 
@@ -73,7 +78,16 @@ def new2014Dataset():
       #'Dry weight (kg)',
       #'Dry tons per acre',
   )
-  return Dataset(samples, input_labels)
+
+  output_generators = collections.OrderedDict([
+      ('adf', lambda sample: get_weight(sample, ADF_LABEL)),
+      ('ndf', lambda sample: get_weight(sample, NDF_LABEL)),
+      ('nfc', lambda sample: get_weight(sample, NFC_LABEL)),
+      ('lignin', lambda sample: get_weight(sample, LIGNIN_LABEL)),
+      ('c6', lambda sample: get_weight(sample, ADF_LABEL, minus=LIGNIN_LABEL)),
+      ('c5', lambda sample: get_weight(sample, NDF_LABEL, minus=ADF_LABEL)),
+  ])
+  return Dataset(samples, input_labels, output_generators)
 
 
 
@@ -144,21 +158,12 @@ def main():
       ('boosted trees', lambda: GradientBoostingRegressor(max_depth=1)),
   ])
 
-  outputs = collections.OrderedDict([
-      ('adf', lambda sample: get_weight(sample, ADF_LABEL)),
-      ('ndf', lambda sample: get_weight(sample, NDF_LABEL)),
-      ('nfc', lambda sample: get_weight(sample, NFC_LABEL)),
-      ('lignin', lambda sample: get_weight(sample, LIGNIN_LABEL)),
-      ('c6', lambda sample: get_weight(sample, ADF_LABEL, minus=LIGNIN_LABEL)),
-      ('c5', lambda sample: get_weight(sample, NDF_LABEL, minus=ADF_LABEL)),
-  ])
-
   for regressor_name, regressor_generator in regressors.items():
     random.seed(RANDOM_SEED)
     np.random.seed(RANDOM_SEED)
 
     print('\n\n' + regressor_name)
-    for output_name, output_generator in outputs.items():
+    for output_name, output_generator in dataset.get_output_generators():
       X, y = dataset.generate(output_generator)
       num_samples = X.shape[0]
       print('Total number of %s samples: %s' % (output_name, num_samples))
