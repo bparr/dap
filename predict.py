@@ -91,11 +91,6 @@ MISSING_VALUE = np.nan
 
 
 
-def pretty_label(label):
-  label = label.replace('%', 'percent').replace('(', 'in ').replace(')', '')
-  return label.replace(' ', '_')
-
-
 def float_or_missing(s):
   try:
     return np.float(s)
