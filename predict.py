@@ -6,9 +6,7 @@ Parse full csv and predict harvest data.
 Usage:
   ./predict.py > predict.out
 
-Note that the output is not deterministic, unfortunately.
 """
-# TODO make output deterministic if possible (and remove file doc about it).
 # TODO tests?
 
 import collections
@@ -122,16 +120,13 @@ def kfold_predict(X, y, regressor_generator):
 
 
 def main():
-  random.seed(RANDOM_SEED)
-  np.random.seed(RANDOM_SEED)
-
   samples = csv_utils.read_csv_as_dicts(DATA_PATH)
   convert_column_to_number(samples, PERICARP_LABEL)
 
   regressors = collections.OrderedDict([
+      ('random forests', lambda: RandomForestRegressor(n_estimators=100)),
       # TODO tune max_depth.
-      ('boosted trees', lambda: GradientBoostingRegressor(max_depth=1, random_state=RANDOM_SEED)),
-      ('random forests', lambda: RandomForestRegressor(n_estimators=100, random_state=RANDOM_SEED)),
+      ('boosted trees', lambda: GradientBoostingRegressor(max_depth=1)),
   ])
 
   outputs = collections.OrderedDict([
@@ -144,6 +139,9 @@ def main():
   ])
 
   for regressor_name, regressor_generator in regressors.items():
+    random.seed(RANDOM_SEED)
+    np.random.seed(RANDOM_SEED)
+
     print('\n\n' + regressor_name)
     for output_name, output_generator in outputs.items():
       X, y = parse_data(samples, INPUT_LABELS, output_generator)
