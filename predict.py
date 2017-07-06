@@ -25,24 +25,43 @@ from sklearn.preprocessing import Imputer
 # TODO split test set into validation and test sets!?
 TRAINING_SIZE = 0.8
 
+
+def convert_column_to_number(samples, column_label):
+  values = sorted(set([x[column_label] for x in samples]))
+  for sample in samples:
+    sample[column_label] = values.index(sample[column_label])
+
+
 class Dataset(object):
-  def __init__(self, csv_path, input_labels):
-    self._csv_path = csv_path
+  def __init__(self, samples, input_labels):
+    # Order modified (shuffled) by self.generate().
+    self._samples = samples
     self._input_labels = input_labels
 
-  # TODO move to factory functions?
-  def read_samples(self):
-    samples = csv_utils.read_csv_as_dicts(self._csv_path)
-    # TODO take in PERICARP_LABEL as constructor argument.
-    convert_column_to_number(samples, PERICARP_LABEL)
-    return samples
+  def generate(self, output_generator):
+    # TODO double check ok to modify
+    random.shuffle(self._samples)
 
-  # TODO keep?
-  def get_input_labels(self):
-    return self._input_labels
+    X = []
+    y = []
+    for sample in self._samples:
+      output = float_or_missing(output_generator(sample))
+      if is_missing(output):
+        # Ignore samples with missing output value.
+        continue
+
+      X.append([float_or_missing(sample[x]) for x in self._input_labels])
+      y.append(output)
+
+    return np.array(X), np.array(y)
+
 
 
 def new2014Dataset():
+  samples = csv_utils.read_csv_as_dicts('2014/2014_Pheotypic_Data_FileS2.csv')
+  convert_column_to_number(samples, 'Pericarp pigmentation')
+
+  # TODO include pericarp in input_labels? Is it known before harvest?
   input_labels = (
       'Anthesis date (days)',
       'Harvest date (days)',
@@ -54,14 +73,11 @@ def new2014Dataset():
       #'Dry weight (kg)',
       #'Dry tons per acre',
   )
-  return Dataset('2014/2014_Pheotypic_Data_FileS2.csv', input_labels)
+  return Dataset(samples, input_labels)
 
 
 
 RANDOM_SEED = 10611
-
-# TODO include in input_labels? Is it known before harvest?
-PERICARP_LABEL = 'Pericarp pigmentation'
 
 ADF_LABEL = 'ADF (% DM)'
 NDF_LABEL = 'NDF (% DM)'
@@ -103,28 +119,6 @@ def get_weight(sample, label, minus=None):
   return dry_weight * (value - minus_value) / 100.0
 
 
-def convert_column_to_number(samples, column_label):
-  values = sorted(set([x[column_label] for x in samples]))
-  for sample in samples:
-    sample[column_label] = values.index(sample[column_label])
-
-
-def parse_data(samples, input_labels, output_generator):
-  random.shuffle(samples)
-
-  X = []
-  y = []
-  for sample in samples:
-    output = float_or_missing(output_generator(sample))
-    if is_missing(output):
-      # Ignore samples with missing output value.
-      continue
-
-    X.append([float_or_missing(sample[x]) for x in input_labels])
-    y.append(output)
-
-  return np.array(X), np.array(y)
-
 
 def kfold_predict(X, y, regressor_generator):
   y_pred = []
@@ -148,7 +142,6 @@ def kfold_predict(X, y, regressor_generator):
 
 def main():
   dataset = new2014Dataset()
-  samples = dataset.read_samples()
 
   regressors = collections.OrderedDict([
       ('random forests', lambda: RandomForestRegressor(n_estimators=100)),
@@ -171,7 +164,7 @@ def main():
 
     print('\n\n' + regressor_name)
     for output_name, output_generator in outputs.items():
-      X, y = parse_data(samples, dataset.get_input_labels(), output_generator)
+      X, y = dataset.generate(output_generator)
       num_samples = X.shape[0]
       print('Total number of %s samples: %s' % (output_name, num_samples))
 
