@@ -12,6 +12,7 @@ Usage:
 import argparse
 import collections
 import csv_utils
+from merge_data import DataKeys, MISMATCH_DELIMETER
 import numpy as np
 import os
 import random
@@ -95,6 +96,18 @@ def new2014Dataset():
   return Dataset(samples, input_labels, output_generators)
 
 
+def new2016Dataset():
+  samples = csv_utils.read_csv_as_dicts('2016.merged.csv')
+  convert_column_to_number(samples, 'accession_type')
+  convert_column_to_number(samples, 'accession_origin')
+  convert_column_to_number(samples, 'accession_race')
+
+  # TODO.
+  input_labels = []
+  output_generators = {}
+
+  return Dataset(samples, input_labels, output_generators)
+
 
 RANDOM_SEED = 10611
 
@@ -110,6 +123,8 @@ MISSING_VALUE = np.nan
 def float_or_missing(s):
   try:
     return np.float(s)
+    # TODO figure out why this breaks 2014 dataset.
+    #return np.mean([float(x) for x in s.split(MISMATCH_DELIMETER)])
   except:
     return MISSING_VALUE
 
@@ -153,18 +168,17 @@ def kfold_predict(X, y, regressor_generator):
 
 def main():
   DATASET_FACTORIES = {
-    2014: new2014Dataset,
-    # TODO change to new2016Dataset!
-    2016: new2014Dataset,
+    '2014': new2014Dataset,
+    '2016': new2016Dataset,
   }
 
   parser = argparse.ArgumentParser(description='Predict harvest data.')
-  parser.add_argument('-y', '--year', default=2016,
+  parser.add_argument('-d', '--dataset', default='2016',
                       choices=list(DATASET_FACTORIES.keys()),
-                      help='Which years data to predict on.')
+                      help='Which dataset to use.')
   args = parser.parse_args()
 
-  dataset = (DATASET_FACTORIES[args.year])()
+  dataset = (DATASET_FACTORIES[args.dataset])()
 
   regressors = collections.OrderedDict([
       ('random forests', lambda: RandomForestRegressor(n_estimators=100)),
