@@ -4,9 +4,9 @@
 Combine all data files into a single one with each row describing a cell.
 
 The field of sorghum is partitioned into cells of genetically siblings. Each
-cell is located by its row (Rw###) and column (Ra###). Note that in the data
-files, Ra### stands for "rank" which is called a "column" in this code to avoid
-confusion with linear algebra ranks.
+cell is located by its row (Rw###) and range (Ra###). Note that in the data
+files, Ra### stands for "range" which is called a "column" in this code to avoid
+confusion with the Python range() function.
 
 Usage:
   ./merge_data.py && ./merge_data_test.py
@@ -99,8 +99,8 @@ class Cells(object):
 
 # Subplot in field containing all genetic siblings.
 class Cell(object):
-  ROW_DATA_NAME = 'plot_row'
-  COLUMN_DATA_NAME = 'plot_column'
+  ROW_DATA_NAME = 'row'
+  COLUMN_DATA_NAME = 'range'
 
   def __init__(self, row, column):
     self._data = {
