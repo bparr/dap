@@ -41,6 +41,8 @@ class Dataset(object):
     self._input_labels = input_labels
     self._output_generators = output_generators
 
+    print('Input labels:,', ', '.join(self._input_labels))
+
   # output_generator must be one returned by get_output_generators().
   def generate(self, output_generator):
     # TODO double check ok to modify
@@ -96,15 +98,26 @@ def new2014Dataset():
   return Dataset(samples, input_labels, output_generators)
 
 
+def filter_2016_labels(data_key_starts_with):
+  return [x.value for x in DataKeys if x.name.startswith(data_key_starts_with)]
+
 def new2016Dataset():
   samples = csv_utils.read_csv_as_dicts('2016.merged.csv')
-  convert_column_to_number(samples, 'accession_type')
-  convert_column_to_number(samples, 'accession_origin')
-  convert_column_to_number(samples, 'accession_race')
+  for label in filter_2016_labels('ACCESSION_'):
+    convert_column_to_number(samples, label)
 
-  # TODO.
-  input_labels = []
-  output_generators = {}
+  # TODO what to include? Allow multiple subsets through commandline?
+  input_data_keys_starts_with = (
+      'ROBOT_',
+      'HARVEST_',
+      #'GPS_',
+      #'ACCESSION_'
+  )
+  input_labels = filter_2016_labels(input_data_keys_starts_with)
+  output_generators = collections.OrderedDict([
+      ('cellulose', lambda sample: sample['Cellulose']),
+      ('hemicellulose', lambda sample: sample['Hemicellulose']),
+  ])
 
   return Dataset(samples, input_labels, output_generators)
 
