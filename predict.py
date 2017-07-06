@@ -9,6 +9,7 @@ Usage:
 """
 # TODO tests?
 
+import argparse
 import collections
 import csv_utils
 import numpy as np
@@ -150,7 +151,19 @@ def kfold_predict(X, y, regressor_generator):
 
 
 def main():
-  dataset = new2014Dataset()
+  DATASET_FACTORIES = {
+    2014: new2014Dataset,
+    # TODO change to new2016Dataset!
+    2016: new2014Dataset,
+  }
+
+  parser = argparse.ArgumentParser(description='Predict harvest data.')
+  parser.add_argument('-y', '--year', default=2016,
+                      choices=list(DATASET_FACTORIES.keys()),
+                      help='Which years data to predict on.')
+  args = parser.parse_args()
+
+  dataset = (DATASET_FACTORIES[args.year])()
 
   regressors = collections.OrderedDict([
       ('random forests', lambda: RandomForestRegressor(n_estimators=100)),
