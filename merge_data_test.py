@@ -75,21 +75,21 @@ class TestOutput(unittest.TestCase):
 
   def test_robot_files(self):
     self._assert_input('2016_07_13-14_Leaf_Necrosis.csv',
-                       merge_data.DataKeys.LEAF_NECROSIS_07)
+                       merge_data.DataKeys.ROBOT_LEAF_NECROSIS_07)
     self._assert_input('2016_07_13-14_vegetation_index.csv',
-                       merge_data.DataKeys.VEGETATION_INDEX_07)
+                       merge_data.DataKeys.ROBOT_VEGETATION_INDEX_07)
     self._assert_input('2016_08_05-08_vegetation_index.csv',
-                       merge_data.DataKeys.VEGETATION_INDEX_08)
+                       merge_data.DataKeys.ROBOT_VEGETATION_INDEX_08)
     self._assert_input('2016_07_13_BAP_Leaf_Area.csv',
-                       merge_data.DataKeys.LEAF_AREA_07)
+                       merge_data.DataKeys.ROBOT_LEAF_AREA_07)
     self._assert_input('2016_07_13_laser_plant_height.csv',
-                       merge_data.DataKeys.LASER_PLANT_HEIGHT_07)
+                       merge_data.DataKeys.ROBOT_LASER_PLANT_HEIGHT_07)
     self._assert_input('2016_07_light_interception.csv',
-                       merge_data.DataKeys.LIGHT_INTERCEPTION_07)
+                       merge_data.DataKeys.ROBOT_LIGHT_INTERCEPTION_07)
     self._assert_input('2016_08_light_interception.csv',
-                       merge_data.DataKeys.LIGHT_INTERCEPTION_08)
+                       merge_data.DataKeys.ROBOT_LIGHT_INTERCEPTION_08)
     self._assert_input('2016_09_light_interception.csv',
-                       merge_data.DataKeys.LIGHT_INTERCEPTION_09)
+                       merge_data.DataKeys.ROBOT_LIGHT_INTERCEPTION_09)
 
   def test_harvest_data(self):
     dict_lines = read_input_file('BAP16_HarvestData.csv')

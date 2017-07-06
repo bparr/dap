@@ -277,15 +277,15 @@ class DataKeys(Enum):
   PLANT_ID = 'plant_id'
 
   # Harvest data.
-  SF16h_HGT1_120 = 'SF16h_HGT1_120'
-  SF16h_HGT2_120 = 'SF16h_HGT2_120'
-  SF16h_HGT3_120 = 'SF16h_HGT3_120'
-  SF16h_TWT_120 = 'SF16h_TWT_120'
-  SF16h_WTP_120 = 'SF16h_WTP_120'
-  SF16h_WTL_120 = 'SF16h_WTL_120'
-  SF16h_PAN1_120 = 'SF16h_PAN1_120'
-  SF16h_PAN2_120 = 'SF16h_PAN2_120'
-  SF16h_PAN3_120 = 'SF16h_PAN3_120'
+  HARVEST_SF16h_HGT1_120 = 'SF16h_HGT1_120'
+  HARVEST_SF16h_HGT2_120 = 'SF16h_HGT2_120'
+  HARVEST_SF16h_HGT3_120 = 'SF16h_HGT3_120'
+  HARVEST_SF16h_TWT_120 = 'SF16h_TWT_120'
+  HARVEST_SF16h_WTP_120 = 'SF16h_WTP_120'
+  HARVEST_SF16h_WTL_120 = 'SF16h_WTL_120'
+  HARVEST_SF16h_PAN1_120 = 'SF16h_PAN1_120'
+  HARVEST_SF16h_PAN2_120 = 'SF16h_PAN2_120'
+  HARVEST_SF16h_PAN3_120 = 'SF16h_PAN3_120'
 
   # Composition data.
   COMPOSITION_ADF = 'ADF'
@@ -311,14 +311,14 @@ class DataKeys(Enum):
   COMPOSITION_HEMICELLULOSE = 'Hemicellulose'
 
   # Robot data.
-  LEAF_NECROSIS_07 = '2016_07_13-14_Leaf_Necrosis'
-  VEGETATION_INDEX_07 = '2016_07_13-14_vegetation_index'
-  VEGETATION_INDEX_08 = '2016_08_05-08_vegetation_index'
-  LEAF_AREA_07 = '2016_07_13_BAP_Leaf_Area'
-  LASER_PLANT_HEIGHT_07 = '2016_07_13_laser_plant_height'
-  LIGHT_INTERCEPTION_07 = '2016_07_light_interception'
-  LIGHT_INTERCEPTION_08 = '2016_08_light_interception'
-  LIGHT_INTERCEPTION_09 = '2016_09_light_interception'
+  ROBOT_LEAF_NECROSIS_07 = '2016_07_13-14_Leaf_Necrosis'
+  ROBOT_VEGETATION_INDEX_07 = '2016_07_13-14_vegetation_index'
+  ROBOT_VEGETATION_INDEX_08 = '2016_08_05-08_vegetation_index'
+  ROBOT_LEAF_AREA_07 = '2016_07_13_BAP_Leaf_Area'
+  ROBOT_LASER_PLANT_HEIGHT_07 = '2016_07_13_laser_plant_height'
+  ROBOT_LIGHT_INTERCEPTION_07 = '2016_07_light_interception'
+  ROBOT_LIGHT_INTERCEPTION_08 = '2016_08_light_interception'
+  ROBOT_LIGHT_INTERCEPTION_09 = '2016_09_light_interception'
 
   # GPS location, in UTM format.
   GPS_EASTINGS = 'gps_eastings_UTMzone17N'
@@ -332,7 +332,7 @@ class DataKeys(Enum):
 
   # Other lower priority data.
   PLOT_ID = 'plot_id'
-  HARVEST_NOTES = 'Notes'
+  NOTES = 'Notes'
   X_OF_Y = 'x_of_y'
   PLOT_PLAN_TAG = 'plot_plan_tag'
   PLOT_PLAN_CON = 'plot_plan_con'
@@ -373,21 +373,21 @@ def main():
   parse_plot_plan_tags(read_csv('BAP16_PlotPlan_Plot_IDs_Tags.csv'), cells)
 
   parse_rw_by_ra(read_csv('2016_07_13-14_Leaf_Necrosis.csv'),
-                 DataKeys.LEAF_NECROSIS_07, cells)
+                 DataKeys.ROBOT_LEAF_NECROSIS_07, cells)
   parse_rw_by_ra(read_csv('2016_07_13-14_vegetation_index.csv'),
-                 DataKeys.VEGETATION_INDEX_07, cells)
+                 DataKeys.ROBOT_VEGETATION_INDEX_07, cells)
   parse_rw_by_ra(read_csv('2016_08_05-08_vegetation_index.csv'),
-                 DataKeys.VEGETATION_INDEX_08, cells)
+                 DataKeys.ROBOT_VEGETATION_INDEX_08, cells)
   parse_rw_by_ra(read_csv('2016_07_13_BAP_Leaf_Area.csv'),
-                 DataKeys.LEAF_AREA_07, cells)
+                 DataKeys.ROBOT_LEAF_AREA_07, cells)
   parse_rw_by_ra(read_csv('2016_07_13_laser_plant_height.csv'),
-                 DataKeys.LASER_PLANT_HEIGHT_07, cells)
+                 DataKeys.ROBOT_LASER_PLANT_HEIGHT_07, cells)
   parse_rw_by_ra(read_csv('2016_07_light_interception.csv'),
-                 DataKeys.LIGHT_INTERCEPTION_07, cells)
+                 DataKeys.ROBOT_LIGHT_INTERCEPTION_07, cells)
   parse_rw_by_ra(read_csv('2016_08_light_interception.csv'),
-                 DataKeys.LIGHT_INTERCEPTION_08, cells)
+                 DataKeys.ROBOT_LIGHT_INTERCEPTION_08, cells)
   parse_rw_by_ra(read_csv('2016_09_light_interception.csv'),
-                 DataKeys.LIGHT_INTERCEPTION_09, cells)
+                 DataKeys.ROBOT_LIGHT_INTERCEPTION_09, cells)
   add_gps_to_cells(read_csv('2016_all_BAP_gps_coords.csv'), cells)
 
   sorted_cells = cells.sorted()
