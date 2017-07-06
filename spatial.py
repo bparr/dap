@@ -11,7 +11,6 @@ the name[key description].2016.csv.
 
 import csv
 import csv_utils
-import itertools
 from merge_data import DataKeys, MISMATCH_DELIMETER
 from multiprocessing import Pool
 import numpy as np
@@ -27,8 +26,7 @@ INPUT_PATH = '2016.csv'
 # Bryan Manly says 5000 is minimum number to estimate a significance level of
 # 0.01 in "Randomization, Bootstrap and Monte Carlo Methods in Biology" at the
 # top of page 208.
-#MANTEL_PERMUTATIONS = 10000  # TODO self mantel.
-MANTEL_PERMUTATIONS = 100
+MANTEL_PERMUTATIONS = 10000
 
 
 def get_output_path(spatial_keys_description):
@@ -38,13 +36,6 @@ def get_output_path(spatial_keys_description):
 # Averge multiple numeric values, caused by mismatched data merging.
 def average_mismatch(value):
   return np.mean([float(x) for x in value.split(MISMATCH_DELIMETER)])
-
-
-def compute_mantel_statistic(A, B, shuffling):
-  r = 0.0
-  for i, j in itertools.combinations(range(len(shuffling)), 2):
-    r += A[shuffling[i]][shuffling[j]] * B[i][j]
-  return r
 
 
 # Computes spatial correlation relative to the two spatial keys provided
@@ -70,32 +61,12 @@ def get_spatial_correlation(arg):
   #random.seed(10611)  # Does not seem to contain all randomness unfortunately.
   #data = [(random.random(), 0.0) for x in samples]
 
-  #spatial_distances = DistanceMatrix(squareform(pdist(spatial_data)))
-  #data_distances = DistanceMatrix(squareform(pdist(data)))
-  #coeff, p_value, N = mantel(spatial_distances, data_distances,
-  #                           permutations=MANTEL_PERMUTATIONS)
+  spatial_distances = DistanceMatrix(squareform(pdist(spatial_data)))
+  data_distances = DistanceMatrix(squareform(pdist(data)))
+  coeff, p_value, n = mantel(spatial_distances, data_distances,
+                             permutations=MANTEL_PERMUTATIONS)
 
-  spatial_distances = squareform(pdist(spatial_data))
-  data_distances = squareform(pdist(data))
-
-  N = len(samples)
-  coeff = 42.0  # TODO remove or do something better.
-
-  shuffling = list(range(N))
-  unshuffled_statistic = compute_mantel_statistic(
-      spatial_distances, data_distances, shuffling)
-
-  lower_or_equal_count = 1  # Include unshuffled.
-  for _ in range(MANTEL_PERMUTATIONS - 1):
-    random.shuffle(shuffling)
-    shuffled_statistic = compute_mantel_statistic(
-        spatial_distances, data_distances, shuffling)
-    if shuffled_statistic <= unshuffled_statistic:
-      lower_or_equal_count += 1
-
-  p_value = 1.0 * lower_or_equal_count / MANTEL_PERMUTATIONS
-
-  return (data_key.value, N, coeff, p_value)
+  return (data_key.value, n, coeff, p_value)
 
 
 def main():
@@ -103,15 +74,14 @@ def main():
   samples = csv_utils.read_csv_as_dicts(INPUT_PATH)
 
   # Tuples of spatial_key1, spatial_key2, spatial_keys_description).
-  # TODO self mantel.
   mantel_runs = [
-    #(DataKeys.GPS_EASTINGS, DataKeys.GPS_NORTHINGS, 'eastings_and_northings'),
-    #(DataKeys.GPS_EASTINGS, None, 'eastings_only'),
-    #(DataKeys.GPS_NORTHINGS, None, 'northings_only'),
+    (DataKeys.GPS_EASTINGS, DataKeys.GPS_NORTHINGS, 'eastings_and_northings'),
+    (DataKeys.GPS_EASTINGS, None, 'eastings_only'),
+    (DataKeys.GPS_NORTHINGS, None, 'northings_only'),
 
     (DataKeys.ROW, DataKeys.COLUMN, 'plot_row_and_column'),
-    #(DataKeys.ROW, None, 'plot_row_only'),
-    #(DataKeys.COLUMN, None, 'plot_column_only'),
+    (DataKeys.ROW, None, 'plot_row_only'),
+    (DataKeys.COLUMN, None, 'plot_column_only'),
   ]
 
   for spatial_key1, spatial_key2, spatial_keys_description in mantel_runs:
