@@ -78,11 +78,10 @@ def get_weight(sample, label, minus=None):
   return dry_weight * (value - minus_value) / 100.0
 
 
-def convert_pericarp_to_number(samples):
-  pericarps = sorted(set([x[PERICARP_LABEL] for x in samples]))  # Includes ''.
+def convert_column_to_number(samples, column_label):
+  values = sorted(set([x[column_label] for x in samples]))
   for sample in samples:
-    if sample[PERICARP_LABEL]:
-      sample[PERICARP_LABEL] = pericarps.index(sample[PERICARP_LABEL])
+    sample[column_label] = values.index(sample[column_label])
 
 
 def parse_data(samples, input_labels, output_generator):
@@ -127,7 +126,7 @@ def main():
   np.random.seed(RANDOM_SEED)
 
   samples = csv_utils.read_csv_as_dicts(DATA_PATH)
-  convert_pericarp_to_number(samples)
+  convert_column_to_number(samples, PERICARP_LABEL)
 
   regressors = collections.OrderedDict([
       # TODO tune max_depth.
