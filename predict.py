@@ -11,6 +11,7 @@ Usage:
 
 import argparse
 import collections
+import csv
 import csv_utils
 from merge_data import DataKeys, MISMATCH_DELIMETER
 import numpy as np
@@ -38,7 +39,7 @@ class Dataset(object):
   def __init__(self, samples, input_labels, output_generators):
     # Order modified (shuffled) by self.generate().
     self._samples = samples
-    self._input_labels = input_labels
+    self._input_labels = tuple(input_labels)
     self._output_generators = output_generators
 
     print('Input labels:,', ', '.join(self._input_labels))
@@ -60,6 +61,9 @@ class Dataset(object):
       y.append(output)
 
     return np.array(X), np.array(y)
+
+  def get_input_labels(self):
+    return self._input_labels
 
   def get_output_generators(self):
     return self._output_generators.items()
@@ -181,7 +185,23 @@ def kfold_predict(X, y, regressor_generator):
   return [y_pred[i] for i in range(len(X))]
 
 
+# Output completely preprocessed CSV files.
+# Currently useful for verifying results against lab's random forest code.
+def write_csv(file_path, input_labels, X, output_label, y):
+  with open(file_path, 'w') as f:
+    writer = csv.writer(f)
+    labels = list(input_labels) + [output_label]
+    writer.writerow(labels)
+    for x_row, y_row in zip(X, y):
+      row = list(x_row) + [y_row]
+      if len(row) != len(labels):
+        raise Exception('Inconsistent number of entries.')
+      writer.writerow(row)
+
+
 def main():
+  global MISSING_VALUE
+
   DATASET_FACTORIES = {
     '2014': new2014Dataset,
     '2016': new2016Dataset,
@@ -191,9 +211,22 @@ def main():
   parser.add_argument('-d', '--dataset', default='2016',
                       choices=list(DATASET_FACTORIES.keys()),
                       help='Which dataset to use.')
+  parser.add_argument('--write_dataviews_only', action='store_true',
+                      help='No prediction. Just write data views.')
   args = parser.parse_args()
 
+  if args.write_dataviews_only:
+    print('Overwriting MISSING_VALUE because writing dataviews!')
+    MISSING_VALUE = -1
+
   dataset = (DATASET_FACTORIES[args.dataset])()
+
+  if args.write_dataviews_only:
+    for output_name, output_generator in dataset.get_output_generators():
+      X, y = dataset.generate(output_generator)
+      write_csv(os.path.join('dataviews', args.dataset, output_name + '.csv'),
+                dataset.get_input_labels(), X, output_name, y)
+    return
 
   regressors = collections.OrderedDict([
       ('random forests', lambda: RandomForestRegressor(n_estimators=100)),
