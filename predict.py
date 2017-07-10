@@ -45,9 +45,10 @@ class Dataset(object):
     print('Input labels:,', ', '.join(self._input_labels))
 
   # output_generator must be one returned by get_output_generators().
-  def generate(self, output_generator):
+  def generate(self, output_generator, shuffle=True):
     # TODO double check ok to modify
-    random.shuffle(self._samples)
+    if shuffle:
+      random.shuffle(self._samples)
 
     X = []
     y = []
@@ -223,7 +224,7 @@ def main():
 
   if args.write_dataviews_only:
     for output_name, output_generator in dataset.get_output_generators():
-      X, y = dataset.generate(output_generator)
+      X, y = dataset.generate(output_generator, shuffle=False)
       write_csv(os.path.join('dataviews', args.dataset, output_name + '.csv'),
                 dataset.get_input_labels(), X, output_name, y)
     return
