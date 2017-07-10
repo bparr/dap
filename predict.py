@@ -122,7 +122,7 @@ def new2016Dataset():
       #'ACCESSION_'
   )
   input_labels = filter_2016_labels(input_data_keys_starts_with)
-  output_labels = filter_2016_labels('COMPOSITION_')
+  output_labels = sorted(filter_2016_labels('COMPOSITION_'))
   output_generators = collections.OrderedDict(
     [(x, create_2016_output_generator(x)) for x in output_labels]
   )
@@ -163,7 +163,6 @@ def get_weight(sample, label, minus=None):
   if is_missing(value) or is_missing(minus_value) or is_missing(dry_weight):
     return MISSING_VALUE
   return dry_weight * (value - minus_value) / 100.0
-
 
 
 def kfold_predict(X, y, regressor_generator):
@@ -240,13 +239,11 @@ def main():
     np.random.seed(RANDOM_SEED)
 
     print('\n\n' + regressor_name)
+    print('output_label,num_samples,r2_score')
     for output_name, output_generator in dataset.get_output_generators():
       X, y = dataset.generate(output_generator)
-      num_samples = X.shape[0]
-      print('Total number of %s samples: %s' % (output_name, num_samples))
-
       y_pred = kfold_predict(X, y, regressor_generator)
-      print('r2 score: ', r2_score(y, y_pred))
+      print(','.join([output_name, str(X.shape[0]), str(r2_score(y, y_pred))]))
 
 
 

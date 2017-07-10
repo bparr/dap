@@ -2,90 +2,50 @@ Input labels:, SF16h_HGT1_120, SF16h_HGT2_120, SF16h_HGT3_120, SF16h_TWT_120, SF
 
 
 random forests
-Total number of ADF samples: 698
-r2 score:  0.373508284875
-Total number of AD-ICP samples: 698
-r2 score:  0.371166853002
-Total number of Adj_CP samples: 698
-r2 score:  0.687925637457
-Total number of aNDFom samples: 698
-r2 score:  0.421194752798
-Total number of Ash samples: 698
-r2 score:  0.0316678360198
-Total number of Crude protein samples: 698
-r2 score:  0.649727806353
-Total number of DCAD samples: 698
-r2 score:  0.0496029412635
-Total number of Dry Matter samples: 698
-r2 score:  0.183436066442
-Total number of EE Fat samples: 698
-r2 score:  0.520983279949
-Total number of Lignin samples: 698
-r2 score:  0.380205084738
-Total number of NEG OARDC samples: 698
-r2 score:  0.447788618846
-Total number of NEL3x ADF samples: 698
-r2 score:  0.15870817898
-Total number of NEL3x OARDC samples: 698
-r2 score:  0.401552483549
-Total number of NEM OARDC samples: 698
-r2 score:  0.430502071042
-Total number of NFC samples: 698
-r2 score:  0.482757186463
-Total number of SPCP samples: 698
-r2 score:  0.506883084568
-Total number of Starch samples: 698
-r2 score:  0.196773331049
-Total number of TDN OARDC samples: 698
-r2 score:  0.230853982347
-Total number of WSC Sugar samples: 698
-r2 score:  0.504661706315
-Total number of Cellulose samples: 698
-r2 score:  0.392413143082
-Total number of Hemicellulose samples: 698
-r2 score:  0.197056033544
+output_label,num_samples,r2_score
+ADF,698,0.373508284875
+AD_ICP,698,0.371166853002
+Adj_CP,698,0.687925637457
+Ash,698,0.0347455548838
+Cellulose,698,0.403450712772
+Crude_protein,698,0.649727806353
+DCAD,698,0.0496029412635
+Dry_Matter,698,0.183436066442
+EE_Fat,698,0.520983279949
+Hemicellulose,698,0.212260566737
+Lignin,698,0.403919005393
+NEG_OARDC,698,0.464191925758
+NEL3x_ADF,698,0.184910228837
+NEL3x_OARDC,698,0.406438718769
+NEM_OARDC,698,0.429299480226
+NFC,698,0.50406209151
+SPCP,698,0.506238462118
+Starch,698,0.153784030246
+TDN_OARDC,698,0.24284536616
+WSC_Sugar,698,0.507212042695
+aNDFom,698,0.407241801018
 
 
 boosted trees
-Total number of ADF samples: 698
-r2 score:  0.361888345342
-Total number of AD-ICP samples: 698
-r2 score:  0.358162277421
-Total number of Adj_CP samples: 698
-r2 score:  0.67715896446
-Total number of aNDFom samples: 698
-r2 score:  0.386578950176
-Total number of Ash samples: 698
-r2 score:  0.0801157564496
-Total number of Crude protein samples: 698
-r2 score:  0.646425192578
-Total number of DCAD samples: 698
-r2 score:  0.0848252697208
-Total number of Dry Matter samples: 698
-r2 score:  0.198111258082
-Total number of EE Fat samples: 698
-r2 score:  0.524291363332
-Total number of Lignin samples: 698
-r2 score:  0.397783278882
-Total number of NEG OARDC samples: 698
-r2 score:  0.405163378432
-Total number of NEL3x ADF samples: 698
-r2 score:  0.194295093608
-Total number of NEL3x OARDC samples: 698
-r2 score:  0.363630788573
-Total number of NEM OARDC samples: 698
-r2 score:  0.398261986469
-Total number of NFC samples: 698
-r2 score:  0.454631919243
-Total number of SPCP samples: 698
-r2 score:  0.504005573735
-Total number of Starch samples: 698
-r2 score:  0.148066188612
-Total number of TDN OARDC samples: 698
-r2 score:  0.270658505782
-Total number of WSC Sugar samples: 698
-r2 score:  0.478211181298
-Total number of Cellulose samples: 698
-r2 score:  0.383710998342
-Total number of Hemicellulose samples: 698
-r2 score:  0.182767246781
+output_label,num_samples,r2_score
+ADF,698,0.361888345342
+AD_ICP,698,0.358162277421
+Adj_CP,698,0.67715896446
+Ash,698,0.0920334065947
+Cellulose,698,0.380076987711
+Crude_protein,698,0.646425192578
+DCAD,698,0.0848252697208
+Dry_Matter,698,0.198111258082
+EE_Fat,698,0.524291363332
+Hemicellulose,698,0.166947678076
+Lignin,698,0.399171199892
+NEG_OARDC,698,0.414245059928
+NEL3x_ADF,698,0.185430944726
+NEL3x_OARDC,698,0.373808747464
+NEM_OARDC,698,0.396129991463
+NFC,698,0.457792441066
+SPCP,698,0.505335285953
+Starch,698,0.159904020329
+TDN_OARDC,698,0.25929448482
+WSC_Sugar,698,0.480162293561
+aNDFom,698,0.377018601376

@@ -1,30 +1,21 @@
+Input labels:, Anthesis date (days), Harvest date (days), Total fresh weight (kg), Brix (maturity), Brix (milk), Stalk height (cm)
 
 
 random forests
-Total number of adf samples: 363
-r2 score:  0.605754632599
-Total number of ndf samples: 363
-r2 score:  0.605353540557
-Total number of nfc samples: 363
-r2 score:  0.584901883249
-Total number of lignin samples: 361
-r2 score:  0.57156718604
-Total number of c6 samples: 361
-r2 score:  0.590714588734
-Total number of c5 samples: 363
-r2 score:  0.522694542706
+output_label,num_samples,r2_score
+adf,363,0.605754632599
+ndf,363,0.605353540557
+nfc,363,0.584901883249
+lignin,361,0.57156718604
+c6,361,0.590714588734
+c5,363,0.522694542706
 
 
 boosted trees
-Total number of adf samples: 363
-r2 score:  0.632742238046
-Total number of ndf samples: 363
-r2 score:  0.639236914088
-Total number of nfc samples: 363
-r2 score:  0.575669039168
-Total number of lignin samples: 361
-r2 score:  0.607592262015
-Total number of c6 samples: 361
-r2 score:  0.644213669249
-Total number of c5 samples: 363
-r2 score:  0.524322475743
+output_label,num_samples,r2_score
+adf,363,0.632742238046
+ndf,363,0.639236914088
+nfc,363,0.575669039168
+lignin,361,0.607592262015
+c6,361,0.644213669249
+c5,363,0.524322475743
