@@ -289,24 +289,24 @@ class DataKeys(Enum):
 
   # Composition data.
   COMPOSITION_ADF = 'ADF'
-  COMPOSITION_AD_ICP = 'AD-ICP'
+  COMPOSITION_AD_ICP = 'AD_ICP'
   COMPOSITION_ADJ_CP = 'Adj_CP'
   COMPOSITION_ANDFOM = 'aNDFom'
   COMPOSITION_ASH = 'Ash'
-  COMPOSITION_CRUDE_PROTEIN = 'Crude protein'
+  COMPOSITION_CRUDE_PROTEIN = 'Crude_protein'
   COMPOSITION_DCAD = 'DCAD'
-  COMPOSITION_DRY_MATTER = 'Dry Matter'
-  COMPOSITION_EE_FAT = 'EE Fat'
+  COMPOSITION_DRY_MATTER = 'Dry_Matter'
+  COMPOSITION_EE_FAT = 'EE_Fat'
   COMPOSITION_LIGNIN = 'Lignin'
-  COMPOSITION_NEG_OARDC = 'NEG OARDC'
-  COMPOSITION_NEL3X_ADF = 'NEL3x ADF'
-  COMPOSITION_NEL3X_OARDC = 'NEL3x OARDC'
-  COMPOSITION_NEM_OARDC = 'NEM OARDC'
+  COMPOSITION_NEG_OARDC = 'NEG_OARDC'
+  COMPOSITION_NEL3X_ADF = 'NEL3x_ADF'
+  COMPOSITION_NEL3X_OARDC = 'NEL3x_OARDC'
+  COMPOSITION_NEM_OARDC = 'NEM_OARDC'
   COMPOSITION_NFC = 'NFC'
   COMPOSITION_SPCP = 'SPCP'
   COMPOSITION_STARCH = 'Starch'
-  COMPOSITION_TDN_OARDC = 'TDN OARDC'
-  COMPOSITION_WSC_SUGAR = 'WSC Sugar'
+  COMPOSITION_TDN_OARDC = 'TDN_OARDC'
+  COMPOSITION_WSC_SUGAR = 'WSC_Sugar'
   COMPOSITION_CELLULOSE = 'Cellulose'
   COMPOSITION_HEMICELLULOSE = 'Hemicellulose'
 
@@ -361,7 +361,8 @@ def main():
 
   compositions = parse_first_column_indexed(
       read_csv('2016_BAPClemsonGRDBBv2.csv'),
-      get_index_fn=lambda x: x.replace('SF16', 'SF'))
+      get_index_fn=lambda x: x.replace('SF16', 'SF'),
+      get_label_fn=lambda x: x.replace(' ', '_').replace('-', '_'))
   # Not all cells have composition data, do not warn about missing entries
   # in the composition dictionary.
   parse_rw_by_ra(read_csv('BAP16_PlotMap_Plot_IDs.csv'), DataKeys.PLOT_ID,

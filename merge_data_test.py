@@ -122,6 +122,7 @@ class TestOutput(unittest.TestCase):
           if k == 'Sample ID':
             continue
 
+          k = k.replace(' ', '_').replace('-', '_')
           self._assert_values_equal(v, get_actual_value(
               row, column, merge_data.DataKeys(k)))
 
