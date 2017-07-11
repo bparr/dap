@@ -265,6 +265,15 @@ def add_gps_to_cells(lines, cells):
     cell.add_data(DataKeys.GPS_NORTHINGS, northings)
 
 
+def add_synthetic_values(cells, data_keys, mean_data_key, std_data_key):
+  for cell in cells.sorted():
+    values = [cell.get_data(x) for x in data_keys]
+    values = [float(x) for x in values if x != '']
+    if len(values) > 0:
+      cell.add_data(mean_data_key, str(np.mean(values)))
+      cell.add_data(std_data_key, str(np.std(values)))
+
+
 # TODO(bparr): 2016_09_penetrometer_robot_Large_Stalks.csv has two lines for
 #              Rw22 Ra32 which seem to describe completely different plants. So
 #              ignoring.
@@ -319,6 +328,12 @@ class DataKeys(Enum):
   ROBOT_LIGHT_INTERCEPTION_07 = '2016_07_light_interception'
   ROBOT_LIGHT_INTERCEPTION_08 = '2016_08_light_interception'
   ROBOT_LIGHT_INTERCEPTION_09 = '2016_09_light_interception'
+
+  # Synthetically created data.
+  SYNTHETIC_SF16h_HGT_120_MEAN = 'SF16h_HGT_120_MEAN'
+  SYNTHETIC_SF16h_HGT_120_STD = 'SF16h_HGT_120_STD'
+  SYNTHETIC_SF16h_PAN_120_MEAN = 'SF16h_PAN_120_MEAN'
+  SYNTHETIC_SF16h_PAN_120_STD = 'SF16h_PAN_120_STD'
 
   # GPS location, in UTM format.
   GPS_EASTINGS = 'gps_eastings_UTMzone17N'
@@ -390,6 +405,16 @@ def main():
   parse_rw_by_ra(read_csv('2016_09_light_interception.csv'),
                  DataKeys.ROBOT_LIGHT_INTERCEPTION_09, cells)
   add_gps_to_cells(read_csv('2016_all_BAP_gps_coords.csv'), cells)
+  add_synthetic_values(cells, [DataKeys.HARVEST_SF16h_HGT1_120,
+                               DataKeys.HARVEST_SF16h_HGT2_120,
+                               DataKeys.HARVEST_SF16h_HGT3_120],
+      DataKeys.SYNTHETIC_SF16h_HGT_120_MEAN,
+      DataKeys.SYNTHETIC_SF16h_HGT_120_STD)
+  add_synthetic_values(cells, [DataKeys.HARVEST_SF16h_PAN1_120,
+                               DataKeys.HARVEST_SF16h_PAN2_120,
+                               DataKeys.HARVEST_SF16h_PAN3_120],
+      DataKeys.SYNTHETIC_SF16h_PAN_120_MEAN,
+      DataKeys.SYNTHETIC_SF16h_PAN_120_STD)
 
   sorted_cells = cells.sorted()
   write_csv(OUTPUT_FILENAME, sorted_cells)
