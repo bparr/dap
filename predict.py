@@ -120,7 +120,7 @@ def new2016Dataset():
   input_data_keys_starts_with = (
       'ROBOT_',
       'HARVEST_',
-      'GPS_',
+      #'GPS_',
       'ACCESSION_',
       'SYNTHETIC_',
   )
