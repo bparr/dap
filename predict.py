@@ -112,8 +112,13 @@ def create_2016_output_generator(key):
 
 def average_features(sample, data_key_starts_with):
   labels = filter_2016_labels(data_key_starts_with)
-  values = [float_or_missing(sample[x]) for x in labels]
-  values = [x for x in values if not is_missing(x)]
+  values = []
+  for label in labels:
+    value = float_or_missing(sample[label])
+    if is_missing(value):
+      continue
+    values.append(value)
+
   return np.mean(values) if len(values) > 0 else MISSING_VALUE
 
 def new2016Dataset():
