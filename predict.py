@@ -30,12 +30,10 @@ from sklearn.preprocessing import Imputer
 TRAINING_SIZE = 0.8
 
 
-# TODO rename.
-def convert_column_to_number(samples, column_label):
-  #values = sorted(set([x[column_label] for x in samples]))
+def replace_empty(samples, column_label):
   for sample in samples:
     if sample[column_label] == '':
-      sample[column_label] = 'MISSING' #= values.index(sample[column_label])
+      sample[column_label] = 'MISSING'
 
 
 class Dataset(object):
@@ -74,9 +72,9 @@ class Dataset(object):
 
 
 
-def new2014Dataset():
+def new2014Dataset(**kwargs):
   samples = csv_utils.read_csv_as_dicts('2014/2014_Pheotypic_Data_FileS2.csv')
-  convert_column_to_number(samples, 'Pericarp pigmentation')
+  replace_empty(samples, 'Pericarp pigmentation')
 
   # TODO include pericarp in input_labels? Is it known before harvest?
   input_labels = (
@@ -113,20 +111,22 @@ def filter_2016_labels(data_key_starts_with):
 def create_2016_output_generator(key):
   return lambda sample: sample[key]
 
-def new2016Dataset():
+def new2016Dataset(include_accession=False, **kwargs):
   samples = csv_utils.read_csv_as_dicts('2016.merged.csv')
   for label in filter_2016_labels('ACCESSION_'):
-    convert_column_to_number(samples, label)
+    replace_empty(samples, label)
 
   # TODO what to include? Allow multiple subsets through commandline?
-  input_data_keys_starts_with = (
+  input_data_keys_starts_with = [
       'ROBOT_',
       'HARVEST_',
-      #'GPS_',
-      'ACCESSION_',
       'SYNTHETIC_',
-  )
-  input_labels = filter_2016_labels(input_data_keys_starts_with)
+      #'GPS_',
+  ]
+  if include_accession:
+    input_data_keys_starts_with += ['ACCESSION_']
+
+  input_labels = filter_2016_labels(tuple(input_data_keys_starts_with))
   output_labels = sorted(filter_2016_labels('COMPOSITION_'))
 
   weight_datakeys = (
@@ -156,6 +156,7 @@ MISSING_VALUE = -1  # Disables Imputer.
 
 
 
+# TODO this is getting to be too hacky. Fix by only running for known floats.
 def float_or_missing(s):
   try:
     if isinstance(s, str):
@@ -191,10 +192,10 @@ def kfold_predict(X, y, regressor_generator):
     X_train, X_test = X[train_indexes], X[test_indexes]
     y_train, y_test = y[train_indexes], y[test_indexes]
 
-    #imp = Imputer()
+    imp = Imputer()
     # Parser ignores rows with missing y, so no need to impute y.
-    #X_train = imp.fit_transform(X_train)
-    #X_test = imp.transform(X_test)
+    X_train = imp.fit_transform(X_train)
+    X_test = imp.transform(X_test)
 
     regressor = regressor_generator().fit(X_train, y_train)
     y_pred.extend(zip(test_indexes, regressor.predict(X_test)))
@@ -237,7 +238,8 @@ def main():
     print('Overwriting MISSING_VALUE because writing dataviews!')
     MISSING_VALUE = -1
 
-  dataset = (DATASET_FACTORIES[args.dataset])()
+  dataset = (DATASET_FACTORIES[args.dataset])(
+      include_accession=args.write_dataviews_only)
 
   if args.write_dataviews_only:
     for output_name, output_generator in dataset.get_output_generators():
