@@ -30,10 +30,12 @@ from sklearn.preprocessing import Imputer
 TRAINING_SIZE = 0.8
 
 
+# TODO rename.
 def convert_column_to_number(samples, column_label):
-  values = sorted(set([x[column_label] for x in samples]))
+  #values = sorted(set([x[column_label] for x in samples]))
   for sample in samples:
-    sample[column_label] = values.index(sample[column_label])
+    if sample[column_label] == '':
+      sample[column_label] = 'MISSING' #= values.index(sample[column_label])
 
 
 class Dataset(object):
@@ -155,11 +157,14 @@ MISSING_VALUE = -1  # Disables Imputer.
 
 
 def float_or_missing(s):
-  if isinstance(s, str):
-    if not s:
-      return MISSING_VALUE
-    return np.mean([float(x) for x in s.split(MISMATCH_DELIMETER)])
-  return np.float(s)
+  try:
+    if isinstance(s, str):
+      if not s:
+        return MISSING_VALUE
+      return np.mean([float(x) for x in s.split(MISMATCH_DELIMETER)])
+    return np.float(s)
+  except:
+    return s
 
 
 def is_missing(value):
@@ -186,10 +191,10 @@ def kfold_predict(X, y, regressor_generator):
     X_train, X_test = X[train_indexes], X[test_indexes]
     y_train, y_test = y[train_indexes], y[test_indexes]
 
-    imp = Imputer()
+    #imp = Imputer()
     # Parser ignores rows with missing y, so no need to impute y.
-    X_train = imp.fit_transform(X_train)
-    X_test = imp.transform(X_test)
+    #X_train = imp.fit_transform(X_train)
+    #X_test = imp.transform(X_test)
 
     regressor = regressor_generator().fit(X_train, y_train)
     y_pred.extend(zip(test_indexes, regressor.predict(X_test)))
