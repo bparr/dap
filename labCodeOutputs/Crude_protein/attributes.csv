@@ -16,10 +16,12 @@ SF16h_PAN3_120,698
 2016_07_light_interception,698
 2016_08_light_interception,698
 2016_09_light_interception,698
-gps_eastings_UTMzone17N,698
-gps_northings_UTMzone17N,698
+SF16h_HGT_120_MEAN,698
+SF16h_HGT_120_STD,698
+SF16h_PAN_120_MEAN,698
+SF16h_PAN_120_STD,698
 accession_photoperiod,698
 accession_type,698
 accession_origin,698
-accession_race,698
+accession_race,696
 Crude_protein,0
