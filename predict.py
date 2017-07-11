@@ -88,17 +88,18 @@ def new2014Dataset():
       #'Dry tons per acre',
   )
 
-  ADF_LABEL = 'ADF (% DM)'
-  NDF_LABEL = 'NDF (% DM)'
-  NFC_LABEL = 'NFC (% DM)'
-  LIGNIN_LABEL = 'Lignin (% DM)'
+  ADF = 'ADF (% DM)'
+  NDF = 'NDF (% DM)'
+  NFC = 'NFC (% DM)'
+  LIGNIN = 'Lignin (% DM)'
+  DRY_WEIGHT = 'Dry weight (kg)'
   output_generators = collections.OrderedDict([
-      ('adf', lambda sample: get_weight(sample, ADF_LABEL)),
-      ('ndf', lambda sample: get_weight(sample, NDF_LABEL)),
-      ('nfc', lambda sample: get_weight(sample, NFC_LABEL)),
-      ('lignin', lambda sample: get_weight(sample, LIGNIN_LABEL)),
-      ('c6', lambda sample: get_weight(sample, ADF_LABEL, minus=LIGNIN_LABEL)),
-      ('c5', lambda sample: get_weight(sample, NDF_LABEL, minus=ADF_LABEL)),
+      ('adf', lambda sample: get_weight(sample, DRY_WEIGHT, ADF)),
+      ('ndf', lambda sample: get_weight(sample, DRY_WEIGHT, NDF)),
+      ('nfc', lambda sample: get_weight(sample, DRY_WEIGHT, NFC)),
+      ('lignin', lambda sample: get_weight(sample, DRY_WEIGHT, LIGNIN)),
+      ('c6', lambda sample: get_weight(sample, DRY_WEIGHT, ADF, minus=LIGNIN)),
+      ('c5', lambda sample: get_weight(sample, DRY_WEIGHT, NDF, minus=ADF)),
   ])
   return Dataset(samples, input_labels, output_generators)
 
@@ -118,13 +119,18 @@ def new2016Dataset():
   input_data_keys_starts_with = (
       'ROBOT_',
       'HARVEST_',
-      #'GPS_',
-      #'ACCESSION_'
+      'GPS_',
+      'ACCESSION_'
   )
   input_labels = filter_2016_labels(input_data_keys_starts_with)
   output_labels = sorted(filter_2016_labels('COMPOSITION_'))
+  weight_outputs = [DataKeys.COMPOSITION_LIGNIN, DataKeys.COMPOSITION_CELLULOSE,
+                    DataKeys.COMPOSITION_HEMICELLULOSE]
+  DRY_MATTER = DataKeys.COMPOSITION_DRY_MATTER.value
   output_generators = collections.OrderedDict(
-    [(x, create_2016_output_generator(x)) for x in output_labels]
+    [(x, create_2016_output_generator(x)) for x in output_labels] +
+    [('abs.' + x.value, lambda sample: get_weight(sample, DRY_MATTER, x.value))
+     for x in weight_outputs]
   )
 
   return Dataset(samples, input_labels, output_generators)
@@ -132,12 +138,10 @@ def new2016Dataset():
 
 RANDOM_SEED = 10611
 
-# TODO is this just for 2014? Seems a bit bleg to be global scope then.
-DRY_WEIGHT_LABEL = 'Dry weight (kg)'
 
 # TODO tune??
-MISSING_VALUE = np.nan
-#MISSING_VALUE = -1  # Disables Imputer.
+#MISSING_VALUE = np.nan
+MISSING_VALUE = -1  # Disables Imputer.
 
 
 
@@ -156,10 +160,10 @@ def is_missing(value):
 
 # Returns result of percent DM value multiplied by dry weight.
 # If given, the minus label's value is subtracted from label's value.
-def get_weight(sample, label, minus=None):
+def get_weight(sample, dry_weight_label, label, minus=None):
   value = float_or_missing(sample[label])
   minus_value = 0.0 if minus is None else float_or_missing(sample[minus])
-  dry_weight = float_or_missing(sample[DRY_WEIGHT_LABEL])
+  dry_weight = float_or_missing(sample[dry_weight_label])
   if is_missing(value) or is_missing(minus_value) or is_missing(dry_weight):
     return MISSING_VALUE
   return dry_weight * (value - minus_value) / 100.0
