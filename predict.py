@@ -124,13 +124,20 @@ def new2016Dataset():
   )
   input_labels = filter_2016_labels(input_data_keys_starts_with)
   output_labels = sorted(filter_2016_labels('COMPOSITION_'))
-  weight_outputs = [DataKeys.COMPOSITION_LIGNIN, DataKeys.COMPOSITION_CELLULOSE,
-                    DataKeys.COMPOSITION_HEMICELLULOSE]
-  DRY_MATTER = DataKeys.COMPOSITION_DRY_MATTER.value
+
+  weight_datakeys = (
+      DataKeys.COMPOSITION_LIGNIN,
+      DataKeys.COMPOSITION_CELLULOSE,
+      DataKeys.COMPOSITION_HEMICELLULOSE)
+
+  def get_weight_generator(data_key):
+    DRY_MATTER = DataKeys.COMPOSITION_DRY_MATTER.value
+    generator = lambda sample: get_weight(sample, DRY_MATTER, data_key.value)
+    return ('abs.' + data_key.value, generator)
+
   output_generators = collections.OrderedDict(
     [(x, create_2016_output_generator(x)) for x in output_labels] +
-    [('abs.' + x.value, lambda sample: get_weight(sample, DRY_MATTER, x.value))
-     for x in weight_outputs]
+    [get_weight_generator(x) for x in weight_datakeys]
   )
 
   return Dataset(samples, input_labels, output_generators)
