@@ -1,6 +1,9 @@
 #!/bin/sh
 
+cur=`pwd`
 for file in *.csv
 do
-  ~/sorghum/random_forest/random_forest ds "$file" label ${file%.*} option regression > stdout.txt && mkdir -p ../../labCodeOutputs/${file%.*} && mv *.csv stdout.txt ../../labCodeOutputs/${file%.*}
+  pushd ~/sorghum/random_forest/
+  ./random_forest ds "$cur"/"$file" label ${file%.*} option regression > stdout.txt && mkdir -p "$cur"/../../labCodeOutputs/${file%.*} && mv *.csv stdout.txt "$cur"/../../labCodeOutputs/${file%.*}
+  popd
 done
