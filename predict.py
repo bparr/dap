@@ -110,43 +110,19 @@ def filter_2016_labels(data_key_starts_with):
 def create_2016_output_generator(key):
   return lambda sample: sample[key]
 
-def average_features(sample, data_key_starts_with):
-  labels = filter_2016_labels(data_key_starts_with)
-  values = []
-  for label in labels:
-    value = float_or_missing(sample[label])
-    if is_missing(value):
-      continue
-    values.append(value)
-
-  return np.mean(values) if len(values) > 0 else MISSING_VALUE
-
 def new2016Dataset():
   samples = csv_utils.read_csv_as_dicts('2016.merged.csv')
   for label in filter_2016_labels('ACCESSION_'):
     convert_column_to_number(samples, label)
 
-  # Mapping from new synthetic input to data_key_starts_with to average over.
-  synthetic_mapping = collections.OrderedDict([
-    ('SYNTHETIC_HGT', 'HARVEST_SF16h_HGT'),
-    ('SYNTHETIC_PAN', 'HARVEST_SF16h_PAN'),
-  ])
-  for sample in samples:
-    for key, data_key_starts_with in synthetic_mapping.items():
-      sample[key] = average_features(sample, data_key_starts_with)
-
   # TODO what to include? Allow multiple subsets through commandline?
   input_data_keys_starts_with = (
       'ROBOT_',
-      'HARVEST_SF16h_TWT_120',
-      'HARVEST_SF16h_WTP_120',
-      'HARVEST_SF16h_WTL_120',
+      'HARVEST_',
       'GPS_',
       'ACCESSION_'
   )
-
-  input_labels = (filter_2016_labels(input_data_keys_starts_with) +
-                  list(synthetic_mapping.keys()))
+  input_labels = filter_2016_labels(input_data_keys_starts_with)
   output_labels = sorted(filter_2016_labels('COMPOSITION_'))
 
   weight_datakeys = (
