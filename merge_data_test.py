@@ -5,6 +5,7 @@
 import csv
 import csv_utils
 import merge_data
+import numpy as np
 import os
 import unittest
 
@@ -188,8 +189,14 @@ class TestOutput(unittest.TestCase):
         self._assert_values_equal(accession['Race'], get_actual_value(
             row, column, merge_data.DataKeys.ACCESSION_RACE))
 
+  def test_GPS_manual_sanity_check(self):
+    row = OUTPUT_CONTENTS[5][1]
+    self.assertAlmostEquals(340658.5225,
+        float(row[merge_data.DataKeys.GPS_EASTINGS.value]))
+    self.assertAlmostEqual(3832647.415,
+        float(row[merge_data.DataKeys.GPS_NORTHINGS.value]))
 
-  def test_GPS(self):
+  def test_GPS_all(self):
     dict_lines = read_input_file('2016_all_BAP_gps_coords.csv')
     gps = dict((x['Row'], {}) for x in dict_lines)
     for line in dict_lines:
@@ -214,6 +221,43 @@ class TestOutput(unittest.TestCase):
             output_line[merge_data.DataKeys.GPS_NORTHINGS.value])
         self.assertAlmostEqual(expected_northings, actual_northings)
 
+  def test_synthetic_manual_sanity_check(self):
+    row = OUTPUT_CONTENTS[7][1]
+    self.assertAlmostEquals(74.0,
+        float(row[merge_data.DataKeys.SYNTHETIC_SF16h_HGT_120_MEAN.value]))
+    self.assertAlmostEquals(5.8878405775518976,
+        float(row[merge_data.DataKeys.SYNTHETIC_SF16h_HGT_120_STD.value]))
+    self.assertAlmostEquals(29.666666667,
+        float(row[merge_data.DataKeys.SYNTHETIC_SF16h_PAN_120_MEAN.value]))
+    self.assertAlmostEquals(4.1899350299921778,
+        float(row[merge_data.DataKeys.SYNTHETIC_SF16h_PAN_120_STD.value]))
+
+  def test_synthetic_all(self):
+    dict_lines = read_input_file('BAP16_HarvestData.csv')
+    for d in dict_lines:
+      heights = [d['SF16h_HGT' + str(x) + '_120'] for x in range(1, 4)]
+      heights = [float(x) for x in heights if x not in csv_utils.EMPTY_VALUES]
+      self.assertTrue(len(heights) == 0 or len(heights) == 3)
+
+      if len(heights) > 0:
+        self._assert_values_equal(str(np.mean(heights)), get_actual_value(
+            d['RW'], d['RA1'], merge_data.DataKeys.SYNTHETIC_SF16h_HGT_120_MEAN,
+            has_fill_rows=False))
+        self._assert_values_equal(str(np.std(heights)), get_actual_value(
+            d['RW'], d['RA1'], merge_data.DataKeys.SYNTHETIC_SF16h_HGT_120_STD,
+            has_fill_rows=False))
+
+      pans = [d['SF16h_PAN' + str(x) + '_120'] for x in range(1, 4)]
+      pans = [float(x) for x in pans if x not in csv_utils.EMPTY_VALUES]
+      self.assertTrue(len(pans) == 0 or len(pans) == 3)
+
+      if len(pans) > 0:
+        self._assert_values_equal(str(np.mean(pans)), get_actual_value(
+            d['RW'], d['RA1'], merge_data.DataKeys.SYNTHETIC_SF16h_PAN_120_MEAN,
+            has_fill_rows=False))
+        self._assert_values_equal(str(np.std(pans)), get_actual_value(
+            d['RW'], d['RA1'], merge_data.DataKeys.SYNTHETIC_SF16h_PAN_120_STD,
+            has_fill_rows=False))
 
   def test_mergeContentsIsSupersetOfNonMergedOutput(self):
     for output_columns in OUTPUT_CONTENTS.values():

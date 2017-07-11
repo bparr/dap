@@ -4,7 +4,8 @@
 Parse full csv and predict harvest data.
 
 Usage:
-  ./predict.py > predict.out
+  ./predict.py > predict.2016.out
+  ./predict.py -d 2014 > predict.2014.out
 
 """
 # TODO tests?
@@ -120,7 +121,8 @@ def new2016Dataset():
       'ROBOT_',
       'HARVEST_',
       'GPS_',
-      'ACCESSION_'
+      'ACCESSION_',
+      'SYNTHETIC_',
   )
   input_labels = filter_2016_labels(input_data_keys_starts_with)
   output_labels = sorted(filter_2016_labels('COMPOSITION_'))
