@@ -25,11 +25,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import Imputer
 
 
-# What percent of the whole dataset to use as the training set.
-# TODO split test set into validation and test sets!?
-TRAINING_SIZE = 0.8
-
-
+# TODO remove!
 def replace_empty(samples, column_label):
   for sample in samples:
     if sample[column_label] == '':
@@ -74,9 +70,7 @@ class Dataset(object):
 
 def new2014Dataset(**kwargs):
   samples = csv_utils.read_csv_as_dicts('2014/2014_Pheotypic_Data_FileS2.csv')
-  replace_empty(samples, 'Pericarp pigmentation')
 
-  # TODO include pericarp in input_labels? Is it known before harvest?
   input_labels = (
       'Anthesis date (days)',
       'Harvest date (days)',
@@ -84,7 +78,7 @@ def new2014Dataset(**kwargs):
       'Brix (maturity)',
       'Brix (milk)',
       'Stalk height (cm)',
-      # TODO allow using dry weight for predictions? When is it known?
+      # Including dry weight greatly increases predictive ability.
       #'Dry weight (kg)',
       #'Dry tons per acre',
   )
@@ -109,7 +103,7 @@ def filter_2016_labels(data_key_starts_with):
   return [x.value for x in DataKeys if x.name.startswith(data_key_starts_with)]
 
 def create_2016_output_generator(key):
-  return lambda sample: sample[key]
+  return lambda sample: float_or_missing(sample[key])
 
 def new2016Dataset(include_accession=False, **kwargs):
   samples = csv_utils.read_csv_as_dicts('2016.merged.csv')
@@ -250,7 +244,6 @@ def main():
 
   regressors = collections.OrderedDict([
       ('random forests', lambda: RandomForestRegressor(n_estimators=100)),
-      # TODO tune max_depth.
       ('boosted trees', lambda: GradientBoostingRegressor(max_depth=1)),
   ])
 
