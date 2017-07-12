@@ -25,13 +25,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import Imputer
 
 
-# TODO remove!
-def replace_empty(samples, column_label):
-  for sample in samples:
-    if sample[column_label] == '':
-      sample[column_label] = 'MISSING'
-
-
 class Dataset(object):
   def __init__(self, samples, input_labels, output_generators):
     # Order modified (shuffled) by self.generate().
@@ -107,8 +100,6 @@ def create_2016_output_generator(key):
 
 def new2016Dataset(include_accession=False, **kwargs):
   samples = csv_utils.read_csv_as_dicts('2016.merged.csv')
-  for label in filter_2016_labels('ACCESSION_'):
-    replace_empty(samples, label)
 
   # TODO what to include? Allow multiple subsets through commandline?
   input_data_keys_starts_with = [
