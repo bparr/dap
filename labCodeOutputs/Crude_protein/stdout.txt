@@ -508,5 +508,5 @@ Learnt 94/100 trees
 Learnt 96/100 trees
 Learnt 98/100 trees
 Learnt 100/100 trees
-R2 = 0.667689
-time taken = 9 sec
+R2 = 0.666832
+time taken = 8 sec
