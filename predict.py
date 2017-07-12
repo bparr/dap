@@ -25,6 +25,31 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import Imputer
 
 
+RANDOM_SEED = 10611
+
+# TODO tune??
+#MISSING_VALUE = np.nan
+MISSING_VALUE = -1  # Disables Imputer.
+
+
+def is_missing(value):
+  # Unfortunately np.nan == np.nan is False, so check both isnan and equality.
+  return np.isnan(value) or value == MISSING_VALUE
+
+
+def convert_to_float_or_missing(samples, labels):
+  for sample in samples:
+    for label in labels:
+      v = sample[label]
+      if v == '':
+        sample[label] = MISSING_VALUE
+        continue
+
+      sample[label] = np.mean([float(x) for x in v.split(MISMATCH_DELIMETER)])
+      if is_missing(sample[label]):
+        raise Exception('Bad value:', v)
+
+
 class Dataset(object):
   def __init__(self, samples, input_labels, output_generators):
     # Order modified (shuffled) by self.generate().
@@ -43,12 +68,12 @@ class Dataset(object):
     X = []
     y = []
     for sample in self._samples:
-      output = float_or_missing(output_generator(sample))
+      output = output_generator(sample)
       if is_missing(output):
         # Ignore samples with missing output value.
         continue
 
-      X.append([float_or_missing(sample[x]) for x in self._input_labels])
+      X.append([sample[x] for x in self._input_labels])
       y.append(output)
 
     return np.array(X), np.array(y)
@@ -64,6 +89,12 @@ class Dataset(object):
 def new2014Dataset(**kwargs):
   samples = csv_utils.read_csv_as_dicts('2014/2014_Pheotypic_Data_FileS2.csv')
 
+  ADF = 'ADF (% DM)'
+  NDF = 'NDF (% DM)'
+  NFC = 'NFC (% DM)'
+  LIGNIN = 'Lignin (% DM)'
+  DRY_WEIGHT = 'Dry weight (kg)'
+
   input_labels = (
       'Anthesis date (days)',
       'Harvest date (days)',
@@ -76,11 +107,9 @@ def new2014Dataset(**kwargs):
       #'Dry tons per acre',
   )
 
-  ADF = 'ADF (% DM)'
-  NDF = 'NDF (% DM)'
-  NFC = 'NFC (% DM)'
-  LIGNIN = 'Lignin (% DM)'
-  DRY_WEIGHT = 'Dry weight (kg)'
+  convert_to_float_or_missing(samples, list(input_labels) + [
+      ADF, NDF, NFC, LIGNIN, DRY_WEIGHT])
+
   output_generators = collections.OrderedDict([
       ('adf', lambda sample: get_weight(sample, DRY_WEIGHT, ADF)),
       ('ndf', lambda sample: get_weight(sample, DRY_WEIGHT, NDF)),
@@ -96,15 +125,19 @@ def filter_2016_labels(data_key_starts_with):
   return [x.value for x in DataKeys if x.name.startswith(data_key_starts_with)]
 
 def create_2016_output_generator(key):
-  return lambda sample: float_or_missing(sample[key])
+  return lambda sample: sample[key]
 
+# TODO remove all args here and in new2014Dataset.
 def new2016Dataset(include_accession=False, **kwargs):
   samples = csv_utils.read_csv_as_dicts('2016.merged.csv')
+  convert_to_float_or_missing(samples, filter_2016_labels((
+      'HARVEST_', 'COMPOSITION_', 'ROBOT_', 'SYNTHETIC_', 'GPS_')) +
+      [DataKeys.ROW.value, DataKeys.COLUMN.value])
 
   # TODO what to include? Allow multiple subsets through commandline?
   input_data_keys_starts_with = [
-      'ROBOT_',
       'HARVEST_',
+      'ROBOT_',
       'SYNTHETIC_',
       #'GPS_',
   ]
@@ -132,38 +165,13 @@ def new2016Dataset(include_accession=False, **kwargs):
   return Dataset(samples, input_labels, output_generators)
 
 
-RANDOM_SEED = 10611
-
-
-# TODO tune??
-#MISSING_VALUE = np.nan
-MISSING_VALUE = -1  # Disables Imputer.
-
-
-
-# TODO this is getting to be too hacky. Fix by only running for known floats.
-def float_or_missing(s):
-  try:
-    if isinstance(s, str):
-      if not s:
-        return MISSING_VALUE
-      return np.mean([float(x) for x in s.split(MISMATCH_DELIMETER)])
-    return np.float(s)
-  except:
-    return s
-
-
-def is_missing(value):
-  # Unfortunately np.nan == np.nan is False, so check both isnan and equality.
-  return np.isnan(value) or value == MISSING_VALUE
-
 
 # Returns result of percent DM value multiplied by dry weight.
 # If given, the minus label's value is subtracted from label's value.
 def get_weight(sample, dry_weight_label, label, minus=None):
-  value = float_or_missing(sample[label])
-  minus_value = 0.0 if minus is None else float_or_missing(sample[minus])
-  dry_weight = float_or_missing(sample[dry_weight_label])
+  value = sample[label]
+  minus_value = 0.0 if minus is None else sample[minus]
+  dry_weight = sample[dry_weight_label]
   if is_missing(value) or is_missing(minus_value) or is_missing(dry_weight):
     return MISSING_VALUE
   return dry_weight * (value - minus_value) / 100.0
