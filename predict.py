@@ -112,7 +112,7 @@ def new2016Dataset(include_accession=False, **kwargs):
     input_data_keys_starts_with += ['ACCESSION_']
 
   input_labels = filter_2016_labels(tuple(input_data_keys_starts_with))
-  output_labels = sorted(filter_2016_labels('COMPOSITION_'))
+  output_labels = filter_2016_labels('COMPOSITION_')
 
   weight_datakeys = (
       DataKeys.COMPOSITION_LIGNIN,
@@ -124,10 +124,10 @@ def new2016Dataset(include_accession=False, **kwargs):
     generator = lambda sample: get_weight(sample, DRY_MATTER, data_key.value)
     return ('abs.' + data_key.value, generator)
 
-  output_generators = collections.OrderedDict(
+  output_generators = collections.OrderedDict(sorted(
     [(x, create_2016_output_generator(x)) for x in output_labels] +
     [get_weight_generator(x) for x in weight_datakeys]
-  )
+  ))
 
   return Dataset(samples, input_labels, output_generators)
 
