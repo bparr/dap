@@ -87,7 +87,7 @@ class Dataset(object):
 
 
 
-def new2014Dataset(**kwargs):
+def new2014Dataset():
   samples = csv_utils.read_csv_as_dicts('2014/2014_Pheotypic_Data_FileS2.csv')
 
   ADF = 'ADF (% DM)'
@@ -128,8 +128,7 @@ def filter_2016_labels(data_key_starts_with):
 def create_2016_output_generator(key):
   return lambda sample: sample[key]
 
-# TODO remove all args here and in new2014Dataset.
-def new2016Dataset(include_accession=False, **kwargs):
+def new2016Dataset():
   samples = csv_utils.read_csv_as_dicts('2016.merged.csv')
   convert_to_float_or_missing(samples, filter_2016_labels((
       'HARVEST_', 'COMPOSITION_', 'ROBOT_', 'SYNTHETIC_', 'GPS_')) +
@@ -141,9 +140,8 @@ def new2016Dataset(include_accession=False, **kwargs):
       'ROBOT_',
       'SYNTHETIC_',
       #'GPS_',
+      'ACCESSION_',
   ]
-  if include_accession:
-    input_data_keys_starts_with += ['ACCESSION_']
 
   input_labels = filter_2016_labels(tuple(input_data_keys_starts_with))
   output_labels = filter_2016_labels('COMPOSITION_')
@@ -232,8 +230,7 @@ def main():
     print('Overwriting MISSING_VALUE because writing dataviews!')
     MISSING_VALUE = -1
 
-  dataset = (DATASET_FACTORIES[args.dataset])(
-      include_accession=args.write_dataviews_only)
+  dataset = (DATASET_FACTORIES[args.dataset])()
 
   if args.write_dataviews_only:
     for output_name, output_generator in dataset.get_output_generators():
