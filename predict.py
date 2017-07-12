@@ -35,7 +35,7 @@ MISSING_VALUE = -1  # Disables Imputer.
 
 def is_missing(value):
   # Unfortunately np.nan == np.nan is False, so check both isnan and equality.
-  return np.isnan(value) or value == MISSING_VALUE
+  return np.isnan(value).any() or (np.array(value) == MISSING_VALUE).any()
 
 
 def convert_to_float_or_missing(samples, labels):
@@ -128,6 +128,10 @@ def filter_2016_labels(data_key_starts_with):
 def create_2016_output_generator(key):
   return lambda sample: sample[key]
 
+def create_2016_multi_output_generator(keys):
+  print(keys)
+  return lambda sample: [sample[key] for key in keys]
+
 def new2016Dataset():
   samples = csv_utils.read_csv_as_dicts('2016.merged.csv')
   convert_to_float_or_missing(samples, filter_2016_labels((
@@ -144,7 +148,7 @@ def new2016Dataset():
   ]
 
   input_labels = filter_2016_labels(tuple(input_data_keys_starts_with))
-  output_labels = filter_2016_labels('COMPOSITION_')
+  output_labels = sorted(filter_2016_labels('COMPOSITION_'))
 
   weight_datakeys = (
       DataKeys.COMPOSITION_LIGNIN,
@@ -157,8 +161,11 @@ def new2016Dataset():
     return ('abs.' + data_key.value, generator)
 
   output_generators = collections.OrderedDict(sorted(
-    [(x, create_2016_output_generator(x)) for x in output_labels] +
-    [get_weight_generator(x) for x in weight_datakeys]
+    #[(x, create_2016_output_generator(x)) for x in output_labels] +
+    #[get_weight_generator(x) for x in weight_datakeys] +
+    [('multi.all', create_2016_multi_output_generator(output_labels)),
+     ('multi.priorized', create_2016_multi_output_generator(sorted(
+        [x.value for x in weight_datakeys] + [DataKeys.COMPOSITION_DRY_MATTER.value])))]
   ))
 
   return Dataset(samples, input_labels, output_generators)
@@ -241,7 +248,7 @@ def main():
 
   regressors = collections.OrderedDict([
       ('random forests', lambda: RandomForestRegressor(n_estimators=100)),
-      ('boosted trees', lambda: GradientBoostingRegressor(max_depth=1)),
+      #('boosted trees', lambda: GradientBoostingRegressor(max_depth=1)),
   ])
 
   for regressor_name, regressor_generator in regressors.items():
@@ -253,7 +260,10 @@ def main():
     for output_name, output_generator in dataset.get_output_generators():
       X, y = dataset.generate(output_generator)
       y_pred = kfold_predict(X, y, regressor_generator)
-      print(','.join([output_name, str(X.shape[0]), str(r2_score(y, y_pred))]))
+      r2 = r2_score(y, y_pred, multioutput='raw_values')
+      print(','.join([output_name, str(X.shape[0]), str(r2)]))
+
+      print('\n'.join([str(x) for x in r2]))
 
 
 
