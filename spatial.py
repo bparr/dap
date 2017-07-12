@@ -61,7 +61,7 @@ def get_spatial_correlation(arg):
   # Sanity check: Random data should show no significant correlation.
   # Results: p-value of 0.905, so sanity check passed.
   #random.seed(10611)  # Does not seem to contain all randomness unfortunately.
-  #data = [(random.random(), 0.0) for x in samples]
+  #data = [random.random() for _ in samples]
 
   spatial_distances = squareform(pdist(spatial_data))
   # Add required second dimension, but set to 0.0, so no affect on distances.
