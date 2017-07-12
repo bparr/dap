@@ -19,6 +19,7 @@ import numpy as np
 import os
 import random
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
+from sklearn.feature_extraction import DictVectorizer
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import KFold
 from sklearn.model_selection import train_test_split
@@ -61,11 +62,10 @@ class Dataset(object):
 
   # output_generator must be one returned by get_output_generators().
   def generate(self, output_generator, shuffle=True):
-    # TODO double check ok to modify
     if shuffle:
       random.shuffle(self._samples)
 
-    X = []
+    X_dicts = []
     y = []
     for sample in self._samples:
       output = output_generator(sample)
@@ -73,10 +73,11 @@ class Dataset(object):
         # Ignore samples with missing output value.
         continue
 
-      X.append([sample[x] for x in self._input_labels])
+      X_dicts.append(dict([(x, sample[x]) for x in self._input_labels]))
       y.append(output)
 
-    return np.array(X), np.array(y)
+    vectorizer = DictVectorizer(sparse=False)
+    return vectorizer.fit_transform(X_dicts), np.array(y)
 
   def get_input_labels(self):
     return self._input_labels
