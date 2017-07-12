@@ -28,6 +28,9 @@ INPUT_PATH = '2016.csv'
 # top of page 208.
 MANTEL_PERMUTATIONS = 10000
 
+# Number of closest plots to count as adjacent (not including the plot itself).
+ADJACENT_COUNT = 8
+
 
 def get_output_path(spatial_keys_description):
   return 'spatial/' + spatial_keys_description + '.' + INPUT_PATH
@@ -53,20 +56,36 @@ def get_spatial_correlation(arg):
   if spatial_key2 is not None:
     spatial_data2 = [average_mismatch(x[spatial_key2.value]) for x in samples]
   spatial_data = list(zip(spatial_data1, spatial_data2))
-  # Add required second dimension, but set to 0.0, so no affect on distances.
-  data = [(average_mismatch(x[data_key.value]), 0.0) for x in samples]
+  data = [average_mismatch(x[data_key.value]) for x in samples]
 
   # Sanity check: Random data should show no significant correlation.
   # Results: p-value of 0.905, so sanity check passed.
   #random.seed(10611)  # Does not seem to contain all randomness unfortunately.
   #data = [(random.random(), 0.0) for x in samples]
 
-  spatial_distances = DistanceMatrix(squareform(pdist(spatial_data)))
-  data_distances = DistanceMatrix(squareform(pdist(data)))
-  coeff, p_value, n = mantel(spatial_distances, data_distances,
+  spatial_distances = squareform(pdist(spatial_data))
+  # Add required second dimension, but set to 0.0, so no affect on distances.
+  data_distances = squareform(pdist([(x, 0.0) for x in data]))
+
+  n = len(samples)
+  adjacent_data_distances = []
+  nonadjacent_data_distances = []
+  for i in range(n):
+    sorted_row = sorted(zip(spatial_distances[i], range(n)))
+    if sorted_row[0][0] != 0.0:
+      raise Exception('The plot itself is NOT the nearest plot??')
+    for j in range(1, ADJACENT_COUNT + 1):
+      adjacent_data_distances.append(data_distances[i][sorted_row[j][1]])
+    for j in range(ADJACENT_COUNT + 1, n):
+      nonadjacent_data_distances.append(data_distances[i][sorted_row[j][1]])
+
+
+  coeff, p_value, _ = mantel(DistanceMatrix(spatial_distances),
+                             DistanceMatrix(data_distances),
                              permutations=MANTEL_PERMUTATIONS)
 
-  return (data_key.value, n, coeff, p_value)
+  return (data_key.value, n, coeff, p_value, np.mean(data),
+          np.mean(adjacent_data_distances), np.mean(nonadjacent_data_distances))
 
 
 def main():
@@ -106,7 +125,9 @@ def main():
 
     with open(output_path, 'w') as f:
       csv_writer = csv.writer(f)
-      csv_writer.writerow(['label', 'num_data_points', 'corr_coeff', 'p_value'])
+      csv_writer.writerow(['label', 'num_data_points', 'corr_coeff', 'p_value',
+                           'avg_data_value', 'avg_adjacent_data_distance',
+                           'avg_nonadjacent_data_distance'])
       csv_writer.writerows(results)
 
 
