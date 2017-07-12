@@ -1,4 +1,4 @@
-bel,num_data_points,avg_data_value,avg_diff_between_adjacent_plots,avg_diff_between_nonadjacent_plots,corr_coeff,p_value
+label,num_data_points,avg_data_value,avg_diff_between_adjacent_plots,avg_diff_between_nonadjacent_plots,corr_coeff,p_value
 2016_08_05-08_vegetation_index,638,0.0699878762,0.0132583397,0.0157609398,0.1079662219,0.00009999
 2016_09_light_interception,623,31.6158120385,13.965985313,18.2867069491,0.0560279305,0.00009999
 AD-ICP,698,0.616504298,0.104237106,0.1082654984,0.0455703068,0.00029997
