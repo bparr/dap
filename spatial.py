@@ -84,8 +84,8 @@ def get_spatial_correlation(arg):
                              DistanceMatrix(data_distances),
                              permutations=MANTEL_PERMUTATIONS)
 
-  return (data_key.value, n, coeff, p_value, np.mean(data),
-          np.mean(adjacent_data_distances), np.mean(nonadjacent_data_distances))
+  return (data_key.value, n, np.mean(data), np.mean(adjacent_data_distances),
+          np.mean(nonadjacent_data_distances), coeff, p_value)
 
 
 def main():
@@ -125,9 +125,10 @@ def main():
 
     with open(output_path, 'w') as f:
       csv_writer = csv.writer(f)
-      csv_writer.writerow(['label', 'num_data_points', 'corr_coeff', 'p_value',
-                           'avg_data_value', 'avg_adjacent_data_distance',
-                           'avg_nonadjacent_data_distance'])
+      csv_writer.writerow(['label', 'num_data_points', 'avg_data_value',
+                           'avg_diff_between_adjacent_plots',
+                           'avg_diff_between_nonadjacent_plots',
+                           'corr_coeff', 'p_value'])
       csv_writer.writerows(results)
 
 
