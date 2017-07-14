@@ -61,6 +61,7 @@ class Dataset(object):
     print('Input labels:,', ', '.join(self._input_labels))
 
   # output_generator must be one returned by get_output_generators().
+  # Returns: (X labels, X, y)
   def generate(self, output_generator, shuffle=True):
     if shuffle:
       random.shuffle(self._samples)
@@ -77,10 +78,8 @@ class Dataset(object):
       y.append(output)
 
     vectorizer = DictVectorizer(sparse=False)
-    return vectorizer.fit_transform(X_dicts), np.array(y)
-
-  def get_input_labels(self):
-    return self._input_labels
+    X = vectorizer.fit_transform(X_dicts)
+    return vectorizer.feature_names_, X, np.array(y)
 
   def get_output_generators(self):
     return self._output_generators.items()
@@ -234,9 +233,9 @@ def main():
 
   if args.write_dataviews_only:
     for output_name, output_generator in dataset.get_output_generators():
-      X, y = dataset.generate(output_generator, shuffle=False)
+      X_labels, X, y = dataset.generate(output_generator, shuffle=False)
       write_csv(os.path.join('dataviews', args.dataset, output_name + '.csv'),
-                dataset.get_input_labels(), X, output_name, y)
+                X_labels, X, output_name, y)
     return
 
   regressors = collections.OrderedDict([
@@ -251,7 +250,7 @@ def main():
     print('\n\n' + regressor_name)
     print('output_label,num_samples,r2_score')
     for output_name, output_generator in dataset.get_output_generators():
-      X, y = dataset.generate(output_generator)
+      _, X, y = dataset.generate(output_generator)
       y_pred = kfold_predict(X, y, regressor_generator)
       print(','.join([output_name, str(X.shape[0]), str(r2_score(y, y_pred))]))
 
