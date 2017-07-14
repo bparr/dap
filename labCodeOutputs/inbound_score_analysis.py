@@ -9,7 +9,7 @@ import numpy as np
 import os
 
 # Number of std away from mean use for filter.
-M = 2
+M = 5
 
 NUM_SAMPLES = 698
 
