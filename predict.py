@@ -61,9 +61,9 @@ class Dataset(object):
     print('Input labels:,', ', '.join(self._input_labels))
 
   # output_generator must be one returned by get_output_generators().
-  def generate(self, output_generator, shuffle=True):
-    if shuffle:
-      random.shuffle(self._samples)
+  # Returns: (X labels, X, y)
+  def generate(self, output_generator):
+    random.shuffle(self._samples)
 
     X_dicts = []
     y = []
@@ -77,10 +77,8 @@ class Dataset(object):
       y.append(output)
 
     vectorizer = DictVectorizer(sparse=False)
-    return vectorizer.fit_transform(X_dicts), np.array(y)
-
-  def get_input_labels(self):
-    return self._input_labels
+    X = vectorizer.fit_transform(X_dicts)
+    return vectorizer.feature_names_, X, np.array(y)
 
   def get_output_generators(self):
     return self._output_generators.items()
@@ -219,6 +217,8 @@ def write_csv(file_path, input_labels, X, output_label, y):
 
 def main():
   global MISSING_VALUE
+  random.seed(RANDOM_SEED)
+  np.random.seed(RANDOM_SEED)
 
   DATASET_FACTORIES = {
     '2014': new2014Dataset,
@@ -241,13 +241,15 @@ def main():
 
   if args.write_dataviews_only:
     for output_name, output_generator in dataset.get_output_generators():
-      X, y = dataset.generate(output_generator, shuffle=False)
+      X_labels, X, y = dataset.generate(output_generator)
       write_csv(os.path.join('dataviews', args.dataset, output_name + '.csv'),
-                dataset.get_input_labels(), X, output_name, y)
+                X_labels, X, output_name, y)
     return
 
   regressors = collections.OrderedDict([
-      ('random forests', lambda: RandomForestRegressor(n_estimators=100)),
+      ('random forests', lambda: RandomForestRegressor(
+          n_estimators=100, max_depth=10, max_features='sqrt',
+          min_samples_split=10)),
       #('boosted trees', lambda: GradientBoostingRegressor(max_depth=1)),
   ])
 
@@ -258,7 +260,7 @@ def main():
     print('\n\n' + regressor_name)
     print('output_label,num_samples,r2_score')
     for output_name, output_generator in dataset.get_output_generators():
-      X, y = dataset.generate(output_generator)
+      _, X, y = dataset.generate(output_generator)
       y_pred = kfold_predict(X, y, regressor_generator)
       r2 = r2_score(y, y_pred, multioutput='raw_values')
       print(','.join([output_name, str(X.shape[0]), str(r2)]))
