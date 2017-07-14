@@ -1,63 +1,3 @@
-accession_origin= will be converted.
-accession_origin=Australia will be converted.
-accession_origin=Benin will be converted.
-accession_origin=Botswana will be converted.
-accession_origin=Burkina_Faso will be converted.
-accession_origin=Burundi will be converted.
-accession_origin=Cameroon will be converted.
-accession_origin=China will be converted.
-accession_origin=Egypt will be converted.
-accession_origin=Ethiopia will be converted.
-accession_origin=Former_Serbia_and_Montenegro will be converted.
-accession_origin=Former_Soviet_Union will be converted.
-accession_origin=Ghana will be converted.
-accession_origin=Hungary will be converted.
-accession_origin=India will be converted.
-accession_origin=Japan will be converted.
-accession_origin=Kenya will be converted.
-accession_origin=Malawi will be converted.
-accession_origin=Mali will be converted.
-accession_origin=Mexico will be converted.
-accession_origin=Nigeria will be converted.
-accession_origin=Rwanda will be converted.
-accession_origin=Senegal will be converted.
-accession_origin=South_Africa will be converted.
-accession_origin=Sudan will be converted.
-accession_origin=Swaziland will be converted.
-accession_origin=Syria will be converted.
-accession_origin=Tanzania will be converted.
-accession_origin=Togo will be converted.
-accession_origin=Turkey will be converted.
-accession_origin=Uganda will be converted.
-accession_origin=United_States will be converted.
-accession_origin=Yemen will be converted.
-accession_origin=Zaire will be converted.
-accession_origin=Zambia will be converted.
-accession_origin=Zimbabwe will be converted.
-accession_photoperiod= will be converted.
-accession_photoperiod=PHOTOPERIOD_INSENSITIVE will be converted.
-accession_photoperiod=PHOTOPERIOD_SENSITIVE will be converted.
-accession_race= will be converted.
-accession_race=Bicolor will be converted.
-accession_race=Caudatum will be converted.
-accession_race=Caudatum-bicolor will be converted.
-accession_race=Durra will be converted.
-accession_race=Durra-bicolor will be converted.
-accession_race=Durra-caudatum will be converted.
-accession_race=Guinea will be converted.
-accession_race=Guinea-bicolor will be converted.
-accession_race=Guinea-caudatum will be converted.
-accession_race=Guinea-durra will be converted.
-accession_race=Guinea-kafir will be converted.
-accession_race=Kafir will be converted.
-accession_race=Kafir-bicolor will be converted.
-accession_race=Kafir-caudatum will be converted.
-accession_race=Kafir-durra will be converted.
-accession_race=Mixed will be converted.
-accession_type= will be converted.
-accession_type=Cellulosic will be converted.
-accession_type=GRAIN will be converted.
-accession_type=Sweet will be converted.
 Starting fold 1 of 10-fold CV...
 Learnt 2/100 trees
 Learnt 4/100 trees
@@ -568,5 +508,5 @@ Learnt 94/100 trees
 Learnt 96/100 trees
 Learnt 98/100 trees
 Learnt 100/100 trees
-R2 = 0.306279
-time taken = 16 sec
+R2 = 0.289307
+time taken = 8 sec
