@@ -239,7 +239,9 @@ def main():
     return
 
   regressors = collections.OrderedDict([
-      ('random forests', lambda: RandomForestRegressor(n_estimators=100)),
+      ('random forests', lambda: RandomForestRegressor(
+          n_estimators=100, max_depth=10, max_features='sqrt',
+          min_samples_split=10)),
       ('boosted trees', lambda: GradientBoostingRegressor(max_depth=1)),
   ])
 
