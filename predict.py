@@ -62,9 +62,8 @@ class Dataset(object):
 
   # output_generator must be one returned by get_output_generators().
   # Returns: (X labels, X, y)
-  def generate(self, output_generator, shuffle=True):
-    if shuffle:
-      random.shuffle(self._samples)
+  def generate(self, output_generator):
+    random.shuffle(self._samples)
 
     X_dicts = []
     y = []
@@ -211,6 +210,8 @@ def write_csv(file_path, input_labels, X, output_label, y):
 
 def main():
   global MISSING_VALUE
+  random.seed(RANDOM_SEED)
+  np.random.seed(RANDOM_SEED)
 
   DATASET_FACTORIES = {
     '2014': new2014Dataset,
@@ -233,7 +234,7 @@ def main():
 
   if args.write_dataviews_only:
     for output_name, output_generator in dataset.get_output_generators():
-      X_labels, X, y = dataset.generate(output_generator, shuffle=False)
+      X_labels, X, y = dataset.generate(output_generator)
       write_csv(os.path.join('dataviews', args.dataset, output_name + '.csv'),
                 X_labels, X, output_name, y)
     return
