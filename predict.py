@@ -249,11 +249,10 @@ def main():
 
   regressors = collections.OrderedDict([
       # Customized.
+      # Based on lab code's configuration.
       ('random_forests', lambda: RandomForestRegressor(
           n_estimators=100, max_depth=10, max_features='sqrt',
           min_samples_split=10)),
-      # TODO remove since seems to perform worse than default settings?
-      ('boosted_trees', lambda: GradientBoostingRegressor(max_depth=1)),
 
       # Cross decomposition.
       ('PLSRegression', lambda: PLSRegression()),
