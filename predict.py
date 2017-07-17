@@ -68,7 +68,7 @@ class Dataset(object):
     self._input_labels = tuple(input_labels)
     self._output_generators = output_generators
 
-    print('Input labels:,', ', '.join(self._input_labels))
+    print(','.join(['INPUTS'] + list(self._input_labels)))
 
   # output_generator must be one returned by get_output_generators().
   # Returns: (X labels, X, y)
@@ -242,18 +242,18 @@ def main():
   dataset = (DATASET_FACTORIES[args.dataset])()
 
   if args.write_dataviews_only:
-    for output_name, output_generator in dataset.get_output_generators():
+    for output_label, output_generator in dataset.get_output_generators():
       X_labels, X, y = dataset.generate(output_generator, shuffle=False)
-      write_csv(os.path.join('dataviews', args.dataset, output_name + '.csv'),
-                X_labels, X, output_name, y)
+      write_csv(os.path.join('dataviews', args.dataset, output_label + '.csv'),
+                X_labels, X, output_label, y)
     return
 
   regressors = collections.OrderedDict([
       # Customized.
-      ('random forests', lambda: RandomForestRegressor(
+      ('random_forests', lambda: RandomForestRegressor(
           n_estimators=100, max_depth=10, max_features='sqrt',
           min_samples_split=10)),
-      ('boosted trees', lambda: GradientBoostingRegressor(max_depth=1)),
+      ('boosted_trees', lambda: GradientBoostingRegressor(max_depth=1)),
 
       # Cross decomposition.
       ('PLSRegression', lambda: PLSRegression()),
@@ -306,18 +306,25 @@ def main():
       ('ExtraTreeRegressor', lambda: ExtraTreeRegressor()),
   ])
 
+  results = {}
   for regressor_name, regressor_generator in regressors.items():
     random.seed(RANDOM_SEED)
     np.random.seed(RANDOM_SEED)
 
-    print('\n\n' + regressor_name)
-    print('output_label,num_samples,r2_score')
-    for output_name, output_generator in dataset.get_output_generators():
+    for output_label, output_generator in dataset.get_output_generators():
       _, X, y = dataset.generate(output_generator)
       y_pred = kfold_predict(X, y, regressor_generator)
-      print(','.join([output_name, str(X.shape[0]), str(r2_score(y, y_pred))]))
-      sys.stdout.flush()
 
+      if not output_label in results:
+        results[output_label] = {'num_samples': str(X.shape[0])}
+      results[output_label][regressor_name] = str(r2_score(y, y_pred))
+
+  regressor_names = list(regressors.keys())
+  print(','.join(['output_label', 'num_samples'] + regressor_names))
+  for output_label in sorted(results.keys()):
+    result = results[output_label]
+    print(','.join([output_label, result['num_samples']] +
+                   [result[x] for x in regressor_names]))
 
 
 if __name__ == '__main__':
