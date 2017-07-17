@@ -278,10 +278,13 @@ def main():
       ('ARDRegression', lambda: ARDRegression()),
       ('HuberRegressor', lambda: HuberRegressor()),
       ('LinearRegression', lambda: LinearRegression()),
-      ('LogisticRegression', lambda: LogisticRegression()),
-      ('LogisticRegressionCV', lambda: LogisticRegressionCV()),
+      # ValueError: Unknown label type: 'continuous'
+      #('LogisticRegression', lambda: LogisticRegression()),
+      # ValueError: Unknown label type: 'continuous'
+      #('LogisticRegressionCV', lambda: LogisticRegressionCV()),
       ('PassiveAggressiveRegressor', lambda: PassiveAggressiveRegressor()),
-      ('RandomizedLogisticRegression', lambda: RandomizedLogisticRegression()),
+      # ValueError: Unknown label type: 'continuous'
+      #('RandomizedLogisticRegression', lambda: RandomizedLogisticRegression()),
       ('RANSACRegressor', lambda: RANSACRegressor()),
       ('SGDRegressor', lambda: SGDRegressor()),
       # Way too slow.
