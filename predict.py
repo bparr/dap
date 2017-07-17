@@ -18,12 +18,22 @@ from merge_data import DataKeys, MISMATCH_DELIMETER
 import numpy as np
 import os
 import random
-from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
+from sklearn.cross_decomposition import PLSRegression
+from sklearn.ensemble import AdaBoostRegressor, BaggingRegressor, ExtraTreesRegressor, GradientBoostingRegressor, RandomForestRegressor
 from sklearn.feature_extraction import DictVectorizer
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.isotonic import IsotonicRegression
+from sklearn.kernel_ridge import KernelRidge
+from sklearn.linear_model import ARDRegression, HuberRegressor, LinearRegression, LogisticRegression, LogisticRegressionCV, PassiveAggressiveRegressor, RandomizedLogisticRegression, RANSACRegressor, SGDRegressor, TheilSenRegressor
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import KFold
 from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsRegressor, RadiusNeighborsRegressor
+from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import Imputer
+from sklearn.svm import SVR, LinearSVR, NuSVR
+from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
+import sys
 
 
 RANDOM_SEED = 10611
@@ -239,10 +249,61 @@ def main():
     return
 
   regressors = collections.OrderedDict([
+      # Customized.
       ('random forests', lambda: RandomForestRegressor(
           n_estimators=100, max_depth=10, max_features='sqrt',
           min_samples_split=10)),
       ('boosted trees', lambda: GradientBoostingRegressor(max_depth=1)),
+
+      # Cross decomposition.
+      ('PLSRegression', lambda: PLSRegression()),
+
+      # Ensemble.
+      ('AdaBoostRegressor', lambda: AdaBoostRegressor()),
+      ('BaggingRegressor', lambda: BaggingRegressor()),
+      ('ExtraTreesRegressor', lambda: ExtraTreesRegressor()),
+      ('GradientBoostingRegressor', lambda: GradientBoostingRegressor()),
+      ('RandomForestRegressor', lambda: RandomForestRegressor()),
+
+      # Gaussian.
+      ('GaussianProcessRegressor', lambda: GaussianProcessRegressor()),
+
+      # Isotonic regression.
+      # ValueError: X should be a 1d array
+      #('IsotonicRegression', lambda: IsotonicRegression()),
+
+      # Kernel ridge.
+      ('KernelRidge', lambda: KernelRidge()),
+
+      # Linear.
+      ('ARDRegression', lambda: ARDRegression()),
+      ('HuberRegressor', lambda: HuberRegressor()),
+      ('LinearRegression', lambda: LinearRegression()),
+      ('LogisticRegression', lambda: LogisticRegression()),
+      ('LogisticRegressionCV', lambda: LogisticRegressionCV()),
+      ('PassiveAggressiveRegressor', lambda: PassiveAggressiveRegressor()),
+      ('RandomizedLogisticRegression', lambda: RandomizedLogisticRegression()),
+      ('RANSACRegressor', lambda: RANSACRegressor()),
+      ('SGDRegressor', lambda: SGDRegressor()),
+      # Way too slow.
+      #('TheilSenRegressor', lambda: TheilSenRegressor()),
+
+      # Neighbors.
+      ('KNeighborsRegressor', lambda: KNeighborsRegressor()),
+      # Predicts Nan, infinity or too large of value.
+      #('RadiusNeighborsRegressor', lambda: RadiusNeighborsRegressor()),
+
+      # Neural network.
+      ('MLPRegressor', lambda: MLPRegressor(max_iter=1000)),
+
+      # Support vector machine.
+      ('SVR', lambda: SVR()),
+      ('LinearSVR', lambda: LinearSVR()),
+      ('NuSVR', lambda: NuSVR()),
+
+      # Tree.
+      ('DecisionTreeRegressor', lambda: DecisionTreeRegressor()),
+      ('ExtraTreeRegressor', lambda: ExtraTreeRegressor()),
   ])
 
   for regressor_name, regressor_generator in regressors.items():
@@ -255,6 +316,7 @@ def main():
       _, X, y = dataset.generate(output_generator)
       y_pred = kfold_predict(X, y, regressor_generator)
       print(','.join([output_name, str(X.shape[0]), str(r2_score(y, y_pred))]))
+      sys.stdout.flush()
 
 
 
