@@ -275,7 +275,8 @@ def main():
       ('KernelRidge', lambda: KernelRidge()),
 
       # Linear.
-      ('ARDRegression', lambda: ARDRegression()),
+      # Way too slow.
+      #('ARDRegression', lambda: ARDRegression()),
       ('HuberRegressor', lambda: HuberRegressor()),
       ('LinearRegression', lambda: LinearRegression()),
       # ValueError: Unknown label type: 'continuous'
