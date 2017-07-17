@@ -33,7 +33,6 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import Imputer
 from sklearn.svm import SVR, LinearSVR, NuSVR
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
-import sys
 
 
 RANDOM_SEED = 10611
