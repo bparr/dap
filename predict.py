@@ -200,8 +200,10 @@ def kfold_predict(X, y, regressor_generator):
     regressor = regressor_generator().fit(X_train, y_train)
     y_pred.extend(zip(test_indexes, regressor.predict(X_test)))
 
-  y_pred = dict(y_pred)
-  return [y_pred[i] for i in range(len(X))]
+  y_pred_dict = dict(y_pred)
+  if len(y_pred_dict) != len(y_pred):
+    raise Exception('kfold splitting was bad.')
+  return [y_pred_dict[i] for i in range(len(X))]
 
 
 # Output completely preprocessed CSV files.
