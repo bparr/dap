@@ -4,8 +4,8 @@
 Parse full csv and predict harvest data.
 
 Usage:
-  ./predict.py > predict.2016.out
-  ./predict.py -d 2014 > predict.2014.out
+  ./predict_test.py && ./predict.py > predict.2016.out
+  ./predict_test.py && ./predict.py -d 2014 > predict.2014.out
 
 """
 # TODO tests?
@@ -182,6 +182,31 @@ def get_weight(sample, dry_weight_label, label, minus=None):
   if is_missing(value) or is_missing(minus_value) or is_missing(dry_weight):
     return MISSING_VALUE
   return dry_weight * (value - minus_value) / 100.0
+
+
+# Generates new samples with input features missing in a way found in X.
+# Note this only generates new samples, and not samples already in X.
+def generate_augmented(X, y):
+  missings = []
+  for x_sample in X:
+    missings.append(tuple(is_missing(a) for a in x_sample))
+  missings_set = set(missings)
+  print(missings_set)
+
+  X_augmented = []
+  y_augmented = []
+  for x_sample, x_missing, y_sample in zip(X, missings, y):
+    for missing in missings_set:
+      if not any((not a and b) for a, b in zip(x_missing, missing)):
+	# Ignore if it would not alter x_sample.
+        continue
+
+      X_augmented.append(
+          [(MISSING_VALUE if b else a) for a, b in zip(x_sample, missing)])
+      y_augmented.append(y_sample)
+
+  print(len(X_augmented))
+  return X_augmented, y_augmented
 
 
 def kfold_predict(X, y, regressor_generator):
