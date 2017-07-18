@@ -191,7 +191,6 @@ def generate_augmented(X, y):
   for x_sample in X:
     missings.append(tuple(is_missing(a) for a in x_sample))
   missings_set = set(missings)
-  print(missings_set)
 
   X_augmented = []
   y_augmented = []
@@ -205,7 +204,6 @@ def generate_augmented(X, y):
           [(MISSING_VALUE if b else a) for a, b in zip(x_sample, missing)])
       y_augmented.append(y_sample)
 
-  print(len(X_augmented))
   return X_augmented, y_augmented
 
 
@@ -216,6 +214,10 @@ def kfold_predict(X, y, regressor_generator):
   for train_indexes, test_indexes in kf.split(X):
     X_train, X_test = X[train_indexes], X[test_indexes]
     y_train, y_test = y[train_indexes], y[test_indexes]
+
+    X_augmented, y_augmented = generate_augmented(X, y)
+    X_train = np.append(X_train, X_augmented, axis=0)
+    y_train = np.append(y_train, y_augmented, axis=0)
 
     imp = Imputer()
     # Parser ignores rows with missing y, so no need to impute y.
@@ -354,6 +356,8 @@ def main():
       if not output_label in results:
         results[output_label] = {'num_samples': str(X.shape[0])}
       results[output_label][regressor_name] = str(r2_score(y, y_pred))
+      # TODO speed up by reorganizing so augmentation happens once-ish.
+      print(output_label, r2_score(y, y_pred))
 
   regressor_names = list(regressors.keys())
   print(','.join(['output_label', 'num_samples'] + regressor_names))
