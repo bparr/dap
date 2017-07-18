@@ -230,6 +230,8 @@ def main():
   parser.add_argument('-d', '--dataset', default='2016',
                       choices=list(DATASET_FACTORIES.keys()),
                       help='Which dataset to use.')
+  parser.add_argument('--rf_only', action='store_true',
+                      help='Only fit main random forest predictor.')
   parser.add_argument('--write_dataviews_only', action='store_true',
                       help='No prediction. Just write data views.')
   args = parser.parse_args()
@@ -308,6 +310,10 @@ def main():
       ('DecisionTreeRegressor', lambda: DecisionTreeRegressor()),
       ('ExtraTreeRegressor', lambda: ExtraTreeRegressor()),
   ])
+
+  if args.rf_only:
+    # Strip regressors dictionary to just the first entry (i.e. the main RF).
+    regressors = collections.OrderedDict([next(iter(regressors.items()))])
 
   results = {}
   for regressor_name, regressor_generator in regressors.items():
