@@ -36,6 +36,8 @@ from sklearn.svm import SVR, LinearSVR, NuSVR
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
 
 RF_REGRESSOR_NAME = 'random_forest'
+# Path to save plot, formatted with the dataset name.
+FEATURE_IMPORTANCE_SAVE_PATH = 'feature_importance.%s.png'
 
 RANDOM_SEED = 10611
 
@@ -435,13 +437,15 @@ def main():
   # Plot the feature importances of the forest.
   # Based on http://scikit-learn.org/stable/auto_examples/ensemble/plot_forest_importances.html.
   indices = np.argsort(mean_feature_importances)[::-1]
-  plt.figure()
+  fig = plt.figure()
   plt.title("Feature Importances")
   plt.bar(range(len(indices)), mean_feature_importances[indices],
           color="r", yerr=std_feature_importances[indices], align="center")
-  plt.xticks(range(len(indices)), [input_labels[x] for x in indices])
+  plt.xticks(range(len(indices)), [input_labels[x] for x in indices],
+             rotation='vertical', fontsize=8)
   plt.xlim([-1, len(indices)])
-  plt.show()
+  plt.tight_layout()
+  plt.savefig(FEATURE_IMPORTANCE_SAVE_PATH % args.dataset)
 
 
 if __name__ == '__main__':
