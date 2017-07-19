@@ -261,18 +261,21 @@ class TestOutput(unittest.TestCase):
             d['RW'], d['RA1'], DK.SYNTHETIC_HARVEST_SF16h_PAN_120_STD,
             has_fill_rows=False))
 
-  def test_cross_validation_10folds(self):
-    counts = [0] * 10
-    for output_columns in MERGED_OUTPUT_CONTENTS.values():
-      for output_line in output_columns.values():
-        value = output_line[merge_data.DataKeys.CROSS_VALIDATION_10FOLD.value]
-        self.assertNotIn(merge_data.MISMATCH_DELIMETER, value)
-        value = int(value)
-        self.assertTrue(value >= 0)
-        self.assertTrue(value < 10)
-        counts[value] += 1
+  def test_cross_validation_kfolds(self):
+    # Do not split merged output into individual rows.
+    with open(merge_data.MERGED_OUTPUT_FILENAME, 'r') as f:
+      output_lines = [d for d in csv.DictReader(f)]
 
-    print(counts)
+    counts = [0] * merge_data.CV_KFOLDS
+    for output_line in output_lines:
+      value = output_line[merge_data.DataKeys.CROSS_VALIDATION_KFOLD.value]
+      self.assertNotIn(merge_data.MISMATCH_DELIMETER, value)
+      value = int(value)
+      self.assertTrue(value >= 0)
+      self.assertTrue(value < merge_data.CV_KFOLDS)
+      counts[value] += 1
+
+    self.assertSetEqual(set([76, 77]), set(counts))
 
   def test_mergeContentsIsSupersetOfNonMergedOutput(self):
     for output_columns in OUTPUT_CONTENTS.values():

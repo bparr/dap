@@ -43,6 +43,9 @@ MISMATCH_DELIMETER = ' && '
 # TODO better name than Cell?
 ROWS_IN_CELL = 4
 
+# How many subsets for future cross-validation.
+CV_KFOLDS = 10
+
 RANDOM_SEED = 10611
 
 
@@ -282,7 +285,7 @@ def add_synthetic_values(cells, data_keys, mean_data_key, std_data_key):
       cell.add_data(std_data_key, str(np.std(values)))
 
 
-def add_cross_validation_10folds(cells):
+def add_cross_validation_kfolds(cells):
   sorted_cells = cells.sorted()
   plots = []
   for cell in sorted_cells:
@@ -292,14 +295,18 @@ def add_cross_validation_10folds(cells):
     plots.append((row, column))
 
   num_plots = len(plots)
-  ten_folds = [int(10.0 * i / num_plots) for i in range(num_plots)]
+  folds = []
+  for i in range(CV_KFOLDS):
+    folds.extend([i] * int(num_plots / CV_KFOLDS))
+    if i < (num_plots % CV_KFOLDS):
+      folds.append(i)
   random.seed(RANDOM_SEED)
-  random.shuffle(ten_folds)
+  random.shuffle(folds)
   for cell in sorted_cells:
     row, column = cell.get_coordinates()
     row -= (row - 1) % ROWS_IN_CELL
-    value = ten_folds[plots.index((row, column))]
-    cell.add_data(DataKeys.CROSS_VALIDATION_10FOLD, value)
+    value = folds[plots.index((row, column))]
+    cell.add_data(DataKeys.CROSS_VALIDATION_KFOLD, value)
 
 
 # TODO(bparr): 2016_09_penetrometer_robot_Large_Stalks.csv has two lines for
@@ -381,7 +388,7 @@ class DataKeys(Enum):
   PLOT_PLAN_CON = 'plot_plan_con'
   PLOT_PLAN_BARCODE = 'plot_plan_barcode'
   PLOT_PLAN_END = 'plot_plan_end'
-  CROSS_VALIDATION_10FOLD = 'cross_validation_10fold'
+  CROSS_VALIDATION_KFOLD = 'cross_validation_%dfold' % CV_KFOLDS
 
 
 # Write output file.
@@ -444,7 +451,7 @@ def main():
                                DataKeys.HARVEST_SF16h_PAN3_120],
       DataKeys.SYNTHETIC_HARVEST_SF16h_PAN_120_MEAN,
       DataKeys.SYNTHETIC_HARVEST_SF16h_PAN_120_STD)
-  add_cross_validation_10folds(cells)
+  add_cross_validation_kfolds(cells)
 
   sorted_cells = cells.sorted()
   write_csv(OUTPUT_FILENAME, sorted_cells)
