@@ -100,6 +100,7 @@ class Dataset(object):
       self._vectorized_feature_names = vectorizer.get_feature_names()
     if self._vectorized_feature_names != vectorizer.get_feature_names():
       # Equality is currently used to match up feature importance across kfold.
+      # This could be removed if store mappings and merge correctly in code.
       raise Exception('Vectorized feature names changed!')
 
     return vectorizer.feature_names_, X, np.array(y)
@@ -263,6 +264,20 @@ def kfold_predict(X, y, regressor_generator):
   return [y_pred_dict[i] for i in range(len(X))], regressors
 
 
+# Merge (sum) importances that have the same input label.
+def merge_importances(input_labels, feature_importances):
+  feature_importances = np.array(feature_importances)
+  sorted_input_labels = sorted(set(input_labels))
+  input_label_to_index = dict((y, x) for x, y in enumerate(sorted_input_labels))
+  merged_feature_importances = np.zeros((feature_importances.shape[0],
+                                         len(input_label_to_index)))
+  for i, input_label in enumerate(input_labels):
+    merged_feature_importances[:,input_label_to_index[input_label]] += (
+        feature_importances[:, i])
+
+  return sorted_input_labels, merged_feature_importances
+
+
 # Output completely preprocessed CSV files.
 # Currently useful for verifying results against lab's random forest code.
 def write_csv(file_path, input_labels, X, output_label, y):
@@ -408,8 +423,8 @@ def main():
 
   print('\n')
   print(','.join(['input_label', 'mean_importance', 'std_importance']))
-  # TODO combine input_labels with same values!
-  input_labels = dataset.get_input_labels()
+  input_labels, feature_importances = merge_importances(
+      dataset.get_input_labels(), feature_importances)
   mean_feature_importances = np.mean(feature_importances, axis=0)
   std_feature_importances = np.std(feature_importances, axis=0)
   for i, input_label in enumerate(input_labels):
