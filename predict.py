@@ -187,14 +187,8 @@ def new2016Dataset(include_harvest=True):
       DataKeys.COMPOSITION_CELLULOSE,
       DataKeys.COMPOSITION_HEMICELLULOSE)
 
-  def get_weight_generator(data_key):
-    DRY_MATTER = DataKeys.COMPOSITION_DRY_MATTER.value
-    generator = lambda sample: get_weight(sample, DRY_MATTER, data_key.value)
-    return ('abs.' + data_key.value, generator)
-
   output_generators = collections.OrderedDict(sorted(
-    [(x, create_2016_output_generator(x)) for x in output_labels] +
-    [get_weight_generator(x) for x in weight_datakeys]
+    [(x, create_2016_output_generator(x)) for x in output_labels]
   ))
 
   return Dataset(samples, input_labels, output_generators)
