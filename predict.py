@@ -195,15 +195,15 @@ def generate_augmented(X, y):
   X_augmented = []
   y_augmented = []
   for x_sample, x_missing, y_sample in zip(X, missings, y):
-    augmented_missings = set([x_missing])
+    #augmented_missings = set([x_missing])
     for missing in missings_set:
-      augmented_missing = tuple((a or b) for a, b in zip(x_missing, missing))
+      #augmented_missing = tuple((a or b) for a, b in zip(x_missing, missing))
       # TODO disable this? What is the effect on performance?
-      if augmented_missing in augmented_missings:
+      #if augmented_missing in augmented_missings:
       # Ignore already seen sample augmentations.
-        continue
+      #  continue
 
-      augmented_missings.add(augmented_missing)
+      #augmented_missings.add(augmented_missing)
       X_augmented.append(
           [(MISSING_VALUE if b else a) for a, b in zip(x_sample, missing)])
       y_augmented.append(y_sample)
@@ -219,9 +219,10 @@ def kfold_predict(X, y, regressor_generator):
     X_train, X_test = X[train_indexes], X[test_indexes]
     y_train, y_test = y[train_indexes], y[test_indexes]
 
-    X_augmented, y_augmented = generate_augmented(X_train, y_train)
-    X_train = np.append(X_train, X_augmented, axis=0)
-    y_train = np.append(y_train, y_augmented, axis=0)
+    # TODO reenable?!
+    #X_augmented, y_augmented = generate_augmented(X_train, y_train)
+    #X_train = np.append(X_train, X_augmented, axis=0)
+    #y_train = np.append(y_train, y_augmented, axis=0)
 
     imp = Imputer()
     # Parser ignores rows with missing y, so no need to impute y.
