@@ -20,6 +20,7 @@ import csv_utils
 from enum import Enum
 import numpy as np
 import os
+import random
 
 DATA_DIRECTORY = '2016'
 OUTPUT_FILENAME = DATA_DIRECTORY + '.csv'
@@ -41,6 +42,8 @@ MISMATCH_DELIMETER = ' && '
 # The amount of rows a single cell contains.
 # TODO better name than Cell?
 ROWS_IN_CELL = 4
+
+RANDOM_SEED = 10611
 
 
 # Averge multiple numeric values, caused by mismatched data merging.
@@ -279,6 +282,26 @@ def add_synthetic_values(cells, data_keys, mean_data_key, std_data_key):
       cell.add_data(std_data_key, str(np.std(values)))
 
 
+def add_cross_validation_10folds(cells):
+  sorted_cells = cells.sorted()
+  plots = []
+  for cell in sorted_cells:
+    row, column = cell.get_coordinates()
+    if row % ROWS_IN_CELL != 1:
+      continue
+    plots.append((row, column))
+
+  num_plots = len(plots)
+  ten_folds = [int(10.0 * i / num_plots) for i in range(num_plots)]
+  random.seed(RANDOM_SEED)
+  random.shuffle(ten_folds)
+  for cell in sorted_cells:
+    row, column = cell.get_coordinates()
+    row -= (row - 1) % ROWS_IN_CELL
+    value = ten_folds[plots.index((row, column))]
+    cell.add_data(DataKeys.CROSS_VALIDATION_10FOLD, value)
+
+
 # TODO(bparr): 2016_09_penetrometer_robot_Large_Stalks.csv has two lines for
 #              Rw22 Ra32 which seem to describe completely different plants. So
 #              ignoring.
@@ -358,6 +381,7 @@ class DataKeys(Enum):
   PLOT_PLAN_CON = 'plot_plan_con'
   PLOT_PLAN_BARCODE = 'plot_plan_barcode'
   PLOT_PLAN_END = 'plot_plan_end'
+  CROSS_VALIDATION_10FOLD = 'cross_validation_10fold'
 
 
 # Write output file.
@@ -420,6 +444,7 @@ def main():
                                DataKeys.HARVEST_SF16h_PAN3_120],
       DataKeys.SYNTHETIC_HARVEST_SF16h_PAN_120_MEAN,
       DataKeys.SYNTHETIC_HARVEST_SF16h_PAN_120_STD)
+  add_cross_validation_10folds(cells)
 
   sorted_cells = cells.sorted()
   write_csv(OUTPUT_FILENAME, sorted_cells)
