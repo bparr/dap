@@ -4,8 +4,9 @@
 Parse full csv and predict harvest data.
 
 Usage:
-  ./predict_test.py && ./predict.py > predict.2016.out
-  ./predict_test.py && ./predict.py -d 2014 > predict.2014.out
+  ./predict.py -d 2016 > predict.2016.out
+  ./predict.py -d 2016.noHarvest > predict.2016.noHarvest.out
+  ./predict.py -d 2014 > predict.2014.out
 
 """
 # TODO tests?
@@ -162,7 +163,7 @@ def filter_2016_labels(data_key_starts_with):
 def create_2016_output_generator(key):
   return lambda sample: sample[key]
 
-def new2016Dataset():
+def new2016Dataset(include_harvest=True):
   samples = csv_utils.read_csv_as_dicts('2016.merged.csv')
   convert_to_float_or_missing(samples, filter_2016_labels((
       'HARVEST_', 'COMPOSITION_', 'ROBOT_', 'SYNTHETIC_', 'GPS_')) +
@@ -170,12 +171,13 @@ def new2016Dataset():
 
   # TODO what to include? Allow multiple subsets through commandline?
   input_data_keys_starts_with = [
-      'HARVEST_',
       'ROBOT_',
-      'SYNTHETIC_',
       #'GPS_',
       'ACCESSION_',
   ]
+  if include_harvest:
+    input_data_keys_starts_with.append('HARVEST_')
+    input_data_keys_starts_with.append('SYNTHETIC_HARVEST_')
 
   input_labels = filter_2016_labels(tuple(input_data_keys_starts_with))
   output_labels = filter_2016_labels('COMPOSITION_')
@@ -196,6 +198,10 @@ def new2016Dataset():
   ))
 
   return Dataset(samples, input_labels, output_generators)
+
+
+def new2016NoHarvestDataset():
+  return new2016Dataset(include_harvest=False)
 
 
 
@@ -300,6 +306,7 @@ def main():
   DATASET_FACTORIES = {
     '2014': new2014Dataset,
     '2016': new2016Dataset,
+    '2016.noHarvest': new2016NoHarvestDataset,
   }
 
   parser = argparse.ArgumentParser(description='Predict harvest data.')

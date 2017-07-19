@@ -330,10 +330,10 @@ class DataKeys(Enum):
   ROBOT_LIGHT_INTERCEPTION_09 = '2016_09_light_interception'
 
   # Synthetically created data.
-  SYNTHETIC_SF16h_HGT_120_MEAN = 'SF16h_HGT_120_MEAN'
-  SYNTHETIC_SF16h_HGT_120_STD = 'SF16h_HGT_120_STD'
-  SYNTHETIC_SF16h_PAN_120_MEAN = 'SF16h_PAN_120_MEAN'
-  SYNTHETIC_SF16h_PAN_120_STD = 'SF16h_PAN_120_STD'
+  SYNTHETIC_HARVEST_SF16h_HGT_120_MEAN = 'SF16h_HGT_120_MEAN'
+  SYNTHETIC_HARVEST_SF16h_HGT_120_STD = 'SF16h_HGT_120_STD'
+  SYNTHETIC_HARVEST_SF16h_PAN_120_MEAN = 'SF16h_PAN_120_MEAN'
+  SYNTHETIC_HARVEST_SF16h_PAN_120_STD = 'SF16h_PAN_120_STD'
 
   # GPS location, in UTM format.
   GPS_EASTINGS = 'gps_eastings_UTMzone17N'
@@ -408,13 +408,13 @@ def main():
   add_synthetic_values(cells, [DataKeys.HARVEST_SF16h_HGT1_120,
                                DataKeys.HARVEST_SF16h_HGT2_120,
                                DataKeys.HARVEST_SF16h_HGT3_120],
-      DataKeys.SYNTHETIC_SF16h_HGT_120_MEAN,
-      DataKeys.SYNTHETIC_SF16h_HGT_120_STD)
+      DataKeys.SYNTHETIC_HARVEST_SF16h_HGT_120_MEAN,
+      DataKeys.SYNTHETIC_HARVEST_SF16h_HGT_120_STD)
   add_synthetic_values(cells, [DataKeys.HARVEST_SF16h_PAN1_120,
                                DataKeys.HARVEST_SF16h_PAN2_120,
                                DataKeys.HARVEST_SF16h_PAN3_120],
-      DataKeys.SYNTHETIC_SF16h_PAN_120_MEAN,
-      DataKeys.SYNTHETIC_SF16h_PAN_120_STD)
+      DataKeys.SYNTHETIC_HARVEST_SF16h_PAN_120_MEAN,
+      DataKeys.SYNTHETIC_HARVEST_SF16h_PAN_120_STD)
 
   sorted_cells = cells.sorted()
   write_csv(OUTPUT_FILENAME, sorted_cells)
