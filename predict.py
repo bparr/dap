@@ -328,9 +328,8 @@ def main():
   regressor_generators = collections.OrderedDict([
       # Customized.
       # Based on lab code's configuration.
-      # TODO change back to 100 n_estimators!
       (RF_REGRESSOR_NAME, lambda: RandomForestRegressor(
-          n_estimators=10, max_depth=10, max_features='sqrt',
+          n_estimators=100, max_depth=10, max_features='sqrt',
           min_samples_split=10)),
 
       # Cross decomposition.
