@@ -16,7 +16,7 @@ import collections
 import csv
 import csv_utils
 import matplotlib.pyplot as plt
-from merge_data import DataKeys, MISMATCH_DELIMETER
+from merge_data import DataKeys, average_mismatch
 import numpy as np
 import os
 import random
@@ -60,7 +60,7 @@ def convert_to_float_or_missing(samples, labels):
         sample[label] = MISSING_VALUE
         continue
 
-      sample[label] = np.mean([float(x) for x in v.split(MISMATCH_DELIMETER)])
+      sample[label] = average_mismatch(v)
       if is_missing(sample[label]):
         raise Exception('Bad value:', v)
 

@@ -11,7 +11,7 @@ the name[key description].2016.csv.
 
 import csv
 import csv_utils
-from merge_data import DataKeys, MISMATCH_DELIMETER
+from merge_data import DataKeys, average_mismatch
 from multiprocessing import Pool
 import numpy as np
 import random
@@ -34,11 +34,6 @@ ADJACENT_COUNT = 8
 
 def get_output_path(spatial_keys_description):
   return 'spatial/' + spatial_keys_description + '.' + INPUT_PATH
-
-
-# Averge multiple numeric values, caused by mismatched data merging.
-def average_mismatch(value):
-  return np.mean([float(x) for x in value.split(MISMATCH_DELIMETER)])
 
 
 # Computes spatial correlation relative to the two spatial keys provided

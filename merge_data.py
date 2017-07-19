@@ -43,6 +43,11 @@ MISMATCH_DELIMETER = ' && '
 ROWS_IN_CELL = 4
 
 
+# Averge multiple numeric values, caused by mismatched data merging.
+def average_mismatch(value):
+  return np.mean([float(x) for x in value.split(MISMATCH_DELIMETER)])
+
+
 # Parse a single row or column cell coordinate to an int.
 def parse_coordinate(coordinate):
   if isinstance(coordinate, int):
