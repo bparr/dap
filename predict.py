@@ -14,6 +14,7 @@ import argparse
 import collections
 import csv
 import csv_utils
+import matplotlib.pyplot as plt
 from merge_data import DataKeys, MISMATCH_DELIMETER
 import numpy as np
 import os
@@ -34,6 +35,7 @@ from sklearn.preprocessing import Imputer
 from sklearn.svm import SVR, LinearSVR, NuSVR
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
 
+RF_REGRESSOR_NAME = 'random_forest'
 
 RANDOM_SEED = 10611
 
@@ -61,11 +63,16 @@ def convert_to_float_or_missing(samples, labels):
 
 
 class Dataset(object):
+  _DICT_VECTORIZER_SEPERATOR = '='
+
   def __init__(self, samples, input_labels, output_generators):
     # Order modified (shuffled) by self.generate().
     self._samples = samples
     self._input_labels = tuple(input_labels)
     self._output_generators = output_generators
+
+    # Generated and verified in self.generate().
+    self._vectorized_feature_names = None
 
     print(','.join(['INPUTS'] + list(self._input_labels)))
 
@@ -86,9 +93,25 @@ class Dataset(object):
       X_dicts.append(dict([(x, sample[x]) for x in self._input_labels]))
       y.append(output)
 
-    vectorizer = DictVectorizer(sparse=False)
+    vectorizer = DictVectorizer(separator=Dataset._DICT_VECTORIZER_SEPERATOR,
+                                sort=True, sparse=False)
     X = vectorizer.fit_transform(X_dicts)
+    if self._vectorized_feature_names is None:
+      self._vectorized_feature_names = vectorizer.get_feature_names()
+    if self._vectorized_feature_names != vectorizer.get_feature_names():
+      # Equality is currently used to match up feature importance across kfold.
+      raise Exception('Vectorized feature names changed!')
+
     return vectorizer.feature_names_, X, np.array(y)
+
+  # Can contain a label multiple times if its values were strings, since
+  # DictVectorizer converts those to one-hot vectors.
+  # Raises an error if called before self.generate() is called.
+  def get_input_labels(self):
+    if self._vectorized_feature_names is None:
+      raise Exception('Can not call get_input_labels before generate.')
+    sep = Dataset._DICT_VECTORIZER_SEPERATOR
+    return [x.split(sep)[0] for x in self._vectorized_feature_names]
 
   def get_output_generators(self):
     return self._output_generators.items()
@@ -215,6 +238,7 @@ def kfold_predict(X, y, regressor_generator):
   y_pred = []
 
   kf = KFold(n_splits=10)
+  regressors = []
   for train_indexes, test_indexes in kf.split(X):
     X_train, X_test = X[train_indexes], X[test_indexes]
     y_train, y_test = y[train_indexes], y[test_indexes]
@@ -231,11 +255,12 @@ def kfold_predict(X, y, regressor_generator):
 
     regressor = regressor_generator().fit(X_train, y_train)
     y_pred.extend(zip(test_indexes, regressor.predict(X_test)))
+    regressors.append(regressor)
 
   y_pred_dict = dict(y_pred)
   if len(y_pred_dict) != len(y_pred):
     raise Exception('kfold splitting was bad.')
-  return [y_pred_dict[i] for i in range(len(X))]
+  return [y_pred_dict[i] for i in range(len(X))], regressors
 
 
 # Output completely preprocessed CSV files.
@@ -283,11 +308,12 @@ def main():
                 X_labels, X, output_label, y)
     return
 
-  regressors = collections.OrderedDict([
+  regressor_generators = collections.OrderedDict([
       # Customized.
       # Based on lab code's configuration.
-      ('random_forests', lambda: RandomForestRegressor(
-          n_estimators=100, max_depth=10, max_features='sqrt',
+      # TODO change back to 100 n_estimators!
+      (RF_REGRESSOR_NAME, lambda: RandomForestRegressor(
+          n_estimators=10, max_depth=10, max_features='sqrt',
           min_samples_split=10)),
 
       # Cross decomposition.
@@ -346,30 +372,61 @@ def main():
   ])
 
   if args.rf_only:
-    # Strip regressors dictionary to just the first entry (i.e. the main RF).
-    regressors = collections.OrderedDict([next(iter(regressors.items()))])
+    regressor_generators = collections.OrderedDict([
+        (RF_REGRESSOR_NAME, regressor_generators[RF_REGRESSOR_NAME])])
 
   results = {}
-  for regressor_name, regressor_generator in regressors.items():
+  feature_importances = []
+  for regressor_name, regressor_generator in regressor_generators.items():
     random.seed(RANDOM_SEED)
     np.random.seed(RANDOM_SEED)
 
     for output_label, output_generator in dataset.get_output_generators():
       _, X, y = dataset.generate(output_generator)
-      y_pred = kfold_predict(X, y, regressor_generator)
+      y_pred, regressors = kfold_predict(X, y, regressor_generator)
 
       if not output_label in results:
         results[output_label] = {'num_samples': str(X.shape[0])}
       results[output_label][regressor_name] = str(r2_score(y, y_pred))
       # TODO speed up by reorganizing so augmentation happens once-ish.
-      print(output_label, r2_score(y, y_pred))
+      #print(output_label, r2_score(y, y_pred))
 
-  regressor_names = list(regressors.keys())
+
+      if regressor_name == RF_REGRESSOR_NAME:
+        for regressor in regressors:
+          feature_importances.extend(
+              [tree.feature_importances_ for tree in regressor.estimators_])
+
+
+  regressor_names = list(regressor_generators.keys())
   print(','.join(['output_label', 'num_samples'] + regressor_names))
   for output_label in sorted(results.keys()):
     result = results[output_label]
     print(','.join([output_label, result['num_samples']] +
                    [result[x] for x in regressor_names]))
+
+
+  print('\n')
+  print(','.join(['input_label', 'mean_importance', 'std_importance']))
+  # TODO combine input_labels with same values!
+  input_labels = dataset.get_input_labels()
+  mean_feature_importances = np.mean(feature_importances, axis=0)
+  std_feature_importances = np.std(feature_importances, axis=0)
+  for i, input_label in enumerate(input_labels):
+    print(','.join([input_label, str(mean_feature_importances[i]),
+                    str(std_feature_importances[i])]))
+
+
+  # Plot the feature importances of the forest.
+  # Based on http://scikit-learn.org/stable/auto_examples/ensemble/plot_forest_importances.html.
+  indices = np.argsort(mean_feature_importances)[::-1]
+  plt.figure()
+  plt.title("Feature Importances")
+  plt.bar(range(len(indices)), mean_feature_importances[indices],
+          color="r", yerr=std_feature_importances[indices], align="center")
+  plt.xticks(range(len(indices)), [input_labels[x] for x in indices])
+  plt.xlim([-1, len(indices)])
+  plt.show()
 
 
 if __name__ == '__main__':
