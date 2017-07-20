@@ -16,7 +16,7 @@ import argparse
 import collections
 import csv
 import csv_utils
-from dataset import MISSING_VALUE, is_missing, convert_to_float_or_missing, Dataset
+import dataset
 from features import Features
 import matplotlib.pyplot as plt
 import numpy as np
@@ -75,7 +75,7 @@ def new2014Dataset():
       #'Dry tons per acre',
   )
 
-  convert_to_float_or_missing(samples, list(input_labels) + [
+  dataset.convert_to_float_or_missing(samples, list(input_labels) + [
       ADF, NDF, NFC, LIGNIN, DRY_WEIGHT])
 
   # Returns result of percent DM value multiplied by dry weight.
@@ -84,8 +84,9 @@ def new2014Dataset():
     value = sample[label]
     minus_value = 0.0 if minus is None else sample[minus]
     dry_weight = sample[dry_weight_label]
-    if is_missing(value) or is_missing(minus_value) or is_missing(dry_weight):
-      return MISSING_VALUE
+    if (dataset.is_missing(value) or dataset.is_missing(minus_value) or
+        dataset.is_missing(dry_weight)):
+      return dataset.MISSING_VALUE
     return dry_weight * (value - minus_value) / 100.0
 
 
@@ -97,7 +98,7 @@ def new2014Dataset():
       ('c6', lambda sample: get_weight(sample, DRY_WEIGHT, ADF, minus=LIGNIN)),
       ('c5', lambda sample: get_weight(sample, DRY_WEIGHT, NDF, minus=ADF)),
   ])
-  return Dataset(samples, input_labels, output_generators)
+  return dataset.Dataset(samples, input_labels, output_generators)
 
 
 
@@ -112,7 +113,7 @@ def create_2016_output_generator(key):
 
 def new2016Dataset(include_harvest=True):
   samples = csv_utils.read_csv_as_dicts('2016.merged.csv')
-  convert_to_float_or_missing(samples, filter_2016_labels((
+  dataset.convert_to_float_or_missing(samples, filter_2016_labels((
       'HARVEST_', 'COMPOSITION_', 'ROBOT_', 'SYNTHETIC_', 'GPS_')) +
       [Features.ROW.value, Features.COLUMN.value])
 
@@ -133,7 +134,7 @@ def new2016Dataset(include_harvest=True):
     [(x, create_2016_output_generator(x)) for x in output_labels]
   ))
 
-  return Dataset(samples, input_labels, output_generators)
+  return dataset.Dataset(samples, input_labels, output_generators)
 
 
 def new2016NoHarvestDataset():
