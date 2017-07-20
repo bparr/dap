@@ -220,7 +220,8 @@ def main():
 
   if args.write_dataviews_only:
     for output_label, output_generator in dataset.get_output_generators():
-      X_labels, X, y = dataset.generate(output_generator, shuffle=False)
+      X_labels, X, y = dataset.generate_view(
+          output_label, output_generator, shuffle=False)
       write_csv(os.path.join('dataviews', args.dataset, output_label + '.csv'),
                 X_labels, X, output_label, y)
     return
@@ -298,7 +299,7 @@ def main():
     np.random.seed(RANDOM_SEED)
 
     for output_label, output_generator in dataset.get_output_generators():
-      _, X, y = dataset.generate(output_generator)
+      _, X, y = dataset.generate_view(output_label, output_generator)
       y_pred, regressors = kfold_predict(X, y, regressor_generator)
 
       if not output_label in results:

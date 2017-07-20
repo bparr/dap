@@ -35,17 +35,15 @@ class Dataset(object):
   _DICT_VECTORIZER_SEPERATOR = '='
 
   def __init__(self, samples, input_labels, output_generators):
-    # Order modified (shuffled) by self.generate().
+    # Order modified (shuffled) by self.generate_view().
     self._samples = samples
     self._input_labels = tuple(input_labels)
     self._output_generators = output_generators
 
-    # Generated and verified in self.generate().
+    # Generated and verified in self.generate_view().
     self._vectorized_feature_names = None
 
-  # output_generator must be one returned by get_output_generators().
-  # Returns: (X labels, X, y)
-  def generate(self, output_generator, shuffle=True):
+  def generate_view(self, output_label, output_generator, shuffle=True):
     if shuffle:
       random.shuffle(self._samples)
 
@@ -70,14 +68,17 @@ class Dataset(object):
       # This could be removed if store mappings and merge correctly in code.
       raise Exception('Vectorized feature names changed!')
 
-    return list(vectorizer.feature_names_), X, np.array(y)
+    return (list(vectorizer.get_feature_names()), X,
+                    np.array(y))
+    #return DataView(list(vectorizer.get_feature_names()), X,
+    #                output_label, np.array(y))
 
   # Can contain a label multiple times if its values were strings, since
   # DictVectorizer converts those to one-hot vectors.
-  # Raises an error if called before self.generate() is called.
+  # Raises an error if called before self.generate_view() is called.
   def get_input_labels(self):
     if self._vectorized_feature_names is None:
-      raise Exception('Can not call get_input_labels before generate.')
+      raise Exception('Can not call get_input_labels before generate_view.')
     sep = Dataset._DICT_VECTORIZER_SEPERATOR
     return [x.split(sep)[0] for x in self._vectorized_feature_names]
 
@@ -93,6 +94,16 @@ class DataView(object):
     self._X = X
     self._y_label = y_label
     self._y = y
+
+  # TODO remove these getters? are they just for testing?
+  def get_X(self):
+    return self._X
+
+  def get_y(self):
+    return self._y
+
+  def get_num_samples(self):
+    return self._X.shape[0]
 
   # Currently useful for verifying results against lab's random forest code.
   def write_csv(self, file_path):
