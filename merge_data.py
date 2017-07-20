@@ -18,6 +18,7 @@ which are written to 2016.csv and 2016.merged.csv.
 import csv
 import csv_utils
 from enum import Enum
+from features import Features
 import numpy as np
 import os
 
@@ -93,18 +94,15 @@ class Cells(object):
 
 # Subplot in field containing all genetic siblings.
 class Cell(object):
-  ROW_DATA_NAME = 'row'
-  COLUMN_DATA_NAME = 'range'
-
   def __init__(self, row, column):
     self._data = {
-        DataKeys(Cell.ROW_DATA_NAME): str(row),
-        DataKeys(Cell.COLUMN_DATA_NAME): str(column),
+        Features.ROW: str(row),
+        Features.COLUMN: str(column),
     }
 
   def __str__(self):
-    return (self._data[DataKeys(Cell.ROW_DATA_NAME)] + ' ' +
-            self._data[DataKeys(Cell.COLUMN_DATA_NAME)])
+    return (self._data[Features.ROW] + ' ' +
+            self._data[Features.COLUMN])
 
   def __repr__(self):
     return self.__str__()
@@ -116,7 +114,7 @@ class Cell(object):
     if value == '':
       return
 
-    key = DataKeys(key)  # Ensure key is a DataKey instance.
+    key = Features(key)  # Ensure key is a Features instance.
     if key in self._data and value != self._data[key]:
       if append_if_mismatch:
         self._data[key] = csv_utils.append_value(self._data[key], value)
@@ -132,8 +130,8 @@ class Cell(object):
 
   # List cells in a deterministic order using this.
   def get_coordinates(self):
-    return (int(self._data[DataKeys(Cell.ROW_DATA_NAME)]),
-            int(self._data[DataKeys(Cell.COLUMN_DATA_NAME)]))
+    return (int(self._data[Features.ROW]),
+            int(self._data[Features.COLUMN]))
 
   def add_all_data_to_cell(self, cell_to_copy_to):
     for key, value in self._data.items():
@@ -145,11 +143,11 @@ def read_csv(file_name):
 
 
 # Return a dictionary whose keys are from the first column, and whose values
-# are dictionaries from DataKey to corresponding value.
+# are dictionaries from Features to corresponding value.
 def parse_first_column_indexed(lines, get_label_fn=None, get_index_fn=None):
   if get_label_fn is None:
     get_label_fn = lambda x: x
-  labels = [DataKeys(get_label_fn(x)) for x in lines[0][1:]]
+  labels = [Features(get_label_fn(x)) for x in lines[0][1:]]
 
   if get_index_fn is None:
     get_index_fn = lambda x: x
@@ -164,12 +162,12 @@ def parse_first_column_indexed(lines, get_label_fn=None, get_index_fn=None):
   return results
 
 
-def parse_rw_by_ra(lines, data_key, cells, extra_data=None,
+def parse_rw_by_ra(lines, feature, cells, extra_data=None,
                    warn_if_added_cells=True,
                    warn_if_missing_extra_data=True):
   added_cells = []
   missing_extra_data = set()
-  used_extra_data_keys = set()
+  used_extra_features = set()
 
   for line in lines[1:]:
     row = line[0]
@@ -182,7 +180,7 @@ def parse_rw_by_ra(lines, data_key, cells, extra_data=None,
       if not cells.exists(row, column):
         added_cells.append(cells.add(row, column))
       cell = cells.get(row, column)
-      cell.add_data(data_key, value)
+      cell.add_data(feature, value)
 
       if extra_data is None:
         continue
@@ -190,28 +188,28 @@ def parse_rw_by_ra(lines, data_key, cells, extra_data=None,
       if value not in extra_data:
         if value not in missing_extra_data and warn_if_missing_extra_data:
           missing_extra_data.add(value)
-          print('WARNING: No extra data:', data_key, value)
+          print('WARNING: No extra data:', feature, value)
         continue
 
-      used_extra_data_keys.add(value)
+      used_extra_features.add(value)
       for k, v in extra_data[value].items():
         cell.add_data(k, v)
 
   if warn_if_added_cells and len(added_cells) != 0:
-    print('WARNING: Added cell(s) that were missing:', data_key, added_cells)
+    print('WARNING: Added cell(s) that were missing:', feature, added_cells)
 
-  if extra_data is not None and len(used_extra_data_keys) != len(extra_data):
-    unused_keys = set(extra_data.keys()) - used_extra_data_keys
-    print('WARNING: Unused extra data:', data_key, sorted(unused_keys))
+  if extra_data is not None and len(used_extra_features) != len(extra_data):
+    unused_keys = set(extra_data.keys()) - used_extra_features
+    print('WARNING: Unused extra data:', feature, sorted(unused_keys))
 
 
 def parse_harvest_data(lines, cells):
-  labels = [DataKeys(v) for v in lines[0][3:]]
+  labels = [Features(v) for v in lines[0][3:]]
   for line in lines[1:]:
     row, column = line[2], line[1]
     row = parse_coordinate(row) + NO_FILL_ROW_OFFSET
     cell = cells.get(row, column)
-    cell.add_data(DataKeys.PLOT_ID, line[0])
+    cell.add_data(Features.PLOT_ID, line[0])
     for i, value in enumerate(line[3:]):
       cell.add_data(labels[i], value)
 
@@ -221,9 +219,9 @@ def parse_plot_plan(lines, cells):
   for plot_id, plant_id, column, row, x_of_y in lines:
     row = parse_coordinate(row) + NO_FILL_ROW_OFFSET
     cell = cells.get(row, column)
-    cell.add_data(DataKeys.PLOT_ID, plot_id)
-    cell.add_data(DataKeys.PLANT_ID, plant_id)
-    cell.add_data(DataKeys.X_OF_Y, x_of_y)
+    cell.add_data(Features.PLOT_ID, plot_id)
+    cell.add_data(Features.PLANT_ID, plant_id)
+    cell.add_data(Features.X_OF_Y, x_of_y)
 
 
 def parse_plot_plan_tags(lines, cells):
@@ -231,13 +229,13 @@ def parse_plot_plan_tags(lines, cells):
   for plot_id, plant_id, column, row, x_of_y, tag, con, barcode, end in lines:
     row = parse_coordinate(row) + NO_FILL_ROW_OFFSET
     cell = cells.get(row, column)
-    cell.add_data(DataKeys.PLOT_ID, plot_id)
-    cell.add_data(DataKeys.PLANT_ID, plant_id)
-    cell.add_data(DataKeys.X_OF_Y, x_of_y)
-    cell.add_data(DataKeys.PLOT_PLAN_TAG, tag, append_if_mismatch=True)
-    cell.add_data(DataKeys.PLOT_PLAN_CON, con, append_if_mismatch=True)
-    cell.add_data(DataKeys.PLOT_PLAN_BARCODE, barcode, append_if_mismatch=True)
-    cell.add_data(DataKeys.PLOT_PLAN_END, end, append_if_mismatch=True)
+    cell.add_data(Features.PLOT_ID, plot_id)
+    cell.add_data(Features.PLANT_ID, plant_id)
+    cell.add_data(Features.X_OF_Y, x_of_y)
+    cell.add_data(Features.PLOT_PLAN_TAG, tag, append_if_mismatch=True)
+    cell.add_data(Features.PLOT_PLAN_CON, con, append_if_mismatch=True)
+    cell.add_data(Features.PLOT_PLAN_BARCODE, barcode, append_if_mismatch=True)
+    cell.add_data(Features.PLOT_PLAN_END, end, append_if_mismatch=True)
 
 
 def add_gps_to_cells(lines, cells):
@@ -252,107 +250,26 @@ def add_gps_to_cells(lines, cells):
     eastings2, northings2 = gps[str(row) + '.5'][str(column)]
     eastings = str(np.mean([eastings1, eastings2]))
     northings = str(np.mean([northings1, northings2]))
-    cell.add_data(DataKeys.GPS_EASTINGS, eastings)
-    cell.add_data(DataKeys.GPS_NORTHINGS, northings)
+    cell.add_data(Features.GPS_EASTINGS, eastings)
+    cell.add_data(Features.GPS_NORTHINGS, northings)
 
 
-def add_synthetic_values(cells, data_keys, mean_data_key, std_data_key):
+def add_synthetic_values(cells, features, mean_feature, std_feature):
   for cell in cells.sorted():
-    values = [cell.get_data(x) for x in data_keys]
+    values = [cell.get_data(x) for x in features]
     values = [float(x) for x in values if x != '']
     if len(values) > 0:
-      cell.add_data(mean_data_key, str(np.mean(values)))
-      cell.add_data(std_data_key, str(np.std(values)))
-
-
-# TODO(bparr): 2016_09_penetrometer_robot_Large_Stalks.csv has two lines for
-#              Rw22 Ra32 which seem to describe completely different plants. So
-#              ignoring.
-# TODO(bparr): Reconsider using these row94 files?
-#      - 2016_07_13_leaf_segmentation_leaf_fill_row94.csv
-#      - 2016_09_penetrometer_manual_Row_94.csv
-class DataKeys(Enum):
-  ROW = Cell.ROW_DATA_NAME
-  COLUMN = Cell.COLUMN_DATA_NAME
-  PLANT_ID = 'plant_id'
-
-  # Harvest data.
-  HARVEST_SF16h_HGT1_120 = 'SF16h_HGT1_120'
-  HARVEST_SF16h_HGT2_120 = 'SF16h_HGT2_120'
-  HARVEST_SF16h_HGT3_120 = 'SF16h_HGT3_120'
-  HARVEST_SF16h_TWT_120 = 'SF16h_TWT_120'
-  HARVEST_SF16h_WTP_120 = 'SF16h_WTP_120'
-  HARVEST_SF16h_WTL_120 = 'SF16h_WTL_120'
-  HARVEST_SF16h_PAN1_120 = 'SF16h_PAN1_120'
-  HARVEST_SF16h_PAN2_120 = 'SF16h_PAN2_120'
-  HARVEST_SF16h_PAN3_120 = 'SF16h_PAN3_120'
-
-  # Composition data.
-  COMPOSITION_ADF = 'ADF'
-  COMPOSITION_AD_ICP = 'AD_ICP'
-  COMPOSITION_ADJ_CP = 'Adj_CP'
-  COMPOSITION_ANDFOM = 'aNDFom'
-  COMPOSITION_ASH = 'Ash'
-  COMPOSITION_CRUDE_PROTEIN = 'Crude_protein'
-  COMPOSITION_DCAD = 'DCAD'
-  COMPOSITION_DRY_MATTER = 'Dry_Matter'
-  COMPOSITION_EE_FAT = 'EE_Fat'
-  COMPOSITION_LIGNIN = 'Lignin'
-  COMPOSITION_NEG_OARDC = 'NEG_OARDC'
-  COMPOSITION_NEL3X_ADF = 'NEL3x_ADF'
-  COMPOSITION_NEL3X_OARDC = 'NEL3x_OARDC'
-  COMPOSITION_NEM_OARDC = 'NEM_OARDC'
-  COMPOSITION_NFC = 'NFC'
-  COMPOSITION_SPCP = 'SPCP'
-  COMPOSITION_STARCH = 'Starch'
-  COMPOSITION_TDN_OARDC = 'TDN_OARDC'
-  COMPOSITION_WSC_SUGAR = 'WSC_Sugar'
-  COMPOSITION_CELLULOSE = 'Cellulose'
-  COMPOSITION_HEMICELLULOSE = 'Hemicellulose'
-
-  # Robot data.
-  ROBOT_LEAF_NECROSIS_07 = '2016_07_13-14_Leaf_Necrosis'
-  ROBOT_VEGETATION_INDEX_07 = '2016_07_13-14_vegetation_index'
-  ROBOT_VEGETATION_INDEX_08 = '2016_08_05-08_vegetation_index'
-  ROBOT_LEAF_AREA_07 = '2016_07_13_BAP_Leaf_Area'
-  ROBOT_LASER_PLANT_HEIGHT_07 = '2016_07_13_laser_plant_height'
-  ROBOT_LIGHT_INTERCEPTION_07 = '2016_07_light_interception'
-  ROBOT_LIGHT_INTERCEPTION_08 = '2016_08_light_interception'
-  ROBOT_LIGHT_INTERCEPTION_09 = '2016_09_light_interception'
-
-  # Synthetically created data.
-  SYNTHETIC_HARVEST_SF16h_HGT_120_MEAN = 'SF16h_HGT_120_MEAN'
-  SYNTHETIC_HARVEST_SF16h_HGT_120_STD = 'SF16h_HGT_120_STD'
-  SYNTHETIC_HARVEST_SF16h_PAN_120_MEAN = 'SF16h_PAN_120_MEAN'
-  SYNTHETIC_HARVEST_SF16h_PAN_120_STD = 'SF16h_PAN_120_STD'
-
-  # GPS location, in UTM format.
-  GPS_EASTINGS = 'gps_eastings_UTMzone17N'
-  GPS_NORTHINGS = 'gps_northings_UTMzone17N'
-
-  # Accessions Data.
-  ACCESSION_PHOTOPERIOD = 'accession_photoperiod'
-  ACCESSION_TYPE = 'accession_type'
-  ACCESSION_ORIGIN = 'accession_origin'
-  ACCESSION_RACE = 'accession_race'
-
-  # Other lower priority data.
-  PLOT_ID = 'plot_id'
-  NOTES = 'Notes'
-  X_OF_Y = 'x_of_y'
-  PLOT_PLAN_TAG = 'plot_plan_tag'
-  PLOT_PLAN_CON = 'plot_plan_con'
-  PLOT_PLAN_BARCODE = 'plot_plan_barcode'
-  PLOT_PLAN_END = 'plot_plan_end'
+      cell.add_data(mean_feature, str(np.mean(values)))
+      cell.add_data(std_feature, str(np.std(values)))
 
 
 # Write output file.
 def write_csv(file_path, cell_list):
   with open(file_path, 'w') as f:
     writer = csv.writer(f)
-    writer.writerow([x.value for x in DataKeys])
+    writer.writerow([x.value for x in Features])
     for cell in cell_list:
-      writer.writerow([cell.get_data(x) for x in DataKeys])
+      writer.writerow([cell.get_data(x) for x in Features])
 
 
 def main():
@@ -362,7 +279,7 @@ def main():
       read_csv('PanelAccessions-BAP.csv'),
       get_label_fn=lambda x: 'accession_' + x.lower())
   # No cells yet, so do not warn when adding cells.
-  parse_rw_by_ra(read_csv('BAP16_PlotMap_Plant_IDs.csv'), DataKeys.PLANT_ID,
+  parse_rw_by_ra(read_csv('BAP16_PlotMap_Plant_IDs.csv'), Features.PLANT_ID,
                  cells, extra_data=accessions, warn_if_added_cells=False)
 
   compositions = parse_first_column_indexed(
@@ -371,7 +288,7 @@ def main():
       get_label_fn=lambda x: x.replace(' ', '_').replace('-', '_'))
   # Not all cells have composition data, do not warn about missing entries
   # in the composition dictionary.
-  parse_rw_by_ra(read_csv('BAP16_PlotMap_Plot_IDs.csv'), DataKeys.PLOT_ID,
+  parse_rw_by_ra(read_csv('BAP16_PlotMap_Plot_IDs.csv'), Features.PLOT_ID,
                  cells, extra_data=compositions,
                  warn_if_missing_extra_data=False)
 
@@ -380,32 +297,32 @@ def main():
   parse_plot_plan_tags(read_csv('BAP16_PlotPlan_Plot_IDs_Tags.csv'), cells)
 
   parse_rw_by_ra(read_csv('2016_07_13-14_Leaf_Necrosis.csv'),
-                 DataKeys.ROBOT_LEAF_NECROSIS_07, cells)
+                 Features.ROBOT_LEAF_NECROSIS_07, cells)
   parse_rw_by_ra(read_csv('2016_07_13-14_vegetation_index.csv'),
-                 DataKeys.ROBOT_VEGETATION_INDEX_07, cells)
+                 Features.ROBOT_VEGETATION_INDEX_07, cells)
   parse_rw_by_ra(read_csv('2016_08_05-08_vegetation_index.csv'),
-                 DataKeys.ROBOT_VEGETATION_INDEX_08, cells)
+                 Features.ROBOT_VEGETATION_INDEX_08, cells)
   parse_rw_by_ra(read_csv('2016_07_13_BAP_Leaf_Area.csv'),
-                 DataKeys.ROBOT_LEAF_AREA_07, cells)
+                 Features.ROBOT_LEAF_AREA_07, cells)
   parse_rw_by_ra(read_csv('2016_07_13_laser_plant_height.csv'),
-                 DataKeys.ROBOT_LASER_PLANT_HEIGHT_07, cells)
+                 Features.ROBOT_LASER_PLANT_HEIGHT_07, cells)
   parse_rw_by_ra(read_csv('2016_07_light_interception.csv'),
-                 DataKeys.ROBOT_LIGHT_INTERCEPTION_07, cells)
+                 Features.ROBOT_LIGHT_INTERCEPTION_07, cells)
   parse_rw_by_ra(read_csv('2016_08_light_interception.csv'),
-                 DataKeys.ROBOT_LIGHT_INTERCEPTION_08, cells)
+                 Features.ROBOT_LIGHT_INTERCEPTION_08, cells)
   parse_rw_by_ra(read_csv('2016_09_light_interception.csv'),
-                 DataKeys.ROBOT_LIGHT_INTERCEPTION_09, cells)
+                 Features.ROBOT_LIGHT_INTERCEPTION_09, cells)
   add_gps_to_cells(read_csv('2016_all_BAP_gps_coords.csv'), cells)
-  add_synthetic_values(cells, [DataKeys.HARVEST_SF16h_HGT1_120,
-                               DataKeys.HARVEST_SF16h_HGT2_120,
-                               DataKeys.HARVEST_SF16h_HGT3_120],
-      DataKeys.SYNTHETIC_HARVEST_SF16h_HGT_120_MEAN,
-      DataKeys.SYNTHETIC_HARVEST_SF16h_HGT_120_STD)
-  add_synthetic_values(cells, [DataKeys.HARVEST_SF16h_PAN1_120,
-                               DataKeys.HARVEST_SF16h_PAN2_120,
-                               DataKeys.HARVEST_SF16h_PAN3_120],
-      DataKeys.SYNTHETIC_HARVEST_SF16h_PAN_120_MEAN,
-      DataKeys.SYNTHETIC_HARVEST_SF16h_PAN_120_STD)
+  add_synthetic_values(cells, [Features.HARVEST_SF16h_HGT1_120,
+                               Features.HARVEST_SF16h_HGT2_120,
+                               Features.HARVEST_SF16h_HGT3_120],
+      Features.SYNTHETIC_HARVEST_SF16h_HGT_120_MEAN,
+      Features.SYNTHETIC_HARVEST_SF16h_HGT_120_STD)
+  add_synthetic_values(cells, [Features.HARVEST_SF16h_PAN1_120,
+                               Features.HARVEST_SF16h_PAN2_120,
+                               Features.HARVEST_SF16h_PAN3_120],
+      Features.SYNTHETIC_HARVEST_SF16h_PAN_120_MEAN,
+      Features.SYNTHETIC_HARVEST_SF16h_PAN_120_STD)
 
   sorted_cells = cells.sorted()
   write_csv(OUTPUT_FILENAME, sorted_cells)

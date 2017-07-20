@@ -5,8 +5,6 @@ Dataset classes and helper functions.
 """
 # TODO tests?
 
-# TODO move it to csv_utils.
-# TODO move DataKeys to its own file?
 import csv
 from csv_utils import average_mismatch
 import numpy as np

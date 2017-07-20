@@ -16,9 +16,9 @@ import argparse
 import collections
 import csv
 import csv_utils
-import matplotlib.pyplot as plt
-from merge_data import DataKeys
 from dataset import MISSING_VALUE, is_missing, convert_to_float_or_missing, Dataset
+from features import Features
+import matplotlib.pyplot as plt
 import numpy as np
 import os
 import random
@@ -104,8 +104,8 @@ def new2014Dataset():
 #######################
 # 2016 Dataset logic. #
 #######################
-def filter_2016_labels(data_key_starts_with):
-  return [x.value for x in DataKeys if x.name.startswith(data_key_starts_with)]
+def filter_2016_labels(feature_starts_with):
+  return [x.value for x in Features if x.name.startswith(feature_starts_with)]
 
 def create_2016_output_generator(key):
   return lambda sample: sample[key]
@@ -114,25 +114,20 @@ def new2016Dataset(include_harvest=True):
   samples = csv_utils.read_csv_as_dicts('2016.merged.csv')
   convert_to_float_or_missing(samples, filter_2016_labels((
       'HARVEST_', 'COMPOSITION_', 'ROBOT_', 'SYNTHETIC_', 'GPS_')) +
-      [DataKeys.ROW.value, DataKeys.COLUMN.value])
+      [Features.ROW.value, Features.COLUMN.value])
 
   # TODO what to include? Allow multiple subsets through commandline?
-  input_data_keys_starts_with = [
+  input_features_starts_with = [
       'ROBOT_',
       #'GPS_',
       'ACCESSION_',
   ]
   if include_harvest:
-    input_data_keys_starts_with.append('HARVEST_')
-    input_data_keys_starts_with.append('SYNTHETIC_HARVEST_')
+    input_features_starts_with.append('HARVEST_')
+    input_features_starts_with.append('SYNTHETIC_HARVEST_')
 
-  input_labels = filter_2016_labels(tuple(input_data_keys_starts_with))
+  input_labels = filter_2016_labels(tuple(input_features_starts_with))
   output_labels = filter_2016_labels('COMPOSITION_')
-
-  weight_datakeys = (
-      DataKeys.COMPOSITION_LIGNIN,
-      DataKeys.COMPOSITION_CELLULOSE,
-      DataKeys.COMPOSITION_HEMICELLULOSE)
 
   output_generators = collections.OrderedDict(sorted(
     [(x, create_2016_output_generator(x)) for x in output_labels]
