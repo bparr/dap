@@ -93,6 +93,20 @@ class TestDataset(unittest.TestCase):
         [[1.0, 0.0, 1.0], [4.0, 0.0, 1.0], [7.0, 1.0, 0.0]], X)
     np.testing.assert_array_equal([30.0, 60.0, 90.0], y)
 
+  def test_generate_is_robust_to_changing_results(self):
+    output_generator = lambda x: 10.0 * x['output']
+    X_labels, X, y = self.dataset_with_strings.generate(
+        output_generator, shuffle=False)
+    X_labels[0] = 'changed'
+    X[0][0] = np.nan
+    y[0] = np.nan
+    X_labels, X, y = self.dataset_with_strings.generate(
+        output_generator, shuffle=False)
+    self.assertListEqual(['label1', 'label2=', 'label2=foo'], X_labels)
+    np.testing.assert_array_equal(
+        [[1.0, 0.0, 1.0], [4.0, 0.0, 1.0], [7.0, 1.0, 0.0]], X)
+    np.testing.assert_array_equal([30.0, 60.0, 90.0], y)
+
   def test_generate_raises_exception_if_vectorization_labels_changed(self):
     output_generator1 = lambda x: 10.0 * x['output']
     self.dataset_with_strings.generate(output_generator1, shuffle=False)
