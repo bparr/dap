@@ -108,6 +108,7 @@ def new2014Dataset():
 def filter_2016_labels(feature_starts_with):
   return [x.value for x in Features if x.name.startswith(feature_starts_with)]
 
+# Used instead of lambda to avoid Python scoping issue.
 def create_2016_output_generator(key):
   return lambda sample: sample[key]
 
@@ -142,7 +143,6 @@ def new2016NoHarvestDataset():
   return new2016Dataset(include_harvest=False)
 
 
-
 # Merge (sum) importances that have the same input label.
 def merge_importances(input_labels, feature_importances):
   feature_importances = np.array(feature_importances)
@@ -155,21 +155,6 @@ def merge_importances(input_labels, feature_importances):
         feature_importances[:, i])
 
   return sorted_input_labels, merged_feature_importances
-
-
-# Output completely preprocessed CSV files.
-# Currently useful for verifying results against lab's random forest code.
-# TODO remove!
-def write_csv(file_path, input_labels, X, output_label, y):
-  with open(file_path, 'w') as f:
-    writer = csv.writer(f)
-    labels = list(input_labels) + [output_label]
-    writer.writerow(labels)
-    for x_row, y_row in zip(X, y):
-      row = list(x_row) + [y_row]
-      if len(row) != len(labels):
-        raise Exception('Inconsistent number of entries.')
-      writer.writerow(row)
 
 
 def main():
@@ -198,6 +183,7 @@ def main():
       data_view.write_csv(os.path.join(
           'dataviews', args.dataset, output_label + '.csv'))
     return
+
 
   global CSV_OUTPUT_PATH
   CSV_OUTPUT_PATH = CSV_OUTPUT_PATH % args.dataset
@@ -289,6 +275,7 @@ def main():
               [tree.feature_importances_ for tree in regressor.estimators_])
 
 
+  # Print each regressors' r2 score results..
   regressor_names = list(regressor_generators.keys())
   rprint(','.join(['output_label', 'num_samples'] + regressor_names))
   for output_label in sorted(results.keys()):
@@ -297,6 +284,7 @@ def main():
                     [str(result[x]) for x in regressor_names]))
 
 
+  # Print feature importances.
   rprint('\n')
   rprint(','.join(['input_label', 'mean_importance', 'std_importance']))
   input_labels, feature_importances = merge_importances(
@@ -306,7 +294,6 @@ def main():
   for i, input_label in enumerate(input_labels):
     rprint(','.join([input_label, str(mean_feature_importances[i]),
                      str(std_feature_importances[i])]))
-
 
   # Plot the feature importances of the forest.
   # Based on http://scikit-learn.org/stable/auto_examples/ensemble/plot_forest_importances.html.
