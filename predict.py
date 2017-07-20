@@ -4,10 +4,11 @@
 Parse full csv and predict harvest data.
 
 Usage:
-  ./predict.py -d 2016 > results.2016.out
-  ./predict.py -d 2016.noHarvest > results.2016.noHarvest.out
-  ./predict.py -d 2014 > results.2014.out
+  ./predict.py -d 2016
+  ./predict.py -d 2016.noHarvest
+  ./predict.py -d 2014
 
+Outputs files to the results/ directory.
 """
 # TODO tests?
 
@@ -37,10 +38,18 @@ from sklearn.svm import SVR, LinearSVR, NuSVR
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
 
 RF_REGRESSOR_NAME = 'random_forest'
+
+# Path to save results as CSV file.
+CSV_OUTPUT_PATH = 'results/%s.out'
 # Path to save plot, formatted with the dataset name.
-FEATURE_IMPORTANCE_SAVE_PATH = 'feature_importance.%s.png'
+FEATURE_IMPORTANCE_SAVE_PATH = 'results/feature_importance.%s.png'
 
 RANDOM_SEED = 10611
+
+def rprint(string_to_print):
+  print(string_to_print)
+  with open(CSV_OUTPUT_PATH, 'a') as f:
+    f.write(string_to_print + '\n')
 
 # TODO tune??
 #MISSING_VALUE = np.nan
@@ -77,7 +86,7 @@ class Dataset(object):
     # Generated and verified in self.generate().
     self._vectorized_feature_names = None
 
-    print(','.join(['INPUTS'] + list(self._input_labels)))
+    rprint(','.join(['INPUTS'] + list(self._input_labels)))
 
   # output_generator must be one returned by get_output_generators().
   # Returns: (X labels, X, y)
@@ -291,6 +300,7 @@ def write_csv(file_path, input_labels, X, output_label, y):
 
 
 def main():
+  global CSV_OUTPUT_PATH
   global MISSING_VALUE
 
   DATASET_FACTORIES = {
@@ -308,6 +318,7 @@ def main():
   parser.add_argument('--write_dataviews_only', action='store_true',
                       help='No prediction. Just write data views.')
   args = parser.parse_args()
+  CSV_OUTPUT_PATH = CSV_OUTPUT_PATH % args.dataset
 
   if args.write_dataviews_only:
     print('Overwriting MISSING_VALUE because writing dataviews!')
@@ -401,9 +412,6 @@ def main():
       if not output_label in results:
         results[output_label] = {'num_samples': str(X.shape[0])}
       results[output_label][regressor_name] = str(r2_score(y, y_pred))
-      # TODO speed up by reorganizing so augmentation happens once-ish.
-      #print(output_label, r2_score(y, y_pred))
-
 
       if regressor_name == RF_REGRESSOR_NAME:
         for regressor in regressors:
@@ -412,22 +420,22 @@ def main():
 
 
   regressor_names = list(regressor_generators.keys())
-  print(','.join(['output_label', 'num_samples'] + regressor_names))
+  rprint(','.join(['output_label', 'num_samples'] + regressor_names))
   for output_label in sorted(results.keys()):
     result = results[output_label]
-    print(','.join([output_label, result['num_samples']] +
-                   [result[x] for x in regressor_names]))
+    rprint(','.join([output_label, result['num_samples']] +
+                    [result[x] for x in regressor_names]))
 
 
-  print('\n')
-  print(','.join(['input_label', 'mean_importance', 'std_importance']))
+  rprint('\n')
+  rprint(','.join(['input_label', 'mean_importance', 'std_importance']))
   input_labels, feature_importances = merge_importances(
       dataset.get_input_labels(), feature_importances)
   mean_feature_importances = np.mean(feature_importances, axis=0)
   std_feature_importances = np.std(feature_importances, axis=0)
   for i, input_label in enumerate(input_labels):
-    print(','.join([input_label, str(mean_feature_importances[i]),
-                    str(std_feature_importances[i])]))
+    rprint(','.join([input_label, str(mean_feature_importances[i]),
+                     str(std_feature_importances[i])]))
 
 
   # Plot the feature importances of the forest.
