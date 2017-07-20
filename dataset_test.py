@@ -22,6 +22,13 @@ class TestHelperFunctions(unittest.TestCase):
     dataset.convert_to_float_or_missing(samples, ['foo'])
     self.assertEqual([{'foo': 42.1, 'untouched': '123'}], samples)
 
+  def test_converte_to_float_or_missing_good_case_multiple(self):
+    samples = [{'foo': '42.1', 'bar': '123'},
+               {'foo': '43.4', 'bar': '124'}]
+    dataset.convert_to_float_or_missing(samples, ['foo', 'bar'])
+    self.assertEqual([{'foo': 42.1, 'bar': 123}, {'foo': 43.4, 'bar': 124}],
+                     samples)
+
   def test_converte_to_float_or_missing_empty_case(self):
     samples = [{'foo': '', 'untouched': '123'}]
     dataset.convert_to_float_or_missing(samples, ['foo'])
@@ -40,16 +47,24 @@ class TestHelperFunctions(unittest.TestCase):
 
 class TestDataset(unittest.TestCase):
   def setUp(self):
-    self.samples = []
-    self.input_labels = ['input_label1', 'input_label2']
-    self.output_generators = collections.OrderedDict([
-      ('key1', 'value1'), ('key2', 'value2')])
-    self.dataset = dataset.Dataset(self.samples, self.input_labels,
-                                   self.output_generators)
+    pass # TODO keep?
+
+  def test_generate(self):
+    samples = [{'label1': 1.0, 'label2': 2.0, 'output': 3.0}]
+    input_labels = ['label1', 'label2']
+    ds = dataset.Dataset(samples, input_labels, 'output_generators')
+
+    output_generator = lambda x: 10.0 * x['output']
+    # TODO actually test when shuffle is True?
+    X_labels, X, y = ds.generate(output_generator, shuffle=False)
+    self.assertListEqual(['label1', 'label2'], X_labels)
+    np.testing.assert_array_equal([[1.0, 2.0]], X)
+    np.testing.assert_array_equal([30.0], y)
 
   def test_get_output_generators(self):
-    self.assertListEqual([('key1', 'value1'), ('key2', 'value2')],
-                         list(self.dataset.get_output_generators()))
+    expected = [('key1', 'value1'), ('key2', 'value2')]
+    ds = dataset.Dataset([], [], collections.OrderedDict(expected))
+    self.assertListEqual(expected, list(ds.get_output_generators()))
 
 if __name__ == '__main__':
     unittest.main()

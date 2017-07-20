@@ -83,6 +83,7 @@ class Dataset(object):
     sep = Dataset._DICT_VECTORIZER_SEPERATOR
     return [x.split(sep)[0] for x in self._vectorized_feature_names]
 
+  # TODO rework code so this method isn't needed?
   def get_output_generators(self):
     return self._output_generators.items()
 
