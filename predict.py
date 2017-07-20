@@ -54,6 +54,17 @@ def rprint(string_to_print):
 #######################
 # 2014 Dataset logic. #
 #######################
+# Returns result of percent DM value multiplied by dry weight.
+# If given, the minus label's value is subtracted from label's value.
+def get_2014_weight(sample, dry_weight_label, label, minus=None):
+  value = sample[label]
+  minus_value = 0.0 if minus is None else sample[minus]
+  dry_weight = sample[dry_weight_label]
+  if (dataset.is_missing(value) or dataset.is_missing(minus_value) or
+      dataset.is_missing(dry_weight)):
+    return dataset.MISSING_VALUE
+  return dry_weight * (value - minus_value) / 100.0
+
 def new2014Dataset():
   samples = csv_utils.read_csv_as_dicts('2014/2014_Pheotypic_Data_FileS2.csv')
 
@@ -78,26 +89,18 @@ def new2014Dataset():
   dataset.convert_to_float_or_missing(samples, list(input_labels) + [
       ADF, NDF, NFC, LIGNIN, DRY_WEIGHT])
 
-  # Returns result of percent DM value multiplied by dry weight.
-  # If given, the minus label's value is subtracted from label's value.
-  def get_weight(sample, dry_weight_label, label, minus=None):
-    value = sample[label]
-    minus_value = 0.0 if minus is None else sample[minus]
-    dry_weight = sample[dry_weight_label]
-    if (dataset.is_missing(value) or dataset.is_missing(minus_value) or
-        dataset.is_missing(dry_weight)):
-      return dataset.MISSING_VALUE
-    return dry_weight * (value - minus_value) / 100.0
-
-
   output_generators = collections.OrderedDict([
-      ('adf', lambda sample: get_weight(sample, DRY_WEIGHT, ADF)),
-      ('ndf', lambda sample: get_weight(sample, DRY_WEIGHT, NDF)),
-      ('nfc', lambda sample: get_weight(sample, DRY_WEIGHT, NFC)),
-      ('lignin', lambda sample: get_weight(sample, DRY_WEIGHT, LIGNIN)),
-      ('c6', lambda sample: get_weight(sample, DRY_WEIGHT, ADF, minus=LIGNIN)),
-      ('c5', lambda sample: get_weight(sample, DRY_WEIGHT, NDF, minus=ADF)),
+      ('adf', lambda sample: get_2014_weight(sample, DRY_WEIGHT, ADF)),
+      ('ndf', lambda sample: get_2014_weight(sample, DRY_WEIGHT, NDF)),
+      ('nfc', lambda sample: get_2014_weight(sample, DRY_WEIGHT, NFC)),
+      ('lignin', lambda sample: get_2014_weight(sample, DRY_WEIGHT, LIGNIN)),
+      ('c6', lambda sample: get_2014_weight(sample, DRY_WEIGHT, ADF,
+                                            minus=LIGNIN)),
+      ('c5', lambda sample: get_2014_weight(sample, DRY_WEIGHT, NDF,
+                                            minus=ADF)),
   ])
+
+  rprint(','.join(['2014_INPUTS'] + list(input_labels)))
   return dataset.Dataset(samples, input_labels, output_generators)
 
 
@@ -134,6 +137,7 @@ def new2016Dataset(include_harvest=True):
     [(x, create_2016_output_generator(x)) for x in output_labels]
   ))
 
+  rprint(','.join(['2016_INPUTS'] + list(input_labels)))
   return dataset.Dataset(samples, input_labels, output_generators)
 
 

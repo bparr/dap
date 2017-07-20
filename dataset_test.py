@@ -47,19 +47,35 @@ class TestHelperFunctions(unittest.TestCase):
 
 class TestDataset(unittest.TestCase):
   def setUp(self):
-    pass # TODO keep?
+    self.input_labels = ['label1', 'label2']
+    self.samples = [
+      {'label1': 1.0, 'label2': 2.0, 'output': 3.0},
+      {'label1': 4.0, 'label2': 5.0, 'output': 6.0},
+      {'label1': 7.0, 'label2': 8.0, 'output': 9.0},
+    ]
+    self.samples_with_strings =[
+      {'label1': 1.0, 'label2': 'foo', 'output': 3.0},
+      {'label1': 4.0, 'label2': 'foo', 'output': 6.0},
+      {'label1': 7.0, 'label2': '', 'output': 9.0},
+    ]
+    self.dataset = dataset.Dataset(
+        self.samples, self.input_labels, 'output_generators')
+    self.dataset_with_strings = dataset.Dataset(
+        self.samples_with_strings, self.input_labels, 'output_generators')
 
-  def test_generate(self):
-    samples = [{'label1': 1.0, 'label2': 2.0, 'output': 3.0}]
-    input_labels = ['label1', 'label2']
-    ds = dataset.Dataset(samples, input_labels, 'output_generators')
-
+  def test_generate_simple(self):
     output_generator = lambda x: 10.0 * x['output']
     # TODO actually test when shuffle is True?
-    X_labels, X, y = ds.generate(output_generator, shuffle=False)
+    X_labels, X, y = self.dataset.generate(output_generator, shuffle=False)
     self.assertListEqual(['label1', 'label2'], X_labels)
-    np.testing.assert_array_equal([[1.0, 2.0]], X)
-    np.testing.assert_array_equal([30.0], y)
+    np.testing.assert_array_equal([[1.0, 2.0], [4.0, 5.0], [7.0, 8.0]], X)
+    np.testing.assert_array_equal([30.0, 60.0, 90.0], y)
+
+  def test_generate_not_affect_if_input_labels_list_changed(self):
+    output_generator = lambda x: x
+    self.input_labels[0] = 'changed'
+    X_labels, _, _ = self.dataset.generate(output_generator, shuffle=False)
+    self.assertListEqual(['label1', 'label2'], X_labels)
 
   def test_get_output_generators(self):
     expected = [('key1', 'value1'), ('key2', 'value2')]

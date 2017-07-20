@@ -43,8 +43,6 @@ class Dataset(object):
     # Generated and verified in self.generate().
     self._vectorized_feature_names = None
 
-    print('INPUTS: ' + ','.join(self._input_labels))
-
   # output_generator must be one returned by get_output_generators().
   # Returns: (X labels, X, y)
   def generate(self, output_generator, shuffle=True):
