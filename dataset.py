@@ -10,6 +10,7 @@ import numpy as np
 import random
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.metrics import r2_score
+from sklearn.model_selection import KFold
 
 
 MISSING_VALUE = -1
@@ -99,11 +100,33 @@ class DataView(object):
     self._y_label = y_label
     self._y = y
 
+  # TODO add test.
   def get_num_samples(self):
     return self._X.shape[0]
 
+  # TODO add test.
   def get_r2_score(self, y_pred):
     return r2_score(self._y, y_pred)
+
+  # TODO add tests.
+  def kfold_predict(self, regressor_generator):
+    y_pred = []
+
+    kf = KFold(n_splits=10)
+    regressors = []
+    for train_indexes, test_indexes in kf.split(self._X):
+      X_train, X_test = self._X[train_indexes], self._X[test_indexes]
+      y_train, y_test = self._y[train_indexes], self._y[test_indexes]
+
+      # TODO reconsider using Imputer?
+      regressor = regressor_generator().fit(X_train, y_train)
+      y_pred.extend(zip(test_indexes, regressor.predict(X_test)))
+      regressors.append(regressor)
+
+    y_pred_dict = dict(y_pred)
+    if len(y_pred_dict) != len(y_pred):
+      raise Exception('kfold splitting was bad.')
+    return [y_pred_dict[i] for i in range(len(self._X))], regressors
 
   # Currently useful for verifying results against lab's random forest code.
   def write_csv(self, file_path):

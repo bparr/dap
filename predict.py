@@ -145,30 +145,6 @@ def new2016NoHarvestDataset():
 
 
 
-# TODO move to DataView?
-def kfold_predict(data_view, regressor_generator):
-  # TODO remove this hack!
-  X = data_view._X
-  y = data_view._y
-  y_pred = []
-
-  kf = KFold(n_splits=10)
-  regressors = []
-  for train_indexes, test_indexes in kf.split(X):
-    X_train, X_test = X[train_indexes], X[test_indexes]
-    y_train, y_test = y[train_indexes], y[test_indexes]
-
-    # TODO reconsider using Imputer?
-    regressor = regressor_generator().fit(X_train, y_train)
-    y_pred.extend(zip(test_indexes, regressor.predict(X_test)))
-    regressors.append(regressor)
-
-  y_pred_dict = dict(y_pred)
-  if len(y_pred_dict) != len(y_pred):
-    raise Exception('kfold splitting was bad.')
-  return [y_pred_dict[i] for i in range(len(X))], regressors
-
-
 # Merge (sum) importances that have the same input label.
 def merge_importances(input_labels, feature_importances):
   feature_importances = np.array(feature_importances)
@@ -303,7 +279,7 @@ def main():
 
     for output_label, output_generator in dataset.get_output_generators():
       data_view = dataset.generate_view(output_label, output_generator)
-      y_pred, regressors = kfold_predict(data_view, regressor_generator)
+      y_pred, regressors = data_view.kfold_predict(regressor_generator)
 
       if not output_label in results:
         results[output_label] = {'num_samples': data_view.get_num_samples()}
