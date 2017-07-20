@@ -5,6 +5,7 @@
 import collections
 import dataset
 import numpy as np
+import tempfile
 import unittest
 
 
@@ -137,6 +138,21 @@ class TestDataset(unittest.TestCase):
     expected = [('key1', 'value1'), ('key2', 'value2')]
     ds = dataset.Dataset([], [], collections.OrderedDict(expected))
     self.assertListEqual(expected, list(ds.get_output_generators()))
+
+
+class TestDataView(unittest.TestCase):
+  def test_write_csv(self):
+    data_view = dataset.DataView(
+        ['label1', 'label2'], np.array([[1.0, 2.0], [3.0, 4.0]]),
+        'output', np.array([5.0, 6.0]))
+    csv_file = tempfile.NamedTemporaryFile(delete=False)
+    data_view.write_csv(csv_file.name)
+
+    with open(csv_file.name, 'r') as f:
+      lines = f.readlines()
+    self.assertListEqual(
+        ['label1,label2,output\n', '1.0,2.0,5.0\n', '3.0,4.0,6.0\n'], lines)
+
 
 if __name__ == '__main__':
     unittest.main()
