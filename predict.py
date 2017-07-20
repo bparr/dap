@@ -28,8 +28,6 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.isotonic import IsotonicRegression
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.linear_model import ARDRegression, HuberRegressor, LinearRegression, LogisticRegression, LogisticRegressionCV, PassiveAggressiveRegressor, RandomizedLogisticRegression, RANSACRegressor, SGDRegressor, TheilSenRegressor
-from sklearn.model_selection import KFold
-from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsRegressor, RadiusNeighborsRegressor
 from sklearn.neural_network import MLPRegressor
 from sklearn.svm import SVR, LinearSVR, NuSVR
