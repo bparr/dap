@@ -33,16 +33,17 @@ def convert_to_float_or_missing(samples, labels):
         raise Exception('Bad value:', v)
 
 
+# Contains entire dataset, and ways to view it.
 class Dataset(object):
   _DICT_VECTORIZER_SEPERATOR = '='
 
   def __init__(self, samples, input_labels, output_generators):
-    # Order modified (shuffled) by self.generate().
+    # Order modified (shuffled) by self._generate().
     self._samples = samples
     self._input_labels = tuple(input_labels)
     self._output_generators = output_generators
 
-    # Generated and verified in self.generate().
+    # Generated and verified in self._generate().
     self._vectorized_feature_names = None
 
   # TODO add tests for this helper function?
@@ -51,7 +52,16 @@ class Dataset(object):
       X_labels, X, y = self._generate(output_generator, shuffle)
       yield output_label, DataView(X_labels, X, output_label, y)
 
-  # Returns: (X labels, X, y)
+  # Can contain a label multiple times if its values were strings, since
+  # DictVectorizer converts those to one-hot vectors.
+  # Raises an error if called before generating any views.
+  def get_input_labels(self):
+    if self._vectorized_feature_names is None:
+      raise Exception('Can not call get_input_labels before generating a view.')
+    sep = Dataset._DICT_VECTORIZER_SEPERATOR
+    return [x.split(sep)[0] for x in self._vectorized_feature_names]
+
+  # Returns: (X_labels, X, y)
   def _generate(self, output_generator, shuffle=True):
     if shuffle:
       random.shuffle(self._samples)
@@ -79,17 +89,8 @@ class Dataset(object):
 
     return list(vectorizer.feature_names_), X, np.array(y)
 
-  # Can contain a label multiple times if its values were strings, since
-  # DictVectorizer converts those to one-hot vectors.
-  # Raises an error if called before self.generate() is called.
-  def get_input_labels(self):
-    if self._vectorized_feature_names is None:
-      raise Exception('Can not call get_input_labels before generate.')
-    sep = Dataset._DICT_VECTORIZER_SEPERATOR
-    return [x.split(sep)[0] for x in self._vectorized_feature_names]
 
-
-# TODO document.
+# A single view of a subset of the data in a a Dataset.
 class DataView(object):
   def __init__(self, X_labels, X, y_label, y):
     self._X_labels = X_labels
@@ -97,11 +98,9 @@ class DataView(object):
     self._y_label = y_label
     self._y = y
 
-  # TODO add test.
   def get_num_samples(self):
     return self._X.shape[0]
 
-  # TODO add test.
   def get_r2_score(self, y_pred):
     return r2_score(self._y, y_pred)
 

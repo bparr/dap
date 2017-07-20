@@ -136,17 +136,29 @@ class TestDataset(unittest.TestCase):
 
 
 class TestDataView(unittest.TestCase):
+  def setUp(self):
+    self.data_view = dataset.DataView(
+        ['label1', 'label2'],
+        np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]]),
+        'output', np.array([7.0, 8.0, 9.0]))
+
+  def test_get_num_samples(self):
+    self.assertEqual(3, self.data_view.get_num_samples())
+
+  def test_get_r2_score(self):
+    self.assertEqual(1.0, self.data_view.get_r2_score([7.0, 8.0, 9.0]))
+    self.assertEqual(0.0, self.data_view.get_r2_score([8.0, 8.0, 8.0]))
+    self.assertEqual(0.75, self.data_view.get_r2_score([7.5, 8.0, 8.5]))
+
   def test_write_csv(self):
-    data_view = dataset.DataView(
-        ['label1', 'label2'], np.array([[1.0, 2.0], [3.0, 4.0]]),
-        'output', np.array([5.0, 6.0]))
     csv_file = tempfile.NamedTemporaryFile(delete=False)
-    data_view.write_csv(csv_file.name)
+    self.data_view.write_csv(csv_file.name)
 
     with open(csv_file.name, 'r') as f:
       lines = f.readlines()
     self.assertListEqual(
-        ['label1,label2,output\n', '1.0,2.0,5.0\n', '3.0,4.0,6.0\n'], lines)
+        ['label1,label2,output\n', '1.0,2.0,7.0\n', '3.0,4.0,8.0\n',
+         '5.0,6.0,9.0\n'], lines)
 
 
 if __name__ == '__main__':
