@@ -3,7 +3,6 @@
 """
 Dataset classes and helper functions.
 """
-# TODO tests?
 
 import csv
 from csv_utils import average_mismatch

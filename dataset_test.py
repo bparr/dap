@@ -2,6 +2,7 @@
 
 # Usage: ./dataset_test.py
 
+import collections
 import dataset
 import numpy as np
 import unittest
@@ -36,6 +37,19 @@ class TestHelperFunctions(unittest.TestCase):
     self.assertRaises(Exception, dataset.convert_to_float_or_missing,
                       samples, ['foo'])
 
+
+class TestDataset(unittest.TestCase):
+  def setUp(self):
+    self.samples = []
+    self.input_labels = ['input_label1', 'input_label2']
+    self.output_generators = collections.OrderedDict([
+      ('key1', 'value1'), ('key2', 'value2')])
+    self.dataset = dataset.Dataset(self.samples, self.input_labels,
+                                   self.output_generators)
+
+  def test_get_output_generators(self):
+    self.assertListEqual([('key1', 'value1'), ('key2', 'value2')],
+                         list(self.dataset.get_output_generators()))
 
 if __name__ == '__main__':
     unittest.main()
