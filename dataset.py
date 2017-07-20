@@ -46,9 +46,10 @@ class Dataset(object):
     self._vectorized_feature_names = None
 
   # TODO add tests for this helper function?
-  def generate_view(self, output_label, output_generator, shuffle=True):
-    X_labels, X, y = self._generate(output_generator, shuffle)
-    return DataView(X_labels, X, output_label, y)
+  def generate_views(self, shuffle=True):
+    for output_label, output_generator in self._output_generators.items():
+      X_labels, X, y = self._generate(output_generator, shuffle)
+      yield output_label, DataView(X_labels, X, output_label, y)
 
   # Returns: (X labels, X, y)
   def _generate(self, output_generator, shuffle=True):
@@ -86,10 +87,6 @@ class Dataset(object):
       raise Exception('Can not call get_input_labels before generate.')
     sep = Dataset._DICT_VECTORIZER_SEPERATOR
     return [x.split(sep)[0] for x in self._vectorized_feature_names]
-
-  # TODO rework code so this method isn't needed?
-  def get_output_generators(self):
-    return self._output_generators.items()
 
 
 # TODO document.

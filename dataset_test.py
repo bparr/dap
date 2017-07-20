@@ -134,11 +134,6 @@ class TestDataset(unittest.TestCase):
     self.assertEqual(['label1', 'label2', 'label2'],
                      self.dataset_with_strings.get_input_labels())
 
-  def test_get_output_generators(self):
-    expected = [('key1', 'value1'), ('key2', 'value2')]
-    ds = dataset.Dataset([], [], collections.OrderedDict(expected))
-    self.assertListEqual(expected, list(ds.get_output_generators()))
-
 
 class TestDataView(unittest.TestCase):
   def test_write_csv(self):
