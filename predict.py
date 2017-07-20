@@ -311,6 +311,7 @@ def main():
                       help='No prediction. Just write data views.')
   args = parser.parse_args()
   CSV_OUTPUT_PATH = CSV_OUTPUT_PATH % args.dataset
+  open(CSV_OUTPUT_PATH, 'w').close()  # Clear file.
 
   dataset = (DATASET_FACTORIES[args.dataset])()
 
