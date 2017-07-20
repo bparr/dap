@@ -95,13 +95,6 @@ class DataView(object):
     self._y_label = y_label
     self._y = y
 
-  # TODO remove these getters? are they just for testing?
-  def get_X(self):
-    return self._X
-
-  def get_y(self):
-    return self._y
-
   def get_num_samples(self):
     return self._X.shape[0]
 

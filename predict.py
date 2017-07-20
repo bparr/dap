@@ -100,7 +100,7 @@ def new2014Dataset():
                                             minus=ADF)),
   ])
 
-  rprint(','.join(['2014_INPUTS'] + list(input_labels)))
+  print('2014 Inputs: ' + ','.join(input_labels))
   return dataset.Dataset(samples, input_labels, output_generators)
 
 
@@ -137,7 +137,7 @@ def new2016Dataset(include_harvest=True):
     [(x, create_2016_output_generator(x)) for x in output_labels]
   ))
 
-  rprint(','.join(['2016_INPUTS'] + list(input_labels)))
+  print('2016 Inputs: ' + ','.join(input_labels))
   return dataset.Dataset(samples, input_labels, output_generators)
 
 
@@ -196,8 +196,6 @@ def write_csv(file_path, input_labels, X, output_label, y):
 
 
 def main():
-  global CSV_OUTPUT_PATH
-
   DATASET_FACTORIES = {
     '2014': new2014Dataset,
     '2016': new2016Dataset,
@@ -213,8 +211,6 @@ def main():
   parser.add_argument('--write_dataviews_only', action='store_true',
                       help='No prediction. Just write data views.')
   args = parser.parse_args()
-  CSV_OUTPUT_PATH = CSV_OUTPUT_PATH % args.dataset
-  open(CSV_OUTPUT_PATH, 'w').close()  # Clear file.
 
   dataset = (DATASET_FACTORIES[args.dataset])()
 
@@ -225,6 +221,10 @@ def main():
       write_csv(os.path.join('dataviews', args.dataset, output_label + '.csv'),
                 X_labels, X, output_label, y)
     return
+
+  global CSV_OUTPUT_PATH
+  CSV_OUTPUT_PATH = CSV_OUTPUT_PATH % args.dataset
+  open(CSV_OUTPUT_PATH, 'w').close()  # Clear file.
 
   regressor_generators = collections.OrderedDict([
       # Customized.
