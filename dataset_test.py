@@ -49,14 +49,14 @@ class TestDataset(unittest.TestCase):
   def setUp(self):
     self.input_labels = ['label1', 'label2']
     self.samples = [
-      {'label1': 1.0, 'label2': 2.0, 'output': 3.0},
-      {'label1': 4.0, 'label2': 5.0, 'output': 6.0},
-      {'label1': 7.0, 'label2': 8.0, 'output': 9.0},
+      {'label1': 1.0, 'label2': 2.0, 'output': 3.0, 'ignored': 1.0},
+      {'label1': 4.0, 'label2': 5.0, 'output': 6.0, 'ignored': 1.0},
+      {'label1': 7.0, 'label2': 8.0, 'output': 9.0, 'ignored': 1.0},
     ]
     self.samples_with_strings =[
-      {'label1': 1.0, 'label2': 'foo', 'output': 3.0},
-      {'label1': 4.0, 'label2': 'foo', 'output': 6.0},
-      {'label1': 7.0, 'label2': '', 'output': 9.0},
+      {'label1': 1.0, 'label2': 'foo', 'output': 3.0, 'ignored': 1.0},
+      {'label1': 4.0, 'label2': 'foo', 'output': 6.0, 'ignored': 1.0},
+      {'label1': 7.0, 'label2': '', 'output': 9.0, 'ignored': 1.0},
     ]
     self.dataset = dataset.Dataset(
         self.samples, self.input_labels, 'output_generators')
@@ -76,6 +76,48 @@ class TestDataset(unittest.TestCase):
     self.input_labels[0] = 'changed'
     X_labels, _, _ = self.dataset.generate(output_generator, shuffle=False)
     self.assertListEqual(['label1', 'label2'], X_labels)
+
+  def test_generate_ignores_missing_outputs(self):
+    output_generator = lambda x: -1 if x['output'] > 3.0 else 42.0
+    X_labels, X, y = self.dataset.generate(output_generator, shuffle=False)
+    self.assertListEqual(['label1', 'label2'], X_labels)
+    np.testing.assert_array_equal([[1.0, 2.0]], X)
+    np.testing.assert_array_equal([42.0], y)
+
+  def test_generate_vectorizes_strings(self):
+    output_generator = lambda x: 10.0 * x['output']
+    X_labels, X, y = self.dataset_with_strings.generate(
+        output_generator, shuffle=False)
+    self.assertListEqual(['label1', 'label2=', 'label2=foo'], X_labels)
+    np.testing.assert_array_equal(
+        [[1.0, 0.0, 1.0], [4.0, 0.0, 1.0], [7.0, 1.0, 0.0]], X)
+    np.testing.assert_array_equal([30.0, 60.0, 90.0], y)
+
+  def test_generate_raises_exception_if_vectorization_labels_changed(self):
+    output_generator1 = lambda x: 10.0 * x['output']
+    self.dataset_with_strings.generate(output_generator1, shuffle=False)
+    # With this generator, the empty string value for label2 no longer exists.
+    output_generator2 = lambda x: -1 if x['output'] > 3.0 else 42.0
+    self.assertRaises(Exception, self.dataset_with_strings.generate,
+                      output_generator2, shuffle=False)
+
+  def test_generate_no_raises_exception_if_vectorization_labels_changed(self):
+    output_generator1 = lambda x: 10.0 * x['output']
+    self.dataset_with_strings.generate(output_generator1, shuffle=False)
+    # With this generator, all string values for label2 still exist.
+    output_generator2 = lambda x: -1 if x['output'] <= 3.0 else 42.0
+    self.dataset_with_strings.generate(output_generator2, shuffle=False)
+
+  def test_get_input_labels(self):
+    output_generator = lambda x: 10.0 * x['output']
+    self.dataset.generate(output_generator, shuffle=False)
+    self.assertEqual(['label1', 'label2'], self.dataset.get_input_labels())
+
+  def test_get_input_labels_with_vectorized_strings(self):
+    output_generator = lambda x: 10.0 * x['output']
+    self.dataset_with_strings.generate(output_generator, shuffle=False)
+    self.assertEqual(['label1', 'label2', 'label2'],
+                     self.dataset_with_strings.get_input_labels())
 
   def test_get_output_generators(self):
     expected = [('key1', 'value1'), ('key2', 'value2')]
