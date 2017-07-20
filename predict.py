@@ -16,7 +16,7 @@ import argparse
 import collections
 import csv
 import csv_utils
-import dataset
+import dataset as dataset_lib
 from features import Features
 import matplotlib.pyplot as plt
 import numpy as np
@@ -60,9 +60,9 @@ def get_2014_weight(sample, dry_weight_label, label, minus=None):
   value = sample[label]
   minus_value = 0.0 if minus is None else sample[minus]
   dry_weight = sample[dry_weight_label]
-  if (dataset.is_missing(value) or dataset.is_missing(minus_value) or
-      dataset.is_missing(dry_weight)):
-    return dataset.MISSING_VALUE
+  if (dataset_lib.is_missing(value) or dataset_lib.is_missing(minus_value) or
+      dataset_lib.is_missing(dry_weight)):
+    return dataset_lib.MISSING_VALUE
   return dry_weight * (value - minus_value) / 100.0
 
 def new2014Dataset():
@@ -86,7 +86,7 @@ def new2014Dataset():
       #'Dry tons per acre',
   )
 
-  dataset.convert_to_float_or_missing(samples, list(input_labels) + [
+  dataset_lib.convert_to_float_or_missing(samples, list(input_labels) + [
       ADF, NDF, NFC, LIGNIN, DRY_WEIGHT])
 
   output_generators = collections.OrderedDict([
@@ -101,7 +101,7 @@ def new2014Dataset():
   ])
 
   print('2014 Inputs: ' + ','.join(input_labels))
-  return dataset.Dataset(samples, input_labels, output_generators)
+  return dataset_lib.Dataset(samples, input_labels, output_generators)
 
 
 
@@ -116,7 +116,7 @@ def create_2016_output_generator(key):
 
 def new2016Dataset(include_harvest=True):
   samples = csv_utils.read_csv_as_dicts('2016.merged.csv')
-  dataset.convert_to_float_or_missing(samples, filter_2016_labels((
+  dataset_lib.convert_to_float_or_missing(samples, filter_2016_labels((
       'HARVEST_', 'COMPOSITION_', 'ROBOT_', 'SYNTHETIC_', 'GPS_')) +
       [Features.ROW.value, Features.COLUMN.value])
 
@@ -138,7 +138,7 @@ def new2016Dataset(include_harvest=True):
   ))
 
   print('2016 Inputs: ' + ','.join(input_labels))
-  return dataset.Dataset(samples, input_labels, output_generators)
+  return dataset_lib.Dataset(samples, input_labels, output_generators)
 
 
 def new2016NoHarvestDataset():
