@@ -33,7 +33,6 @@ from sklearn.model_selection import KFold
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsRegressor, RadiusNeighborsRegressor
 from sklearn.neural_network import MLPRegressor
-from sklearn.preprocessing import Imputer
 from sklearn.svm import SVR, LinearSVR, NuSVR
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
 
@@ -51,9 +50,7 @@ def rprint(string_to_print):
   with open(CSV_OUTPUT_PATH, 'a') as f:
     f.write(string_to_print + '\n')
 
-# TODO tune??
-#MISSING_VALUE = np.nan
-MISSING_VALUE = -1  # Disables Imputer.
+MISSING_VALUE = -1
 
 
 def is_missing(value):
@@ -255,11 +252,7 @@ def kfold_predict(X, y, regressor_generator):
     X_train, X_test = X[train_indexes], X[test_indexes]
     y_train, y_test = y[train_indexes], y[test_indexes]
 
-    imp = Imputer()
-    # Parser ignores rows with missing y, so no need to impute y.
-    X_train = imp.fit_transform(X_train)
-    X_test = imp.transform(X_test)
-
+    # TODO reconsider using Imputer?
     regressor = regressor_generator().fit(X_train, y_train)
     y_pred.extend(zip(test_indexes, regressor.predict(X_test)))
     regressors.append(regressor)
@@ -301,7 +294,6 @@ def write_csv(file_path, input_labels, X, output_label, y):
 
 def main():
   global CSV_OUTPUT_PATH
-  global MISSING_VALUE
 
   DATASET_FACTORIES = {
     '2014': new2014Dataset,
@@ -319,10 +311,6 @@ def main():
                       help='No prediction. Just write data views.')
   args = parser.parse_args()
   CSV_OUTPUT_PATH = CSV_OUTPUT_PATH % args.dataset
-
-  if args.write_dataviews_only:
-    print('Overwriting MISSING_VALUE because writing dataviews!')
-    MISSING_VALUE = -1
 
   dataset = (DATASET_FACTORIES[args.dataset])()
 
