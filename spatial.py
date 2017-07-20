@@ -10,8 +10,8 @@ the name[key description].2016.csv.
 """
 
 import csv
-import csv_utils
-from merge_data import DataKeys, average_mismatch
+from csv_utils import average_mismatch, read_csv_as_dicts
+from merge_data import DataKeys
 from multiprocessing import Pool
 import numpy as np
 import random
@@ -85,7 +85,7 @@ def get_spatial_correlation(arg):
 
 def main():
   pool = Pool()
-  samples = csv_utils.read_csv_as_dicts(INPUT_PATH)
+  samples = read_csv_as_dicts(INPUT_PATH)
 
   # Tuples of spatial_key1, spatial_key2, spatial_keys_description).
   mantel_runs = [

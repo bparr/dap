@@ -8,7 +8,7 @@ Dataset classes and helper functions.
 # TODO move it to csv_utils.
 # TODO move DataKeys to its own file?
 import csv
-from merge_data import average_mismatch
+from csv_utils import average_mismatch
 import numpy as np
 import random
 from sklearn.feature_extraction import DictVectorizer

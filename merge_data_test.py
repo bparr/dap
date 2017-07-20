@@ -21,7 +21,7 @@ def read_output_file(file_path, merged=False):
       row_str = d[merge_data.Cell.ROW_DATA_NAME]
       row_list = [row_str]
       if merged:
-        row_list = row_str.split(merge_data.MISMATCH_DELIMETER)
+        row_list = csv_utils.split_values(row_str)
 
       for row in row_list:
         row = int(row)
@@ -50,8 +50,8 @@ class TestOutput(unittest.TestCase):
   def _assert_values_equal(self, expected, actual):
     if expected in csv_utils.EMPTY_VALUES:
       return
-    actual_subentries = actual.split(merge_data.MISMATCH_DELIMETER)
-    for expected_subentry in expected.split(merge_data.MISMATCH_DELIMETER):
+    actual_subentries = csv_utils.split_values(actual)
+    for expected_subentry in csv_utils.split_values(expected):
       self.assertIn(expected_subentry, actual_subentries)
 
   # Test values in an input file were correctly copied over to output file.

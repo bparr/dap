@@ -7,12 +7,12 @@ Visualize specific features of the field.
 # TODO tests?
 
 import argparse
-import csv_utils
+from csv_utils import average_mismatch, read_csv_as_dicts
 import matplotlib.pyplot as plt
-from merge_data import DataKeys, average_mismatch
+from merge_data import DataKeys
 
 def main():
-  samples = csv_utils.read_csv_as_dicts('2016.merged.csv')
+  samples = read_csv_as_dicts('2016.merged.csv')
   parser = argparse.ArgumentParser(description='Visualize features')
   parser.add_argument('-f', '--feature', required=True,
                       choices=samples[0].keys(),

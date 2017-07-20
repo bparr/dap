@@ -32,20 +32,9 @@ MERGED_OUTPUT_FILENAME = DATA_DIRECTORY + '.merged.csv'
 # rows, and uses this offset to reindex rows in the PlotPlan and HarvestData.
 NO_FILL_ROW_OFFSET = 4
 
-# Store all values for a specific entry in output csv by delimitting them with
-# this. For example, some plot ids are inconsistent across PlotMap and
-# PlotPlan, so just store all the ones encountered in the single plot id entry
-# for the inconsistent cells.  Some plot ids are inconsistent.
-MISMATCH_DELIMETER = ' && '
-
 # The amount of rows a single cell contains.
 # TODO better name than Cell?
 ROWS_IN_CELL = 4
-
-
-# Averge multiple numeric values, caused by mismatched data merging.
-def average_mismatch(value):
-  return np.mean([float(x) for x in value.split(MISMATCH_DELIMETER)])
 
 
 # Parse a single row or column cell coordinate to an int.
@@ -130,10 +119,7 @@ class Cell(object):
     key = DataKeys(key)  # Ensure key is a DataKey instance.
     if key in self._data and value != self._data[key]:
       if append_if_mismatch:
-        # Don't re-append a single value over and over.
-        if value in self._data[key].split(MISMATCH_DELIMETER):
-          return
-        self._data[key] += MISMATCH_DELIMETER + value
+        self._data[key] = csv_utils.append_value(self._data[key], value)
         return
 
       raise Exception('Unexpected mismatch in existing value:',

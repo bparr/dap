@@ -17,7 +17,7 @@ import collections
 import csv
 import csv_utils
 import matplotlib.pyplot as plt
-from merge_data import DataKeys, average_mismatch
+from merge_data import DataKeys
 from dataset import MISSING_VALUE, is_missing, convert_to_float_or_missing, Dataset
 import numpy as np
 import os
