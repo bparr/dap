@@ -4,9 +4,9 @@
 Parse full csv and predict harvest data.
 
 Usage:
-  ./predict.py -d 2016 > predict.2016.out
-  ./predict.py -d 2016.noHarvest > predict.2016.noHarvest.out
-  ./predict.py -d 2014 > predict.2014.out
+  ./predict.py -d 2016 > results.2016.out
+  ./predict.py -d 2016.noHarvest > results.2016.noHarvest.out
+  ./predict.py -d 2014 > results.2014.out
 
 """
 # TODO tests?
