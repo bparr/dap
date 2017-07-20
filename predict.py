@@ -106,7 +106,7 @@ class Dataset(object):
       # This could be removed if store mappings and merge correctly in code.
       raise Exception('Vectorized feature names changed!')
 
-    return vectorizer.feature_names_, X, np.array(y)
+    return list(vectorizer.feature_names_), X, np.array(y)
 
   # Can contain a label multiple times if its values were strings, since
   # DictVectorizer converts those to one-hot vectors.
@@ -120,6 +120,26 @@ class Dataset(object):
   def get_output_generators(self):
     return self._output_generators.items()
 
+
+# TODO document.
+class DataView(object):
+  def __init__(self, X_labels, X, y_label, y):
+    self._X_labels = X_labels
+    self._X = X
+    self._y_label = y_label
+    self._y = y
+
+  # Currently useful for verifying results against lab's random forest code.
+  def write_csv(self, file_path):
+    with open(file_path, 'w') as f:
+      writer = csv.writer(f)
+      labels = self._X_labels + [self._y_label]
+      writer.writerow(labels)
+      for x_row, y_row in zip(self._X, self._y):
+        row = list(x_row) + [y_row]
+        if len(row) != len(labels):
+          raise Exception('Inconsistent number of entries.')
+        writer.writerow(row)
 
 
 #######################
@@ -257,6 +277,7 @@ def merge_importances(input_labels, feature_importances):
 
 # Output completely preprocessed CSV files.
 # Currently useful for verifying results against lab's random forest code.
+# TODO remove!
 def write_csv(file_path, input_labels, X, output_label, y):
   with open(file_path, 'w') as f:
     writer = csv.writer(f)
