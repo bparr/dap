@@ -9,6 +9,7 @@ from csv_utils import average_mismatch
 import numpy as np
 import random
 from sklearn.feature_extraction import DictVectorizer
+from sklearn.metrics import r2_score
 
 
 MISSING_VALUE = -1
@@ -45,7 +46,7 @@ class Dataset(object):
 
   # TODO add tests for this helper function?
   def generate_view(self, output_label, output_generator, shuffle=True):
-    X_labels, X, y = self._genearte(output_generator, shuffle)
+    X_labels, X, y = self._generate(output_generator, shuffle)
     return DataView(X_labels, X, output_label, y)
 
   # Returns: (X labels, X, y)
@@ -100,6 +101,9 @@ class DataView(object):
 
   def get_num_samples(self):
     return self._X.shape[0]
+
+  def get_r2_score(self, y_pred):
+    return r2_score(self._y, y_pred)
 
   # Currently useful for verifying results against lab's random forest code.
   def write_csv(self, file_path):

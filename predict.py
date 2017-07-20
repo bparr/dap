@@ -28,7 +28,6 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.isotonic import IsotonicRegression
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.linear_model import ARDRegression, HuberRegressor, LinearRegression, LogisticRegression, LogisticRegressionCV, PassiveAggressiveRegressor, RandomizedLogisticRegression, RANSACRegressor, SGDRegressor, TheilSenRegressor
-from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import KFold
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsRegressor, RadiusNeighborsRegressor
@@ -146,7 +145,11 @@ def new2016NoHarvestDataset():
 
 
 
-def kfold_predict(X, y, regressor_generator):
+# TODO move to DataView?
+def kfold_predict(data_view, regressor_generator):
+  # TODO remove this hack!
+  X = data_view._X
+  y = data_view._y
   y_pred = []
 
   kf = KFold(n_splits=10)
@@ -216,10 +219,10 @@ def main():
 
   if args.write_dataviews_only:
     for output_label, output_generator in dataset.get_output_generators():
-      # TODO change to generate_view!
-      X_labels, X, y = dataset._generate(output_generator, shuffle=False)
-      write_csv(os.path.join('dataviews', args.dataset, output_label + '.csv'),
-                X_labels, X, output_label, y)
+      data_view = dataset.generate_view(
+          output_label, output_generator, shuffle=False)
+      data_view.write_csv(os.path.join(
+          'dataviews', args.dataset, output_label + '.csv'))
     return
 
   global CSV_OUTPUT_PATH
@@ -299,13 +302,12 @@ def main():
     np.random.seed(RANDOM_SEED)
 
     for output_label, output_generator in dataset.get_output_generators():
-      # TODO change to generate_view!
-      _, X, y = dataset._generate(output_generator)
-      y_pred, regressors = kfold_predict(X, y, regressor_generator)
+      data_view = dataset.generate_view(output_label, output_generator)
+      y_pred, regressors = kfold_predict(data_view, regressor_generator)
 
       if not output_label in results:
-        results[output_label] = {'num_samples': str(X.shape[0])}
-      results[output_label][regressor_name] = str(r2_score(y, y_pred))
+        results[output_label] = {'num_samples': data_view.get_num_samples()}
+      results[output_label][regressor_name] = data_view.get_r2_score(y_pred)
 
       if regressor_name == RF_REGRESSOR_NAME:
         for regressor in regressors:
@@ -317,8 +319,8 @@ def main():
   rprint(','.join(['output_label', 'num_samples'] + regressor_names))
   for output_label in sorted(results.keys()):
     result = results[output_label]
-    rprint(','.join([output_label, result['num_samples']] +
-                    [result[x] for x in regressor_names]))
+    rprint(','.join([output_label, str(result['num_samples'])] +
+                    [str(result[x]) for x in regressor_names]))
 
 
   rprint('\n')
