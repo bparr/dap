@@ -16,8 +16,7 @@ MISSING_VALUE = -1
 
 
 def is_missing(value):
-  # Unfortunately np.nan == np.nan is False, so check both isnan and equality.
-  return np.isnan(value) or value == MISSING_VALUE
+  return value == MISSING_VALUE
 
 
 def convert_to_float_or_missing(samples, labels):
