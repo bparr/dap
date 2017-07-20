@@ -43,9 +43,13 @@ class Dataset(object):
     # Generated and verified in self.generate().
     self._vectorized_feature_names = None
 
-  # output_generator must be one returned by get_output_generators().
+  # TODO add tests for this helper function?
+  def generate_view(self, output_label, output_generator, shuffle=True):
+    X_labels, X, y = self._genearte(output_generator, shuffle)
+    return DataView(X_labels, X, output_label, y)
+
   # Returns: (X labels, X, y)
-  def generate(self, output_generator, shuffle=True):
+  def _generate(self, output_generator, shuffle=True):
     if shuffle:
       random.shuffle(self._samples)
 
