@@ -35,15 +35,17 @@ class Dataset(object):
   _DICT_VECTORIZER_SEPERATOR = '='
 
   def __init__(self, samples, input_labels, output_generators):
-    # Order modified (shuffled) by self.generate_view().
+    # Order modified (shuffled) by self.generate().
     self._samples = samples
     self._input_labels = tuple(input_labels)
     self._output_generators = output_generators
 
-    # Generated and verified in self.generate_view().
+    # Generated and verified in self.generate().
     self._vectorized_feature_names = None
 
-  def generate_view(self, output_label, output_generator, shuffle=True):
+  # output_generator must be one returned by get_output_generators().
+  # Returns: (X labels, X, y)
+  def generate(self, output_generator, shuffle=True):
     if shuffle:
       random.shuffle(self._samples)
 
@@ -68,17 +70,14 @@ class Dataset(object):
       # This could be removed if store mappings and merge correctly in code.
       raise Exception('Vectorized feature names changed!')
 
-    return (list(vectorizer.get_feature_names()), X,
-                    np.array(y))
-    #return DataView(list(vectorizer.get_feature_names()), X,
-    #                output_label, np.array(y))
+    return list(vectorizer.feature_names_), X, np.array(y)
 
   # Can contain a label multiple times if its values were strings, since
   # DictVectorizer converts those to one-hot vectors.
-  # Raises an error if called before self.generate_view() is called.
+  # Raises an error if called before self.generate() is called.
   def get_input_labels(self):
     if self._vectorized_feature_names is None:
-      raise Exception('Can not call get_input_labels before generate_view.')
+      raise Exception('Can not call get_input_labels before generate.')
     sep = Dataset._DICT_VECTORIZER_SEPERATOR
     return [x.split(sep)[0] for x in self._vectorized_feature_names]
 
