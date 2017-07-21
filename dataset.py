@@ -38,7 +38,6 @@ class Dataset(object):
   _DICT_VECTORIZER_SEPERATOR = '='
 
   def __init__(self, samples, input_labels, output_generators):
-    # Order modified (shuffled) by self._generate().
     self._samples = samples
     self._input_labels = tuple(input_labels)
     self._output_generators = output_generators
@@ -47,9 +46,9 @@ class Dataset(object):
     self._vectorized_feature_names = None
 
   # TODO add tests for this helper function?
-  def generate_views(self, shuffle=True):
+  def generate_views(self):
     for output_label, output_generator in self._output_generators.items():
-      X_labels, X, y = self._generate(output_generator, shuffle)
+      X_labels, X, y = self._generate(output_generator)
       yield output_label, DataView(X_labels, X, output_label, y)
 
   # Can contain a label multiple times if its values were strings, since
@@ -62,10 +61,7 @@ class Dataset(object):
     return [x.split(sep)[0] for x in self._vectorized_feature_names]
 
   # Returns: (X_labels, X, y)
-  def _generate(self, output_generator, shuffle=True):
-    if shuffle:
-      random.shuffle(self._samples)
-
+  def _generate(self, output_generator):
     X_dicts = []
     y = []
     for sample in self._samples:
@@ -108,7 +104,7 @@ class DataView(object):
   def kfold_predict(self, regressor_generator):
     y_pred = []
 
-    kf = KFold(n_splits=10)
+    kf = KFold(n_splits=10, shuffle=True)
     regressors = []
     for train_indexes, test_indexes in kf.split(self._X):
       X_train, X_test = self._X[train_indexes], self._X[test_indexes]

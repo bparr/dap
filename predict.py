@@ -177,7 +177,7 @@ def main():
   dataset = (DATASET_FACTORIES[args.dataset])()
 
   if args.write_dataviews_only:
-    for output_label, data_view in dataset.generate_views(shuffle=False):
+    for output_label, data_view in dataset.generate_views():
       data_view.write_csv(os.path.join(
           'dataviews', args.dataset, output_label + '.csv'))
     return
