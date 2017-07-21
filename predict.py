@@ -113,23 +113,7 @@ def create_2016_output_generator(key):
 ADJACENT_COUNT = 4 # TODO impove code quality.
 ADJACENT_LABEL_SUFFIX = '_ADJACENT'
 
-def new2016Dataset(include_harvest=True):
-  samples = csv_utils.read_csv_as_dicts('2016.merged.csv')
-  dataset_lib.convert_to_float_or_missing(samples, filter_2016_labels((
-      'HARVEST_', 'COMPOSITION_', 'ROBOT_', 'SYNTHETIC_', 'GPS_')) +
-      [Features.ROW.value, Features.COLUMN.value])
-
-  adjacent_augmented_labels = filter_2016_labels(('ROBOT_', 'SYNTHETIC_'))
-  input_features_starts_with = [
-      'ROBOT_',
-      'GPS_',
-      'ACCESSION_',
-  ]
-  if include_harvest:
-    adjacent_augmented_labels.extend(filter_2016_labels('HARVEST_'))
-    input_features_starts_with.append('HARVEST_')
-    input_features_starts_with.append('SYNTHETIC_HARVEST_')
-
+def add_adjacent_features(samples, adjacent_augmented_labels):
   EASTINGS_LABEL = Features.GPS_EASTINGS.value
   NORTHINGS_LABEL = Features.GPS_NORTHINGS.value
   # TODO some of this is copy-pasta from spatial.py. Remove code redundancy?
@@ -147,6 +131,25 @@ def new2016Dataset(include_harvest=True):
       sample[input_label + ADJACENT_LABEL_SUFFIX] = np.mean(adjacent_values)
 
 
+def new2016Dataset(include_harvest=True):
+  samples = csv_utils.read_csv_as_dicts('2016.merged.csv')
+  dataset_lib.convert_to_float_or_missing(samples, filter_2016_labels((
+      'HARVEST_', 'COMPOSITION_', 'ROBOT_', 'SYNTHETIC_', 'GPS_')) +
+      [Features.ROW.value, Features.COLUMN.value])
+
+  adjacent_augmented_labels = filter_2016_labels(('ROBOT_', 'SYNTHETIC_'))
+  input_features_starts_with = [
+      'ROBOT_',
+      'GPS_',
+      'ACCESSION_',
+  ]
+  if include_harvest:
+    adjacent_augmented_labels.extend(filter_2016_labels('HARVEST_'))
+    input_features_starts_with.append('HARVEST_')
+    input_features_starts_with.append('SYNTHETIC_HARVEST_')
+
+
+  add_adjacent_features(samples, adjacent_augmented_labels)
   input_labels = filter_2016_labels(tuple(input_features_starts_with)) + (
                  [x + ADJACENT_LABEL_SUFFIX for x in adjacent_augmented_labels])
   output_labels = filter_2016_labels('COMPOSITION_')
