@@ -35,6 +35,9 @@ FEATURE_IMPORTANCE_SAVE_PATH = 'results/feature_importance.%s.png'
 
 RANDOM_SEED = 10611
 
+# Used to gather feature importance data across predictions.
+global_feature_importances = []
+
 def rprint(string_to_print):
   print(string_to_print)
   with open(CSV_OUTPUT_PATH, 'a') as f:
@@ -145,9 +148,24 @@ def create_simple_predictor(regressor_generator):
   return simple_predictor
 
 
+def rf_predictor(kfold_data_view):
+  # Based on lab code's configuration.
+  regressor = RandomForestRegressor(n_estimators=100, max_depth=10,
+                                    max_features='sqrt', min_samples_split=10)
+  regressor.fit(kfold_data_view.X_train, kfold_data_view.y_train)
+  y_pred = regressor.predict(kfold_data_view.X_test)
+
+  global global_feature_importances
+  global_feature_importances.extend(
+      [tree.feature_importances_ for tree in regressor.estimators_])
+
+  return y_pred
+
+
 # Merge (sum) importances that have the same input label.
-def merge_importances(input_labels, feature_importances):
-  feature_importances = np.array(feature_importances)
+def get_merged_importances(input_labels):
+  global global_feature_importances
+  feature_importances = np.array(global_feature_importances)
   sorted_input_labels = sorted(set(input_labels))
   input_label_to_index = dict((y, x) for x, y in enumerate(sorted_input_labels))
   merged_feature_importances = np.zeros((feature_importances.shape[0],
@@ -189,19 +207,14 @@ def main():
   CSV_OUTPUT_PATH = CSV_OUTPUT_PATH % args.dataset
   open(CSV_OUTPUT_PATH, 'w').close()  # Clear file.
 
-  predictors = collections.OrderedDict([
-      # Based on lab code's configuration.
-      (RF_REGRESSOR_NAME, create_simple_predictor(lambda: RandomForestRegressor(
-          n_estimators=100, max_depth=10, max_features='sqrt',
-          min_samples_split=10))),
-  ])
+  predictors = collections.OrderedDict()
+  predictors[RF_REGRESSOR_NAME] = rf_predictor
 
   if not args.rf_only:
     for name, regressor_generator in scikit_regressors.REGRESSORS.items():
       predictors[name] = create_simple_predictor(regressor_generator)
 
   results = {}
-  feature_importances = []
   for predictor_name, predictor in predictors.items():
     random.seed(RANDOM_SEED)
     np.random.seed(RANDOM_SEED)
@@ -213,12 +226,6 @@ def main():
         results[output_label] = {'num_samples': data_view.get_num_samples()}
       results[output_label][predictor_name] = data_view.get_r2_score(y_pred)
 
-      # TODO add back using a global blah in predictor instead of this hack.
-      #if predictor_name == RF_REGRESSOR_NAME:
-      #  for regressor in regressors:
-      #    feature_importances.extend(
-      #        [tree.feature_importances_ for tree in regressor.estimators_])
-
 
   # Print each predictors' r2 score results..
   predictor_names = list(predictors.keys())
@@ -229,14 +236,11 @@ def main():
                     [str(result[x]) for x in predictor_names]))
 
 
-  # TODO reenable feature importances!
-  return
-
   # Print feature importances.
   rprint('\n')
   rprint(','.join(['input_label', 'mean_importance', 'std_importance']))
-  input_labels, feature_importances = merge_importances(
-      dataset.get_input_labels(), feature_importances)
+  input_labels, feature_importances = get_merged_importances(
+      dataset.get_input_labels())
   mean_feature_importances = np.mean(feature_importances, axis=0)
   std_feature_importances = np.std(feature_importances, axis=0)
   for i, input_label in enumerate(input_labels):
