@@ -149,9 +149,10 @@ def new2016Dataset(include_harvest=True):
     input_features_starts_with.append('SYNTHETIC_HARVEST_')
 
 
-  add_adjacent_features(samples, adjacent_augmented_labels)
-  input_labels = filter_2016_labels(tuple(input_features_starts_with)) + (
-                 [x + ADJACENT_LABEL_SUFFIX for x in adjacent_augmented_labels])
+  # TODO remove completely?
+  #add_adjacent_features(samples, adjacent_augmented_labels)
+  input_labels = filter_2016_labels(tuple(input_features_starts_with))# + (
+  #               [x + ADJACENT_LABEL_SUFFIX for x in adjacent_augmented_labels])
   output_labels = filter_2016_labels('COMPOSITION_')
 
   output_generators = collections.OrderedDict(sorted(
