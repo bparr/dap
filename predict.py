@@ -143,6 +143,15 @@ def new2016NoHarvestDataset():
   return new2016Dataset(include_harvest=False)
 
 
+# Create a predictor that uses a single regressor to fit and predict.
+def create_simple_predictor(regressor_generator):
+  def simple_predictor(kfold_data_view):
+    regressor = regressor_generator()
+    regressor.fit(kfold_data_view.X_train, kfold_data_view.y_train)
+    return regressor.predict(kfold_data_view.X_test)
+  return simple_predictor
+
+
 # Merge (sum) importances that have the same input label.
 def merge_importances(input_labels, feature_importances):
   feature_importances = np.array(feature_importances)
@@ -253,33 +262,40 @@ def main():
     regressor_generators = collections.OrderedDict([
         (RF_REGRESSOR_NAME, regressor_generators[RF_REGRESSOR_NAME])])
 
+  predictors = collections.OrderedDict([
+      (x, create_simple_predictor(y)) for x, y in regressor_generators.items()])
+
   results = {}
   feature_importances = []
-  for regressor_name, regressor_generator in regressor_generators.items():
+  for predictor_name, predictor in predictors.items():
     random.seed(RANDOM_SEED)
     np.random.seed(RANDOM_SEED)
 
     for output_label, data_view in dataset.generate_views():
-      y_pred, regressors = data_view.kfold_predict(regressor_generator)
+      y_pred = data_view.kfold_predict(predictor)
 
       if not output_label in results:
         results[output_label] = {'num_samples': data_view.get_num_samples()}
-      results[output_label][regressor_name] = data_view.get_r2_score(y_pred)
+      results[output_label][predictor_name] = data_view.get_r2_score(y_pred)
 
-      if regressor_name == RF_REGRESSOR_NAME:
-        for regressor in regressors:
-          feature_importances.extend(
-              [tree.feature_importances_ for tree in regressor.estimators_])
+      # TODO add back using a global blah in predictor instead of this hack.
+      #if predictor_name == RF_REGRESSOR_NAME:
+      #  for regressor in regressors:
+      #    feature_importances.extend(
+      #        [tree.feature_importances_ for tree in regressor.estimators_])
 
 
-  # Print each regressors' r2 score results..
-  regressor_names = list(regressor_generators.keys())
-  rprint(','.join(['output_label', 'num_samples'] + regressor_names))
+  # Print each predictors' r2 score results..
+  predictor_names = list(predictors.keys())
+  rprint(','.join(['output_label', 'num_samples'] + predictor_names))
   for output_label in sorted(results.keys()):
     result = results[output_label]
     rprint(','.join([output_label, str(result['num_samples'])] +
-                    [str(result[x]) for x in regressor_names]))
+                    [str(result[x]) for x in predictor_names]))
 
+
+  # TODO reenable feature importances!
+  return
 
   # Print feature importances.
   rprint('\n')

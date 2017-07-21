@@ -101,24 +101,23 @@ class DataView(object):
     return r2_score(self._y, y_pred)
 
   # TODO add tests.
-  def kfold_predict(self, regressor_generator):
+  # The predictor argument is a function that takes in a _KFoldDataView and
+  # outputs y test predictions.
+  def kfold_predict(self, predictor):
     y_pred = []
 
     kf = KFold(n_splits=10, shuffle=True)
-    regressors = []
     for train_indexes, test_indexes in kf.split(self._X):
       X_train, X_test = self._X[train_indexes], self._X[test_indexes]
       y_train, y_test = self._y[train_indexes], self._y[test_indexes]
-
-      # TODO reconsider using Imputer?
-      regressor = regressor_generator().fit(X_train, y_train)
-      y_pred.extend(zip(test_indexes, regressor.predict(X_test)))
-      regressors.append(regressor)
+      kfold_data_view = _KFoldDataView(list(self._X_labels), np.copy(X_train),
+                                       np.copy(X_test), np.copy(y_train))
+      y_pred.extend(zip(test_indexes, predictor(kfold_data_view)))
 
     y_pred_dict = dict(y_pred)
     if len(y_pred_dict) != len(y_pred):
       raise Exception('kfold splitting was bad.')
-    return [y_pred_dict[i] for i in range(len(self._X))], regressors
+    return [y_pred_dict[i] for i in range(len(self._X))]
 
   # Currently useful for verifying results against lab's random forest code.
   def write_csv(self, file_path):
@@ -131,4 +130,19 @@ class DataView(object):
         if len(row) != len(labels):
           raise Exception('Inconsistent number of entries.')
         writer.writerow(row)
+
+
+# Enforce not knowing true y_test when making predictions by not providing it.
+# Marked as private since it should not be constructed outside this file.
+class _KFoldDataView(object):
+  def __init__(self, X_labels, X_train, X_test, y_train):
+    # TODO reconsider using Imputer?
+    self.X_labels = X_labels
+    self.X_train = X_train
+    self.X_test = X_test
+    self.y_train = y_train
+
+  def augment_X(self, new_data):
+    # TODO fill in.
+    print(self._X_train.shape)
 
