@@ -113,6 +113,15 @@ def create_2016_output_generator(key):
 ADJACENT_COUNT = 4 # TODO impove code quality.
 ADJACENT_LABEL_SUFFIX = '_ADJACENT'
 
+# TODO somehow make this only affect 2016 datasets.
+# TODO fix feature importance breakage from augment_X.
+def gps_cascaded_rf_predictor(kfold_data_view):
+  gps_kfold_data_view = kfold_data_view.create_filtered_data_view(
+        tuple(filter_2016_labels('GPS_')))
+  kfold_data_view.augment_X('gps_kfold', rf_predictor(
+      gps_kfold_data_view, predict_all_X=True))
+  return rf_predictor(kfold_data_view)
+
 def add_adjacent_features(samples, adjacent_augmented_labels):
   EASTINGS_LABEL = Features.GPS_EASTINGS.value
   NORTHINGS_LABEL = Features.GPS_NORTHINGS.value
@@ -176,18 +185,19 @@ def create_simple_predictor(regressor_generator):
   return simple_predictor
 
 
-def rf_predictor(kfold_data_view):
+def rf_predictor(kfold_data_view, predict_all_X=False):
   # Based on lab code's configuration.
   regressor = RandomForestRegressor(n_estimators=100, max_depth=10,
                                     max_features='sqrt', min_samples_split=10)
   regressor.fit(kfold_data_view.X_train, kfold_data_view.y_train)
-  y_pred = regressor.predict(kfold_data_view.X_test)
 
   global global_feature_importances
   global_feature_importances.extend(
       [tree.feature_importances_ for tree in regressor.estimators_])
 
-  return y_pred
+  if predict_all_X:
+    return regressor.predict(kfold_data_view.get_all_X())
+  return regressor.predict(kfold_data_view.X_test)
 
 
 # Merge (sum) importances that have the same input label.
@@ -236,7 +246,7 @@ def main():
   open(CSV_OUTPUT_PATH, 'w').close()  # Clear file.
 
   predictors = collections.OrderedDict()
-  predictors[RF_REGRESSOR_NAME] = rf_predictor
+  predictors[RF_REGRESSOR_NAME] = gps_cascaded_rf_predictor
 
   if not args.rf_only:
     for name, regressor_generator in scikit_regressors.REGRESSORS.items():
@@ -263,6 +273,7 @@ def main():
     rprint(','.join([output_label, str(result['num_samples'])] +
                     [str(result[x]) for x in predictor_names]))
 
+  return
 
   # Print feature importances.
   rprint('\n')
