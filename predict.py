@@ -111,30 +111,7 @@ def create_2016_output_generator(key):
 
 
 ADJACENT_COUNT = 4 # TODO impove code quality.
-
-# TODO some of this is copy-pasta from spatial.py. Remove code redundancy?
-# TODO should this really be in merge_data.py??
-def nearby_augmented_2016_rf_predictor(kfold_data_view):
-  gps_kfold_data_view = kfold_data_view.create_filtered_data_view(
-      tuple(filter_2016_labels('GPS_')))
-  total_weights = kfold_data_view.create_filtered_data_view(
-      Features.HARVEST_SF16h_TWT_120.value).get_all_X()
-
-  augmented_data = []
-  spatial_distances = squareform(pdist(gps_kfold_data_view.get_all_X()))
-  for spatial_row in spatial_distances:
-    sorted_row = sorted(zip(spatial_row, range(len(spatial_row))))
-    if sorted_row[0][0] != 0.0:
-      raise Exception('The plot itself is NOT the nearest plot??')
-
-    adjacent_total_weights = []
-    for i in range(1, ADJACENT_COUNT + 1):
-      adjacent_total_weights.append(total_weights[sorted_row[i][1]])
-    augmented_data.append(np.mean(adjacent_total_weights))
-
-  kfold_data_view.augment_X('adjacent_twt', augmented_data)
-  return rf_predictor(kfold_data_view)
-
+ADJACENT_LABEL_SUFFIX = '_ADJACENT'
 
 def new2016Dataset(include_harvest=True):
   samples = csv_utils.read_csv_as_dicts('2016.merged.csv')
@@ -142,16 +119,36 @@ def new2016Dataset(include_harvest=True):
       'HARVEST_', 'COMPOSITION_', 'ROBOT_', 'SYNTHETIC_', 'GPS_')) +
       [Features.ROW.value, Features.COLUMN.value])
 
+  adjacent_augmented_labels = filter_2016_labels(('ROBOT_', 'SYNTHETIC_'))
   input_features_starts_with = [
       'ROBOT_',
       'GPS_',
       'ACCESSION_',
   ]
   if include_harvest:
+    adjacent_augmented_labels.extend(filter_2016_labels('HARVEST_'))
     input_features_starts_with.append('HARVEST_')
     input_features_starts_with.append('SYNTHETIC_HARVEST_')
 
-  input_labels = filter_2016_labels(tuple(input_features_starts_with))
+  EASTINGS_LABEL = Features.GPS_EASTINGS.value
+  NORTHINGS_LABEL = Features.GPS_NORTHINGS.value
+  # TODO some of this is copy-pasta from spatial.py. Remove code redundancy?
+  spatial_distances = squareform(pdist(
+      [(x[EASTINGS_LABEL], x[NORTHINGS_LABEL]) for x in samples]))
+  for spatial_row, sample in zip(spatial_distances, samples):
+    sorted_row = sorted(zip(spatial_row, range(len(spatial_row))))
+    if sorted_row[0][0] != 0.0:
+      raise Exception('The plot itself is NOT the nearest plot??')
+
+    for input_label in adjacent_augmented_labels:
+      adjacent_values = []
+      for i in range(1, ADJACENT_COUNT + 1):
+        adjacent_values.append(samples[sorted_row[i][1]][input_label])
+      sample[input_label + ADJACENT_LABEL_SUFFIX] = np.mean(adjacent_values)
+
+
+  input_labels = filter_2016_labels(tuple(input_features_starts_with)) + (
+                 [x + ADJACENT_LABEL_SUFFIX for x in adjacent_augmented_labels])
   output_labels = filter_2016_labels('COMPOSITION_')
 
   output_generators = collections.OrderedDict(sorted(
@@ -235,8 +232,7 @@ def main():
   open(CSV_OUTPUT_PATH, 'w').close()  # Clear file.
 
   predictors = collections.OrderedDict()
-  # TODO somehow limit this to just 2016? by having new*Dataset return tuple?
-  predictors[RF_REGRESSOR_NAME] = nearby_augmented_2016_rf_predictor
+  predictors[RF_REGRESSOR_NAME] = rf_predictor
 
   if not args.rf_only:
     for name, regressor_generator in scikit_regressors.REGRESSORS.items():
