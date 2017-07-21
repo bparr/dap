@@ -22,16 +22,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import random
-from sklearn.cross_decomposition import PLSRegression
-from sklearn.ensemble import AdaBoostRegressor, BaggingRegressor, ExtraTreesRegressor, GradientBoostingRegressor, RandomForestRegressor
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.isotonic import IsotonicRegression
-from sklearn.kernel_ridge import KernelRidge
-from sklearn.linear_model import ARDRegression, HuberRegressor, LinearRegression, LogisticRegression, LogisticRegressionCV, PassiveAggressiveRegressor, RandomizedLogisticRegression, RANSACRegressor, SGDRegressor, TheilSenRegressor
-from sklearn.neighbors import KNeighborsRegressor, RadiusNeighborsRegressor
-from sklearn.neural_network import MLPRegressor
-from sklearn.svm import SVR, LinearSVR, NuSVR
-from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
+import scikit_regressors
+from sklearn.ensemble import RandomForestRegressor
+
 
 RF_REGRESSOR_NAME = 'random_forest'
 
@@ -196,74 +189,16 @@ def main():
   CSV_OUTPUT_PATH = CSV_OUTPUT_PATH % args.dataset
   open(CSV_OUTPUT_PATH, 'w').close()  # Clear file.
 
-  regressor_generators = collections.OrderedDict([
-      # Customized.
+  predictors = collections.OrderedDict([
       # Based on lab code's configuration.
-      (RF_REGRESSOR_NAME, lambda: RandomForestRegressor(
+      (RF_REGRESSOR_NAME, create_simple_predictor(lambda: RandomForestRegressor(
           n_estimators=100, max_depth=10, max_features='sqrt',
-          min_samples_split=10)),
-
-      # Cross decomposition.
-      ('PLSRegression', lambda: PLSRegression()),
-
-      # Ensemble.
-      ('AdaBoostRegressor', lambda: AdaBoostRegressor()),
-      ('BaggingRegressor', lambda: BaggingRegressor()),
-      ('ExtraTreesRegressor', lambda: ExtraTreesRegressor()),
-      ('GradientBoostingRegressor', lambda: GradientBoostingRegressor()),
-      ('RandomForestRegressor', lambda: RandomForestRegressor()),
-
-      # Gaussian.
-      ('GaussianProcessRegressor', lambda: GaussianProcessRegressor()),
-
-      # Isotonic regression.
-      # ValueError: X should be a 1d array
-      #('IsotonicRegression', lambda: IsotonicRegression()),
-
-      # Kernel ridge.
-      ('KernelRidge', lambda: KernelRidge()),
-
-      # Linear.
-      # Way too slow.
-      #('ARDRegression', lambda: ARDRegression()),
-      ('HuberRegressor', lambda: HuberRegressor()),
-      ('LinearRegression', lambda: LinearRegression()),
-      # ValueError: Unknown label type: 'continuous'
-      #('LogisticRegression', lambda: LogisticRegression()),
-      # ValueError: Unknown label type: 'continuous'
-      #('LogisticRegressionCV', lambda: LogisticRegressionCV()),
-      ('PassiveAggressiveRegressor', lambda: PassiveAggressiveRegressor()),
-      # ValueError: Unknown label type: 'continuous'
-      #('RandomizedLogisticRegression', lambda: RandomizedLogisticRegression()),
-      ('RANSACRegressor', lambda: RANSACRegressor()),
-      ('SGDRegressor', lambda: SGDRegressor()),
-      # Way too slow.
-      #('TheilSenRegressor', lambda: TheilSenRegressor()),
-
-      # Neighbors.
-      ('KNeighborsRegressor', lambda: KNeighborsRegressor()),
-      # Predicts Nan, infinity or too large of value.
-      #('RadiusNeighborsRegressor', lambda: RadiusNeighborsRegressor()),
-
-      # Neural network.
-      ('MLPRegressor', lambda: MLPRegressor(max_iter=1000)),
-
-      # Support vector machine.
-      ('SVR', lambda: SVR()),
-      ('LinearSVR', lambda: LinearSVR()),
-      ('NuSVR', lambda: NuSVR()),
-
-      # Tree.
-      ('DecisionTreeRegressor', lambda: DecisionTreeRegressor()),
-      ('ExtraTreeRegressor', lambda: ExtraTreeRegressor()),
+          min_samples_split=10))),
   ])
 
-  if args.rf_only:
-    regressor_generators = collections.OrderedDict([
-        (RF_REGRESSOR_NAME, regressor_generators[RF_REGRESSOR_NAME])])
-
-  predictors = collections.OrderedDict([
-      (x, create_simple_predictor(y)) for x, y in regressor_generators.items()])
+  if not args.rf_only:
+    for name, regressor_generator in scikit_regressors.REGRESSORS.items():
+      predictors[name] = create_simple_predictor(regressor_generator)
 
   results = {}
   feature_importances = []
