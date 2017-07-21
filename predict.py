@@ -23,6 +23,7 @@ import numpy as np
 import os
 import random
 import scikit_regressors
+from scipy.spatial.distance import pdist, squareform
 from sklearn.ensemble import RandomForestRegressor
 
 
@@ -107,6 +108,32 @@ def filter_2016_labels(feature_starts_with):
 # Used instead of lambda to avoid Python scoping issue.
 def create_2016_output_generator(key):
   return lambda sample: sample[key]
+
+
+ADJACENT_COUNT = 4 # TODO impove code quality.
+
+# TODO some of this is copy-pasta from spatial.py. Remove code redundancy?
+def nearby_augmented_2016_rf_predictor(kfold_data_view):
+  gps_kfold_data_view = kfold_data_view.create_filtered_data_view(
+      tuple(filter_2016_labels('GPS_')))
+  total_weights = kfold_data_view.create_filtered_data_view(
+      Features.HARVEST_SF16h_TWT_120.value).get_all_X()
+
+  augmented_data = []
+  spatial_distances = squareform(pdist(gps_kfold_data_view.get_all_X()))
+  for spatial_row in spatial_distances:
+    sorted_row = sorted(zip(spatial_row, range(len(spatial_row))))
+    if sorted_row[0][0] != 0.0:
+      raise Exception('The plot itself is NOT the nearest plot??')
+
+    adjacent_total_weights = []
+    for i in range(1, ADJACENT_COUNT + 1):
+      adjacent_total_weights.append(total_weights[sorted_row[i][1]])
+    augmented_data.append(np.mean(adjacent_total_weights))
+
+  # TODO change return!
+  return rf_predictor(kfold_data_view)
+
 
 def new2016Dataset(include_harvest=True):
   samples = csv_utils.read_csv_as_dicts('2016.merged.csv')
@@ -207,7 +234,8 @@ def main():
   open(CSV_OUTPUT_PATH, 'w').close()  # Clear file.
 
   predictors = collections.OrderedDict()
-  predictors[RF_REGRESSOR_NAME] = rf_predictor
+  # TODO somehow limit this to just 2016? by having new*Dataset return tuple?
+  predictors[RF_REGRESSOR_NAME] = nearby_augmented_2016_rf_predictor
 
   if not args.rf_only:
     for name, regressor_generator in scikit_regressors.REGRESSORS.items():

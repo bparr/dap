@@ -132,6 +132,7 @@ class DataView(object):
         writer.writerow(row)
 
 
+# TODO tests!
 # Enforce not knowing true y_test when making predictions by not providing it.
 # Marked as private since it should not be constructed outside this file.
 class _KFoldDataView(object):
@@ -142,7 +143,20 @@ class _KFoldDataView(object):
     self.X_test = X_test
     self.y_train = y_train
 
-  def augment_X(self, new_data):
+  def get_all_X(self):
+    return np.vstack((self.X_train, self.X_test))
+
+  def augment_X(self, name, X_data):
+    if len(X_data) != len(self.X_train) + len(self.X_test):
+      raise Exception('Augmented data size mismatch!')
     # TODO fill in.
-    print(self._X_train.shape)
+
+  def create_filtered_data_view(self, input_labels_starts_with):
+    filtered = [(i, x) for i, x in enumerate(self.X_labels)
+                if x.startswith(input_labels_starts_with)]
+    filtered_indexes, filtered_labels = zip(*filtered)  # Unzip.
+    # TODO are copys needed? Doc if no copy.
+    return _KFoldDataView(
+        filtered_labels, np.copy(self.X_train[:, filtered_indexes]),
+        np.copy(self.X_test[:, filtered_indexes]), np.copy(self.y_train))
 
