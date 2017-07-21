@@ -114,10 +114,9 @@ def new2016Dataset(include_harvest=True):
       'HARVEST_', 'COMPOSITION_', 'ROBOT_', 'SYNTHETIC_', 'GPS_')) +
       [Features.ROW.value, Features.COLUMN.value])
 
-  # TODO what to include? Allow multiple subsets through commandline?
   input_features_starts_with = [
       'ROBOT_',
-      #'GPS_',
+      'GPS_',
       'ACCESSION_',
   ]
   if include_harvest:
