@@ -113,6 +113,7 @@ def create_2016_output_generator(key):
 ADJACENT_COUNT = 4 # TODO impove code quality.
 
 # TODO some of this is copy-pasta from spatial.py. Remove code redundancy?
+# TODO should this really be in merge_data.py??
 def nearby_augmented_2016_rf_predictor(kfold_data_view):
   gps_kfold_data_view = kfold_data_view.create_filtered_data_view(
       tuple(filter_2016_labels('GPS_')))
@@ -131,7 +132,7 @@ def nearby_augmented_2016_rf_predictor(kfold_data_view):
       adjacent_total_weights.append(total_weights[sorted_row[i][1]])
     augmented_data.append(np.mean(adjacent_total_weights))
 
-  # TODO change return!
+  kfold_data_view.augment_X('adjacent_twt', augmented_data)
   return rf_predictor(kfold_data_view)
 
 

@@ -149,7 +149,11 @@ class _KFoldDataView(object):
   def augment_X(self, name, X_data):
     if len(X_data) != len(self.X_train) + len(self.X_test):
       raise Exception('Augmented data size mismatch!')
-    # TODO fill in.
+    self.X_labels.append(name)
+    self.X_train = np.append(
+        self.X_train, np.array([X_data[:len(self.X_train)]]).T, axis=1)
+    self.X_test = np.append(
+        self.X_test, np.array([X_data[len(self.X_train):]]).T, axis=1)
 
   def create_filtered_data_view(self, input_labels_starts_with):
     filtered = [(i, x) for i, x in enumerate(self.X_labels)
