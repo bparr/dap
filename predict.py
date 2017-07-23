@@ -129,7 +129,9 @@ def gps_cascaded_rf_predictor(kfold_data_view):
     if len(x_results) == num_total_samples:
       continue
 
-    gps_regressor = GradientBoostingRegressor().fit(gps_results, x_results)
+    gps_regressor = RandomForestRegressor(
+        n_estimators=100, max_depth=10, max_features='sqrt',
+        min_samples_split=10).fit(gps_results, x_results)
     kfold_data_view.replace_missing(i, gps_regressor, gps_indexes)
 
   return rf_predictor(kfold_data_view)
