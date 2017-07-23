@@ -24,7 +24,7 @@ import os
 import random
 import scikit_regressors
 from scipy.spatial.distance import pdist, squareform
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 
 
 RF_REGRESSOR_NAME = 'random_forest'
@@ -118,8 +118,13 @@ ADJACENT_LABEL_SUFFIX = '_ADJACENT'
 def gps_cascaded_rf_predictor(kfold_data_view):
   gps_kfold_data_view = kfold_data_view.create_filtered_data_view(
         tuple(filter_2016_labels('GPS_')))
-  kfold_data_view.augment_X('gps_kfold', rf_predictor(
-      gps_kfold_data_view, predict_all_X=True))
+  gps_regressor = GradientBoostingRegressor()
+  gps_regressor.fit(gps_kfold_data_view.X_train, gps_kfold_data_view.y_train)
+  kfold_data_view.augment_X('gps_kfold',
+      gps_regressor.predict(gps_kfold_data_view.get_all_X()))
+
+  #asdf = [np.random.uniform() for _ in gps_kfold_data_view.get_all_X()]
+  #kfold_data_view.augment_X('gps_kfold', asdf)
   return rf_predictor(kfold_data_view)
 
 def add_adjacent_features(samples, adjacent_augmented_labels):
@@ -185,7 +190,7 @@ def create_simple_predictor(regressor_generator):
   return simple_predictor
 
 
-def rf_predictor(kfold_data_view, predict_all_X=False):
+def rf_predictor(kfold_data_view):
   # Based on lab code's configuration.
   regressor = RandomForestRegressor(n_estimators=100, max_depth=10,
                                     max_features='sqrt', min_samples_split=10)
@@ -195,8 +200,6 @@ def rf_predictor(kfold_data_view, predict_all_X=False):
   global_feature_importances.extend(
       [tree.feature_importances_ for tree in regressor.estimators_])
 
-  if predict_all_X:
-    return regressor.predict(kfold_data_view.get_all_X())
   return regressor.predict(kfold_data_view.X_test)
 
 
