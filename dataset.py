@@ -100,7 +100,7 @@ class DataView(object):
     return r2_score(self._y, y_pred)
 
   # TODO add tests.
-  # The predictor argument is a function that takes in a _KFoldDataView and
+  # The predictor argument is a function that takes in a KFoldDataView and
   # outputs y test predictions.
   def kfold_predict(self, predictor):
     y_pred = []
@@ -109,8 +109,8 @@ class DataView(object):
     for train_indexes, test_indexes in kf.split(self._X):
       X_train, X_test = self._X[train_indexes], self._X[test_indexes]
       y_train, y_test = self._y[train_indexes], self._y[test_indexes]
-      kfold_data_view = _KFoldDataView(list(self._X_labels), np.copy(X_train),
-                                       np.copy(X_test), np.copy(y_train))
+      kfold_data_view = KFoldDataView(list(self._X_labels), np.copy(X_train),
+                                      np.copy(X_test), np.copy(y_train))
       y_pred.extend(zip(test_indexes, predictor(kfold_data_view)))
 
     y_pred_dict = dict(y_pred)
@@ -133,8 +133,7 @@ class DataView(object):
 
 # TODO tests!
 # Enforce not knowing true y_test when making predictions by not providing it.
-# Marked as private since it should not be constructed outside this file.
-class _KFoldDataView(object):
+class KFoldDataView(object):
   def __init__(self, X_labels, X_train, X_test, y_train):
     # TODO reconsider using Imputer?
     self.X_labels = X_labels
@@ -154,12 +153,12 @@ class _KFoldDataView(object):
     self.X_test = np.append(
         self.X_test, np.array([X_data[len(self.X_train):]]).T, axis=1)
 
-  def create_filtered_data_view(self, input_labels_starts_with):
+  def create_filtered(self, input_labels_starts_with):
     filtered = [(i, x) for i, x in enumerate(self.X_labels)
                 if x.startswith(input_labels_starts_with)]
     filtered_indexes, filtered_labels = zip(*filtered)  # Unzip.
     # TODO are copys needed? Doc if no copy.
-    return _KFoldDataView(
-        filtered_labels, np.copy(self.X_train[:, filtered_indexes]),
+    return KFoldDataView(
+        list(filtered_labels), np.copy(self.X_train[:, filtered_indexes]),
         np.copy(self.X_test[:, filtered_indexes]), np.copy(self.y_train))
 

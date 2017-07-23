@@ -175,5 +175,45 @@ class TestDataView(unittest.TestCase):
          '5.0,6.0,9.0\n'], lines)
 
 
+class TestKfoldDataView(unittest.TestCase):
+  def setUp(self):
+    self.kfold_data_view = dataset.KFoldDataView(
+        ['label1', 'label2'],
+        np.array([[1.0, 2.0], [3.0, 4.0]]),
+        np.array([[5.0, 6.0]]),
+        np.array([7.0, 8.0]))
+
+  def test_get_all_X(self):
+    np.testing.assert_array_equal(
+        np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]]),
+        self.kfold_data_view.get_all_X())
+
+  def test_augment_X(self):
+    self.kfold_data_view.augment_X('new_label', [10.0, 11.0, 12.0])
+    self.assertListEqual(['label1', 'label2', 'new_label'],
+                         self.kfold_data_view.X_labels)
+    np.testing.assert_array_equal(
+        np.array([[1.0, 2.0, 10.0], [3.0, 4.0, 11.0]]),
+        self.kfold_data_view.X_train)
+    np.testing.assert_array_equal(
+        np.array([[5.0, 6.0, 12.0]]),
+        self.kfold_data_view.X_test)
+    np.testing.assert_array_equal(np.array([7.0, 8.0]),
+                                  self.kfold_data_view.y_train)
+
+  def test_augment_X_raises_exception_if_new_data_wrong_size(self):
+    self.assertRaises(Exception, self.kfold_data_view.augment_X,
+                      'new_label', [10.0, 11.0])
+    self.assertRaises(Exception, self.kfold_data_view.augment_X,
+                      'new_label', [10.0, 11.0, 12.0, 13.0])
+
+  def test_create_filtered_data_view(self):
+    filtered = self.kfold_data_view.create_filtered('label1')
+    self.assertListEqual(['label1'], filtered.X_labels)
+    np.testing.assert_array_equal(np.array([[1.0], [3.0]]), filtered.X_train)
+    np.testing.assert_array_equal(np.array([[5.0]]), filtered.X_test)
+    np.testing.assert_array_equal(np.array([7.0, 8.0]), filtered.y_train)
+
+
 if __name__ == '__main__':
     unittest.main()

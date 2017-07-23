@@ -133,7 +133,7 @@ def add_adjacent_features(samples, adjacent_augmented_labels):
 
 # TODO use.
 def augment_with_nearest_train_outputs(kfold_data_view):
-  gps_kfold_data_view = kfold_data_view.create_filtered_data_view(
+  gps_kfold_data_view = kfold_data_view.create_filtered(
         tuple(filter_2016_labels('GPS_')))
   spatial_distances = squareform(pdist(gps_kfold_data_view.get_all_X()))
   augmented_values = []
