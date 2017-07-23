@@ -1,31 +1,33 @@
 #!/usr/bin/env python3
 
 """
-Visualize specific features of the field.
+Visualize specific labels of a CSV file.
 """
-# TODO improve file doc. Including a Usage:.
 # TODO tests?
 
 import argparse
 from csv_utils import average_mismatch, read_csv_as_dicts
 from features import Features
 import matplotlib.pyplot as plt
+import os
 
 def main():
-  samples = read_csv_as_dicts('2016.merged.csv')
   parser = argparse.ArgumentParser(description='Visualize features')
-  parser.add_argument('-f', '--feature', required=True,
-                      choices=[x.value for x in Features],
-                      help='Feature name to visualize.')
+  parser.add_argument('-f', '--file', required=True,
+                      help='Path to input file.')
+  parser.add_argument('-l', '--label', required=True,
+                      help='Label name in input file to visualize.')
   args = parser.parse_args()
 
-  samples = [x for x in samples if x[args.feature] != '']
+  samples = read_csv_as_dicts(args.file)
+  samples = [x for x in samples if x[args.label] != '']
 
   rows = [average_mismatch(x[Features.ROW.value]) for x in samples]
   columns = [average_mismatch(x[Features.COLUMN.value]) for x in samples]
-  values = [average_mismatch(x[args.feature]) for x in samples]
+  values = [average_mismatch(x[args.label]) for x in samples]
 
-  plt.title('Visualization of ' + args.feature)
+  plt.title('Visualization of ' + args.label + ' in ' +
+            os.path.basename(args.file))
   xdim = 3
   ydim = 2
   plt.scatter(rows, columns, c=values, s=100,
