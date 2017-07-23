@@ -125,10 +125,11 @@ class DataView(object):
     with open(file_path, 'w') as f:
       writer = csv.writer(f)
       writer.writerow([x for _, x in filtered] +
-                      ['actual_' + self._y_label, 'predicted_' + self._y_label])
+                      ['actual_' + self._y_label, 'predicted_' + self._y_label,
+                       'prediction_diff'])
       for x_row, y_actual_row, y_pred_row in zip(self._X, self._y, y_pred):
         writer.writerow(list(x_row[include_X_indexes]) +
-                        [y_actual_row, y_pred_row])
+                        [y_actual_row, y_pred_row, y_pred_row - y_actual_row])
 
   # Currently useful for verifying results against lab's random forest code.
   def write_csv(self, file_path):

@@ -166,13 +166,14 @@ class TestDataView(unittest.TestCase):
 
   def test_write_predictions(self):
     csv_file = tempfile.NamedTemporaryFile(delete=False)
-    self.data_view.write_predictions(csv_file.name, [10.0, 11.0, 12.0],
+    self.data_view.write_predictions(csv_file.name, [10.0, 12.0, 15.0],
                                      ['label2'])
     with open(csv_file.name, 'r') as f:
       lines = f.readlines()
     self.assertListEqual(
-        ['label2,actual_output,predicted_output\n', '2.0,7.0,10.0\n',
-         '4.0,8.0,11.0\n', '6.0,9.0,12.0\n'], lines)
+        ['label2,actual_output,predicted_output,prediction_diff\n',
+         '2.0,7.0,10.0,3.0\n', '4.0,8.0,12.0,4.0\n', '6.0,9.0,15.0,6.0\n'],
+        lines)
 
   def test_write_csv(self):
     csv_file = tempfile.NamedTemporaryFile(delete=False)
