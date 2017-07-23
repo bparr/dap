@@ -45,7 +45,6 @@ class Dataset(object):
     # Generated and verified in self._generate().
     self._vectorized_feature_names = None
 
-  # TODO add tests for this helper function?
   def generate_views(self):
     for output_label, output_generator in self._output_generators.items():
       X_labels, X, y = self._generate(output_generator)

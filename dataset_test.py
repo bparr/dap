@@ -59,15 +59,32 @@ class TestDataset(unittest.TestCase):
       {'label1': 4.0, 'label2': 'foo', 'output': 6.0, 'ignored': 1.0},
       {'label1': 7.0, 'label2': '', 'output': 9.0, 'ignored': 1.0},
     ]
-    self.output_generators = {
-        'times10': lambda x: 10.0 * x['output'],
-        'filterGt3': lambda x: -1 if x['output'] > 3.0 else 42.0
-    }
+    self.output_generators = collections.OrderedDict([
+        ('times10', lambda x: 10.0 * x['output']),
+        ('filterGt3', lambda x: -1 if x['output'] > 3.0 else 42.0)])
 
     self.dataset = dataset.Dataset(
         self.samples, self.input_labels, self.output_generators)
     self.dataset_with_strings = dataset.Dataset(
         self.samples_with_strings, self.input_labels, self.output_generators)
+
+  def test_generate_views(self):
+    results = list(self.dataset.generate_views())
+    self.assertEqual(2, len(results))
+    self.assertListEqual([2, 2], [len(x) for x in results])
+    self.assertListEqual(['times10', 'filterGt3'], [x[0] for x in results])
+
+    dv = results[0][1]
+    self.assertListEqual(['label1', 'label2'], dv._X_labels)
+    np.testing.assert_array_equal([[1.0, 2.0], [4.0, 5.0], [7.0, 8.0]], dv._X)
+    self.assertEqual('times10', dv._y_label)
+    np.testing.assert_array_equal([30.0, 60.0, 90.0], dv._y)
+
+    dv = results[1][1]
+    self.assertListEqual(['label1', 'label2'], dv._X_labels)
+    np.testing.assert_array_equal([[1.0, 2.0]], dv._X)
+    self.assertEqual('filterGt3', dv._y_label)
+    np.testing.assert_array_equal([42.0], dv._y)
 
   def test_get_input_labels(self):
     self.dataset._generate(self.output_generators['times10'])
