@@ -66,7 +66,8 @@ class Dataset(object):
     y = []
     for sample in self._samples:
       output = output_generator(sample)
-      if is_missing(output):
+      # TODO fix this for 2014 Dataset that only has a single output.
+      if any(is_missing(x) for x in output):
         # Ignore samples with missing output value.
         continue
 
