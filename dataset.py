@@ -98,7 +98,7 @@ class DataView(object):
     return self._X.shape[0]
 
   def get_r2_score(self, y_pred):
-    return r2_score(self._y, y_pred)
+    return r2_score(self._y, y_pred, multioutput='raw_values')
 
   # TODO add tests.
   # The predictor argument is a function that takes in a _KFoldDataView and

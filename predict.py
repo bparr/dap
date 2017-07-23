@@ -187,9 +187,7 @@ def new2016Dataset(include_harvest=True):
   output_generators = collections.OrderedDict(sorted(
     #[(x, create_2016_output_generator(x)) for x in output_labels] +
     #[get_weight_generator(x) for x in weight_datakeys] +
-    [('multi.all', create_2016_multi_output_generator(output_labels)),
-     ('multi.priorized', create_2016_multi_output_generator(sorted(
-        [x.value for x in weight_datakeys] + [DataKeys.COMPOSITION_DRY_MATTER.value])))]
+    [('multi.all', create_2016_multi_output_generator(output_labels))],
   ))
 
   print('2016 Inputs: ' + ','.join(input_labels))
