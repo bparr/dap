@@ -118,6 +118,18 @@ class DataView(object):
       raise Exception('kfold splitting was bad.')
     return [y_pred_dict[i] for i in range(len(self._X))]
 
+  def write_predictions(self, file_path, y_pred, include_X_labels):
+    filtered = [(i, x) for i, x in enumerate(self._X_labels)
+                if x in include_X_labels]
+    include_X_indexes = [x for x, _ in filtered]
+    with open(file_path, 'w') as f:
+      writer = csv.writer(f)
+      writer.writerow([x for _, x in filtered] +
+                      ['actual_' + self._y_label, 'predicted_' + self._y_label])
+      for x_row, y_actual_row, y_pred_row in zip(self._X, self._y, y_pred):
+        writer.writerow(list(x_row[include_X_indexes]) +
+                        [y_actual_row, y_pred_row])
+
   # Currently useful for verifying results against lab's random forest code.
   def write_csv(self, file_path):
     with open(file_path, 'w') as f:
