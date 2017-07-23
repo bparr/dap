@@ -161,14 +161,16 @@ def augment_with_nearest_train_outputs(kfold_data_view):
 def new2016Dataset(include_harvest=True):
   samples = csv_utils.read_csv_as_dicts('2016.merged.csv')
   dataset_lib.convert_to_float_or_missing(samples, filter_2016_labels((
-      'HARVEST_', 'COMPOSITION_', 'ROBOT_', 'SYNTHETIC_', 'GPS_')) +
-      [Features.ROW.value, Features.COLUMN.value])
+      'HARVEST_', 'COMPOSITION_', 'ROBOT_', 'SYNTHETIC_', 'GPS_',
+      'ROW', 'COLUMN')))
 
   adjacent_augmented_labels = filter_2016_labels(('ROBOT_', 'SYNTHETIC_'))
   input_features_starts_with = [
       'ROBOT_',
       'GPS_',
       'ACCESSION_',
+      'ROW',
+      'COLUMN',
   ]
   if include_harvest:
     adjacent_augmented_labels.extend(filter_2016_labels('HARVEST_'))
@@ -274,7 +276,7 @@ def main():
     random.seed(RANDOM_SEED)
     np.random.seed(RANDOM_SEED)
 
-    predictor_dir = os.path.join(PREDICTIONS_DIR, predictor_name)
+    predictor_dir = os.path.join(PREDICTIONS_DIR, args.dataset, predictor_name)
     os.makedirs(predictor_dir, exist_ok=True)
 
     for output_label, data_view in dataset.generate_views():
