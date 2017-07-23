@@ -155,6 +155,46 @@ def augment_with_nearest_train_outputs(kfold_data_view):
   kfold_data_view.augment_X('augmented_output', augmented_values)
   return rf_predictor(kfold_data_view)
 
+# TODO tests?! See git commit 447b84c48b4420ccfd8777e96a41fc6ef3b3039d
+# TODO apply to 2014 dataset as well. Would be a better story that way if it
+#     improved both.
+# Generates new samples with input features missing in a way found in X.
+# Note this only generates new samples, and not samples already in X.
+def generate_augmented(X, y):
+  MISSING_VALUE = dataset_lib.MISSING_VALUE
+  missings = []
+  for x_sample in X:
+    missings.append(tuple(dataset_lib.is_missing(a) for a in x_sample))
+  missings_set = set(missings)
+
+  X_augmented = []
+  y_augmented = []
+  for x_sample, x_missing, y_sample in zip(X, missings, y):
+    #augmented_missings = set([x_missing])
+    for missing in missings_set:
+      #augmented_missing = tuple((a or b) for a, b in zip(x_missing, missing))
+      # TODO disable this? What is the effect on performance?
+      #if augmented_missing in augmented_missings:
+      # Ignore already seen sample augmentations.
+      #  continue
+
+      #augmented_missings.add(augmented_missing)
+      X_augmented.append(
+          [(MISSING_VALUE if b else a) for a, b in zip(x_sample, missing)])
+      y_augmented.append(y_sample)
+
+  return X_augmented, y_augmented
+
+def augmented_missing_rf_predictor(kfold_data_view):
+  X_train, y_train = generate_augmented(
+      kfold_data_view.X_train, kfold_data_view.y_train)
+  # TODO remove this copy-paste.
+  regressor = RandomForestRegressor(n_estimators=100, max_depth=10,
+                                    max_features='sqrt', min_samples_split=10)
+  regressor.fit(X_train, y_train)
+  return regressor.predict(kfold_data_view.X_test)
+
+
 def new2016Dataset(include_harvest=True):
   samples = csv_utils.read_csv_as_dicts('2016.merged.csv')
   dataset_lib.convert_to_float_or_missing(samples, filter_2016_labels((
@@ -260,7 +300,7 @@ def main():
   open(CSV_OUTPUT_PATH, 'w').close()  # Clear file.
 
   predictors = collections.OrderedDict()
-  predictors[RF_REGRESSOR_NAME] = rf_predictor
+  predictors[RF_REGRESSOR_NAME] = augmented_missing_rf_predictor
 
   if not args.rf_only:
     for name, regressor_generator in scikit_regressors.REGRESSORS.items():
