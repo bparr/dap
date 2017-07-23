@@ -116,15 +116,22 @@ ADJACENT_LABEL_SUFFIX = '_ADJACENT'
 # TODO somehow make this only affect 2016 datasets.
 # TODO fix feature importance breakage from augment_X.
 def gps_cascaded_rf_predictor(kfold_data_view):
-  gps_kfold_data_view = kfold_data_view.create_filtered_data_view(
-        tuple(filter_2016_labels('GPS_')))
-  gps_regressor = GradientBoostingRegressor()
-  gps_regressor.fit(gps_kfold_data_view.X_train, gps_kfold_data_view.y_train)
-  kfold_data_view.augment_X('gps_kfold',
-      gps_regressor.predict(gps_kfold_data_view.get_all_X()))
+  gps_labels = filter_2016_labels('GPS_')
+  gps_indexes = [kfold_data_view.X_labels.index(x) for x in gps_labels]
+  num_total_samples = kfold_data_view.num_total_samples()
 
-  #asdf = [np.random.uniform() for _ in gps_kfold_data_view.get_all_X()]
-  #kfold_data_view.augment_X('gps_kfold', asdf)
+  for i in range(len(kfold_data_view.X_labels)):
+    if i in gps_indexes:
+      continue
+
+    x_results, gps_results = kfold_data_view.get_all_non_missing_X(
+        i, gps_indexes)
+    if len(x_results) == num_total_samples:
+      continue
+
+    gps_regressor = GradientBoostingRegressor().fit(gps_results, x_results)
+    kfold_data_view.replace_missing(i, gps_regressor, gps_indexes)
+
   return rf_predictor(kfold_data_view)
 
 def add_adjacent_features(samples, adjacent_augmented_labels):

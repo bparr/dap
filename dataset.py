@@ -143,8 +143,30 @@ class _KFoldDataView(object):
     self.X_test = X_test
     self.y_train = y_train
 
+  def num_total_samples(self):
+    return len(self.X_train) + len(self.X_test)
+
   def get_all_X(self):
     return np.vstack((self.X_train, self.X_test))
+
+  def get_all_non_missing_X(self, feature_index, extra_indexes):
+    results = []
+    extra_results = []
+    for x in self.get_all_X():
+      if is_missing(x[feature_index]):
+        continue
+      results.append(x[feature_index])
+      extra_results.append(x[extra_indexes])
+
+    return results, extra_results
+
+  def replace_missing(self, feature_index, regressor, regressor_indexes):
+    for x in self.X_train:
+      if is_missing(x[feature_index]):
+        x[feature_index] = regressor.predict([x[regressor_indexes]])[0]
+    for x in self.X_test:
+      if is_missing(x[feature_index]):
+        x[feature_index] = regressor.predict([x[regressor_indexes]])[0]
 
   def augment_X(self, name, X_data):
     if len(X_data) != len(self.X_train) + len(self.X_test):
