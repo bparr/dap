@@ -29,6 +29,9 @@ from sklearn.ensemble import RandomForestRegressor
 
 RF_REGRESSOR_NAME = 'random_forest'
 
+# Where to store the actual predictions.
+PREDICTIONS_DIR = 'predictions'
+
 # Path to save results as CSV file.
 CSV_OUTPUT_PATH = 'results/%s.out'
 # Path to save plot, formatted with the dataset name.
@@ -271,8 +274,14 @@ def main():
     random.seed(RANDOM_SEED)
     np.random.seed(RANDOM_SEED)
 
+    predictor_dir = os.path.join(PREDICTIONS_DIR, predictor_name)
+    os.makedirs(predictor_dir, exist_ok=True)
+
     for output_label, data_view in dataset.generate_views():
       y_pred = data_view.kfold_predict(predictor)
+      data_view.write_predictions(
+          os.path.join(predictor_dir, output_label + '.csv'), y_pred,
+          [Features.ROW.value, Features.COLUMN.value])
 
       if not output_label in results:
         results[output_label] = {'num_samples': data_view.get_num_samples()}
