@@ -6,9 +6,34 @@ convert values in EMPTY_VALUES to ''.
 """
 
 import csv
+import numpy as np
 
 # Values in original csv files that are interpreted as empty strings.
-EMPTY_VALUES = ['', ' ', 'FILL', 'NA', ' NA']
+EMPTY_VALUES = ('', ' ', 'FILL', 'NA', ' NA')
+
+# Store all values for a specific entry in output csv by delimitting them with
+# this. For example, some plots have multiple differing robotic values, so
+# just store all the ones encountered in the single CSV entry.
+_MISMATCH_DELIMETER = ' && '
+
+
+# Averge multiple numeric values, caused by mismatched data merging.
+def average_mismatch(value):
+  return np.mean([float(x) for x in value.split(_MISMATCH_DELIMETER)])
+
+
+# Combine two values in a single CSV entry.
+def append_value(original, to_append):
+  # Don't re-append a single value over and over.
+  if to_append in original.split(_MISMATCH_DELIMETER):
+    return original
+  return original + _MISMATCH_DELIMETER + to_append
+
+
+# Split appended values in a cingle CSV entry.
+def split_values(string_to_split):
+  return string_to_split.split(_MISMATCH_DELIMETER)
+
 
 # Returns list of lines (represented as lists).
 def read_csv(file_path):

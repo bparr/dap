@@ -10,8 +10,8 @@ the name[key description].2016.csv.
 """
 
 import csv
-import csv_utils
-from merge_data import DataKeys, MISMATCH_DELIMETER
+from csv_utils import average_mismatch, read_csv_as_dicts
+from features import Features
 from multiprocessing import Pool
 import numpy as np
 import random
@@ -36,11 +36,6 @@ def get_output_path(spatial_keys_description):
   return 'spatial/' + spatial_keys_description + '.' + INPUT_PATH
 
 
-# Averge multiple numeric values, caused by mismatched data merging.
-def average_mismatch(value):
-  return np.mean([float(x) for x in value.split(MISMATCH_DELIMETER)])
-
-
 # Computes spatial correlation relative to the two spatial keys provided
 # (e.g. GPS_EASTINGS, GPS_NORTHINGS). To use a single spatial key, set spatial
 # key 2 to None. This will then use 0 for all the corresponding values in that
@@ -48,15 +43,15 @@ def average_mismatch(value):
 # Returns (key name, number of data points, correlation coefficient, p value)
 def get_spatial_correlation(arg):
   # Use a single argument since using pool.map().
-  samples, spatial_key1, spatial_key2, data_key = arg
-  samples = [x for x in samples if x[data_key.value] != '']
+  samples, spatial_key1, spatial_key2, feature = arg
+  samples = [x for x in samples if x[feature.value] != '']
 
   spatial_data1 = [average_mismatch(x[spatial_key1.value]) for x in samples]
   spatial_data2 = [0.0] * len(samples)
   if spatial_key2 is not None:
     spatial_data2 = [average_mismatch(x[spatial_key2.value]) for x in samples]
   spatial_data = list(zip(spatial_data1, spatial_data2))
-  data = [average_mismatch(x[data_key.value]) for x in samples]
+  data = [average_mismatch(x[feature.value]) for x in samples]
 
   # Sanity check: Random data should show no significant correlation.
   # Results: p-value of 0.905, so sanity check passed.
@@ -84,38 +79,38 @@ def get_spatial_correlation(arg):
                              DistanceMatrix(data_distances),
                              permutations=MANTEL_PERMUTATIONS)
 
-  return (data_key.value, n, np.mean(data), np.mean(adjacent_data_distances),
+  return (feature.value, n, np.mean(data), np.mean(adjacent_data_distances),
           np.mean(nonadjacent_data_distances), coeff, p_value)
 
 
 def main():
   pool = Pool()
-  samples = csv_utils.read_csv_as_dicts(INPUT_PATH)
+  samples = read_csv_as_dicts(INPUT_PATH)
 
   # Tuples of spatial_key1, spatial_key2, spatial_keys_description).
   mantel_runs = [
-    (DataKeys.GPS_EASTINGS, DataKeys.GPS_NORTHINGS, 'eastings_and_northings'),
-    (DataKeys.GPS_EASTINGS, None, 'eastings_only'),
-    (DataKeys.GPS_NORTHINGS, None, 'northings_only'),
+    (Features.GPS_EASTINGS, Features.GPS_NORTHINGS, 'eastings_and_northings'),
+    (Features.GPS_EASTINGS, None, 'eastings_only'),
+    (Features.GPS_NORTHINGS, None, 'northings_only'),
 
-    (DataKeys.ROW, DataKeys.COLUMN, 'plot_row_and_column'),
-    (DataKeys.ROW, None, 'plot_row_only'),
-    (DataKeys.COLUMN, None, 'plot_column_only'),
+    (Features.ROW, Features.COLUMN, 'plot_row_and_column'),
+    (Features.ROW, None, 'plot_row_only'),
+    (Features.COLUMN, None, 'plot_column_only'),
   ]
 
   for spatial_key1, spatial_key2, spatial_keys_description in mantel_runs:
     args = []
-    for data_key in DataKeys:
+    for feature in Features:
       # This is a bit hacky way to skip values that are all text values.
       # But it works nicely right now.
-      if (data_key == DataKeys.ROW or
-          data_key == DataKeys.COLUMN or
-          data_key == DataKeys.PLANT_ID):
+      if (feature == Features.ROW or
+          feature == Features.COLUMN or
+          feature == Features.PLANT_ID):
         continue
-      if data_key == DataKeys.GPS_EASTINGS:
-        break  # Ignore this DataKey and all DataKeys after this one.
+      if feature == Features.GPS_EASTINGS:
+        break  # Ignore this Feature and all Features after this one.
 
-      args.append((samples, spatial_key1, spatial_key2, data_key))
+      args.append((samples, spatial_key1, spatial_key2, feature))
 
 
     output_path = get_output_path(spatial_keys_description)
