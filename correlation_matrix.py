@@ -26,9 +26,9 @@ def filter_2016_labels(feature_starts_with):
 
 def main():
   samples = csv_utils.read_csv_as_dicts(INPUT_PATH)
-  features_to_use = filter_2016_labels((
-      'HARVEST_', 'COMPOSITION_', 'ROBOT_', 'SYNTHETIC_', 'GPS_',
-      'ROW', 'COLUMN'))
+  features_to_use = (filter_2016_labels(('ROW', 'COLUMN', 'GPS_')) +
+                     filter_2016_labels(('ROBOT_', 'HARVEST_', 'SYNTHETIC_')) +
+                     filter_2016_labels(('COMPOSITION_')))
   dataset.convert_to_float_or_missing(samples, features_to_use)
   X = np.array([[sample[x] for x in features_to_use] for sample in samples])
 
