@@ -57,3 +57,4 @@ def read_csv(file_path):
 def read_csv_as_dicts(file_path):
   labels, *lines = read_csv(file_path)
   return [dict(zip(labels, line)) for line in lines]
+

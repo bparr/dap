@@ -29,6 +29,9 @@ from sklearn.ensemble import RandomForestRegressor
 
 RF_REGRESSOR_NAME = 'random_forest'
 
+# Where to store the actual predictions.
+PREDICTIONS_DIR = 'predictions'
+
 # Path to save results as CSV file.
 CSV_OUTPUT_PATH = 'results/%s.out'
 # Path to save plot, formatted with the dataset name.
@@ -133,7 +136,7 @@ def add_adjacent_features(samples, adjacent_augmented_labels):
 
 # TODO use.
 def augment_with_nearest_train_outputs(kfold_data_view):
-  gps_kfold_data_view = kfold_data_view.create_filtered_data_view(
+  gps_kfold_data_view = kfold_data_view.create_filtered(
         tuple(filter_2016_labels('GPS_')))
   spatial_distances = squareform(pdist(gps_kfold_data_view.get_all_X()))
   augmented_values = []
@@ -198,14 +201,16 @@ def augmented_missing_rf_predictor(kfold_data_view):
 def new2016Dataset(include_harvest=True):
   samples = csv_utils.read_csv_as_dicts('2016.merged.csv')
   dataset_lib.convert_to_float_or_missing(samples, filter_2016_labels((
-      'HARVEST_', 'COMPOSITION_', 'ROBOT_', 'SYNTHETIC_', 'GPS_')) +
-      [Features.ROW.value, Features.COLUMN.value])
+      'HARVEST_', 'COMPOSITION_', 'ROBOT_', 'SYNTHETIC_', 'GPS_',
+      'ROW', 'COLUMN')))
 
   adjacent_augmented_labels = filter_2016_labels(('ROBOT_', 'SYNTHETIC_'))
   input_features_starts_with = [
       'ROBOT_',
       'GPS_',
       'ACCESSION_',
+      'ROW',
+      'COLUMN',
   ]
   if include_harvest:
     adjacent_augmented_labels.extend(filter_2016_labels('HARVEST_'))
@@ -311,8 +316,14 @@ def main():
     random.seed(RANDOM_SEED)
     np.random.seed(RANDOM_SEED)
 
+    predictor_dir = os.path.join(PREDICTIONS_DIR, args.dataset, predictor_name)
+    os.makedirs(predictor_dir, exist_ok=True)
+
     for output_label, data_view in dataset.generate_views():
       y_pred = data_view.kfold_predict(predictor)
+      data_view.write_predictions(
+          os.path.join(predictor_dir, output_label + '.csv'), y_pred,
+          [Features.ROW.value, Features.COLUMN.value])
 
       if not output_label in results:
         results[output_label] = {'num_samples': data_view.get_num_samples()}

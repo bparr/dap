@@ -45,7 +45,6 @@ class Dataset(object):
     # Generated and verified in self._generate().
     self._vectorized_feature_names = None
 
-  # TODO add tests for this helper function?
   def generate_views(self):
     for output_label, output_generator in self._output_generators.items():
       X_labels, X, y = self._generate(output_generator)
@@ -101,7 +100,7 @@ class DataView(object):
     return r2_score(self._y, y_pred)
 
   # TODO add tests.
-  # The predictor argument is a function that takes in a _KFoldDataView and
+  # The predictor argument is a function that takes in a KFoldDataView and
   # outputs y test predictions.
   def kfold_predict(self, predictor):
     y_pred = []
@@ -110,14 +109,27 @@ class DataView(object):
     for train_indexes, test_indexes in kf.split(self._X):
       X_train, X_test = self._X[train_indexes], self._X[test_indexes]
       y_train, y_test = self._y[train_indexes], self._y[test_indexes]
-      kfold_data_view = _KFoldDataView(list(self._X_labels), np.copy(X_train),
-                                       np.copy(X_test), np.copy(y_train))
+      kfold_data_view = KFoldDataView(list(self._X_labels), np.copy(X_train),
+                                      np.copy(X_test), np.copy(y_train))
       y_pred.extend(zip(test_indexes, predictor(kfold_data_view)))
 
     y_pred_dict = dict(y_pred)
     if len(y_pred_dict) != len(y_pred):
       raise Exception('kfold splitting was bad.')
     return [y_pred_dict[i] for i in range(len(self._X))]
+
+  def write_predictions(self, file_path, y_pred, include_X_labels):
+    filtered = [(i, x) for i, x in enumerate(self._X_labels)
+                if x in include_X_labels]
+    include_X_indexes = [x for x, _ in filtered]
+    with open(file_path, 'w') as f:
+      writer = csv.writer(f)
+      writer.writerow([x for _, x in filtered] +
+                      ['actual_' + self._y_label, 'predicted_' + self._y_label,
+                       'prediction_diff'])
+      for x_row, y_actual_row, y_pred_row in zip(self._X, self._y, y_pred):
+        writer.writerow(list(x_row[include_X_indexes]) +
+                        [y_actual_row, y_pred_row, y_pred_row - y_actual_row])
 
   # Currently useful for verifying results against lab's random forest code.
   def write_csv(self, file_path):
@@ -134,8 +146,7 @@ class DataView(object):
 
 # TODO tests!
 # Enforce not knowing true y_test when making predictions by not providing it.
-# Marked as private since it should not be constructed outside this file.
-class _KFoldDataView(object):
+class KFoldDataView(object):
   def __init__(self, X_labels, X_train, X_test, y_train):
     # TODO reconsider using Imputer?
     self.X_labels = X_labels
@@ -155,12 +166,12 @@ class _KFoldDataView(object):
     self.X_test = np.append(
         self.X_test, np.array([X_data[len(self.X_train):]]).T, axis=1)
 
-  def create_filtered_data_view(self, input_labels_starts_with):
+  def create_filtered(self, input_labels_starts_with):
     filtered = [(i, x) for i, x in enumerate(self.X_labels)
                 if x.startswith(input_labels_starts_with)]
     filtered_indexes, filtered_labels = zip(*filtered)  # Unzip.
     # TODO are copys needed? Doc if no copy.
-    return _KFoldDataView(
-        filtered_labels, np.copy(self.X_train[:, filtered_indexes]),
+    return KFoldDataView(
+        list(filtered_labels), np.copy(self.X_train[:, filtered_indexes]),
         np.copy(self.X_test[:, filtered_indexes]), np.copy(self.y_train))
 
