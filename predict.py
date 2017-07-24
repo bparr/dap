@@ -113,51 +113,6 @@ def create_2016_output_generator(key):
   return lambda sample: sample[key]
 
 
-ADJACENT_COUNT = 4 # TODO impove code quality.
-ADJACENT_LABEL_SUFFIX = '_ADJACENT'
-
-def add_adjacent_features(samples, adjacent_augmented_labels):
-  EASTINGS_LABEL = Features.GPS_EASTINGS.value
-  NORTHINGS_LABEL = Features.GPS_NORTHINGS.value
-  # TODO some of this is copy-pasta from spatial.py. Remove code redundancy?
-  spatial_distances = squareform(pdist(
-      [(x[EASTINGS_LABEL], x[NORTHINGS_LABEL]) for x in samples]))
-  for spatial_row, sample in zip(spatial_distances, samples):
-    sorted_row = sorted(zip(spatial_row, range(len(spatial_row))))
-    if sorted_row[0][0] != 0.0:
-      raise Exception('The plot itself is NOT the nearest plot??')
-
-    for input_label in adjacent_augmented_labels:
-      adjacent_values = []
-      for i in range(1, ADJACENT_COUNT + 1):
-        adjacent_values.append(samples[sorted_row[i][1]][input_label])
-      sample[input_label + ADJACENT_LABEL_SUFFIX] = np.mean(adjacent_values)
-
-
-# TODO use.
-def augment_with_nearest_train_outputs(kfold_data_view):
-  gps_kfold_data_view = kfold_data_view.create_filtered(
-        tuple(filter_2016_labels('GPS_')))
-  spatial_distances = squareform(pdist(gps_kfold_data_view.get_all_X()))
-  augmented_values = []
-  for spatial_row in spatial_distances:
-    sorted_row = sorted(zip(spatial_row, range(len(spatial_row))))
-    if sorted_row[0][0] != 0.0:
-      raise Exception('The plot itself is NOT the nearest plot??')
-
-    adjacent_values = []
-    for _, sorted_index in sorted_row[1:]:
-      if sorted_index >= len(kfold_data_view.y_train):
-        continue  # Can not use if if is in the test dataset.
-
-      adjacent_values.append(kfold_data_view.y_train[sorted_index])
-      if len(adjacent_values) == ADJACENT_COUNT:
-        break
-    augmented_values.append(np.mean(adjacent_values))
-
-  kfold_data_view.augment_X('augmented_output', augmented_values)
-  return rf_predictor(kfold_data_view)
-
 # TODO tests?! See git commit 447b84c48b4420ccfd8777e96a41fc6ef3b3039d
 # TODO apply to 2014 dataset as well. Would be a better story that way if it
 #     improved both.
@@ -218,10 +173,7 @@ def new2016Dataset(include_harvest=True):
     input_features_starts_with.append('SYNTHETIC_HARVEST_')
 
 
-  # TODO remove completely?
-  #add_adjacent_features(samples, adjacent_augmented_labels)
-  input_labels = filter_2016_labels(tuple(input_features_starts_with))# + (
-  #               [x + ADJACENT_LABEL_SUFFIX for x in adjacent_augmented_labels])
+  input_labels = filter_2016_labels(tuple(input_features_starts_with))
   output_labels = filter_2016_labels('COMPOSITION_')
 
   output_generators = collections.OrderedDict(sorted(
