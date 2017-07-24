@@ -19,16 +19,19 @@ INPUT_PATH = '2016.merged.csv'
 OUTPUT_PATH = 'results/correlation_matrix.2016.csv'
 
 
-# TODO move to features.py? It is currently copied here and in predict.py.
-def filter_2016_labels(feature_starts_with):
-  return [x.value for x in Features if x.name.startswith(feature_starts_with)]
+def filter_labels(feature_starts_with_list):
+  result = []
+  for starts_with in feature_starts_with_list:
+    result.extend([x.value for x in Features if x.name.startswith(starts_with)])
+  if len(set(result)) != len(result):
+    raise Exception('Duplicate features filtered!')
+  return result
 
 
 def main():
   samples = csv_utils.read_csv_as_dicts(INPUT_PATH)
-  features_to_use = (filter_2016_labels(('ROW', 'COLUMN', 'GPS_')) +
-                     filter_2016_labels(('ROBOT_', 'HARVEST_', 'SYNTHETIC_')) +
-                     filter_2016_labels(('COMPOSITION_')))
+  features_to_use = filter_labels(('ROW', 'COLUMN', 'GPS_', 'ROBOT_',
+                                   'HARVEST_', 'SYNTHETIC_', 'COMPOSITION_'))
   dataset.convert_to_float_or_missing(samples, features_to_use)
   X = np.array([[sample[x] for x in features_to_use] for sample in samples])
 
