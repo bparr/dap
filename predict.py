@@ -118,10 +118,10 @@ def create_2016_output_generator(key):
 #     improved both.
 # Generates new samples with input features missing in a way found in X.
 # Note this only generates new samples, and not samples already in X.
-def generate_augmented(X, y):
+def generate_augmented(X, y, X_test):
   MISSING_VALUE = dataset_lib.MISSING_VALUE
   missings = []
-  for x_sample in X:
+  for x_sample in X_test:
     missings.append(tuple(dataset_lib.is_missing(a) for a in x_sample))
   missings_set = set(missings)
 
@@ -134,6 +134,9 @@ def generate_augmented(X, y):
       augmented_samples.add(tuple(
           [(MISSING_VALUE if b else a) for a, b in zip(x_sample, missing)]))
 
+    X_augmented.append(x_sample)
+    y_augmented.append(y_sample)
+    sample_weights.append(1.0)
     for augmented_sample in augmented_samples:
       X_augmented.append(augmented_sample)
       y_augmented.append(y_sample)
@@ -143,7 +146,8 @@ def generate_augmented(X, y):
 
 def augmented_missing_rf_predictor(kfold_data_view):
   X_train, y_train, sample_weights = generate_augmented(
-      kfold_data_view.X_train, kfold_data_view.y_train)
+      kfold_data_view.X_train, kfold_data_view.y_train,
+      kfold_data_view.X_test)
   # TODO remove this copy-paste.
   regressor = RandomForestRegressor(n_estimators=100, max_depth=10,
                                     max_features='sqrt', min_samples_split=10)
