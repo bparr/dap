@@ -36,8 +36,9 @@ def main():
 
   with open(OUTPUT_PATH, 'w') as f:
     writer = csv.writer(f)
-    writer.writerow(features_to_use)
-    writer.writerows(results)
+    writer.writerow(['feature_name'] + features_to_use)
+    for feature_name, results_row in zip(features_to_use, results):
+      writer.writerow([feature_name] + list(results_row))
 
 
 if __name__ == '__main__':
