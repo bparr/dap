@@ -127,29 +127,27 @@ def generate_augmented(X, y):
 
   X_augmented = []
   y_augmented = []
-  for x_sample, x_missing, y_sample in zip(X, missings, y):
-    #augmented_missings = set([x_missing])
+  sample_weights = []
+  for x_sample, y_sample in zip(X, y):
+    augmented_samples = set([tuple(x_sample)])
     for missing in missings_set:
-      #augmented_missing = tuple((a or b) for a, b in zip(x_missing, missing))
-      # TODO disable this? What is the effect on performance?
-      #if augmented_missing in augmented_missings:
-      # Ignore already seen sample augmentations.
-      #  continue
+      augmented_samples.add(tuple(
+          [(MISSING_VALUE if b else a) for a, b in zip(x_sample, missing)]))
 
-      #augmented_missings.add(augmented_missing)
-      X_augmented.append(
-          [(MISSING_VALUE if b else a) for a, b in zip(x_sample, missing)])
+    for augmented_sample in augmented_samples:
+      X_augmented.append(augmented_sample)
       y_augmented.append(y_sample)
+      sample_weights.append(1.0 / len(augmented_samples))
 
-  return X_augmented, y_augmented
+  return X_augmented, y_augmented, sample_weights
 
 def augmented_missing_rf_predictor(kfold_data_view):
-  X_train, y_train = generate_augmented(
+  X_train, y_train, sample_weights = generate_augmented(
       kfold_data_view.X_train, kfold_data_view.y_train)
   # TODO remove this copy-paste.
   regressor = RandomForestRegressor(n_estimators=100, max_depth=10,
                                     max_features='sqrt', min_samples_split=10)
-  regressor.fit(X_train, y_train)
+  regressor.fit(X_train, y_train, sample_weight=sample_weights)
   return regressor.predict(kfold_data_view.X_test)
 
 
@@ -280,6 +278,7 @@ def main():
       if not output_label in results:
         results[output_label] = {'num_samples': data_view.get_num_samples()}
       results[output_label][predictor_name] = data_view.get_r2_score(y_pred)
+      print(output_label, results[output_label][predictor_name])
 
 
   # Print each predictors' r2 score results..
