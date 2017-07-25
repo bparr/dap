@@ -127,7 +127,7 @@ def generate_augmented(X, y, X_test):
 
   X_augmented = []
   y_augmented = []
-  sample_weights = []
+  sample_weight = []
   for x_sample, y_sample in zip(X, y):
     augmented_samples = set([tuple(x_sample)])
     for missing in missings_set:
@@ -136,22 +136,22 @@ def generate_augmented(X, y, X_test):
 
     X_augmented.append(x_sample)
     y_augmented.append(y_sample)
-    sample_weights.append(1.0)
+    sample_weight.append(1.0)
     for augmented_sample in augmented_samples:
       X_augmented.append(augmented_sample)
       y_augmented.append(y_sample)
-      sample_weights.append(1.0 / len(augmented_samples))
+      sample_weight.append(1.0 / len(augmented_samples))
 
-  return X_augmented, y_augmented, sample_weights
+  return X_augmented, y_augmented, sample_weight
 
 def augmented_missing_rf_predictor(kfold_data_view):
-  X_train, y_train, sample_weights = generate_augmented(
+  X_train, y_train, sample_weight = generate_augmented(
       kfold_data_view.X_train, kfold_data_view.y_train,
       kfold_data_view.X_test)
   # TODO remove this copy-paste.
   regressor = RandomForestRegressor(n_estimators=100, max_depth=10,
                                     max_features='sqrt', min_samples_split=10)
-  regressor.fit(X_train, y_train, sample_weight=sample_weights)
+  regressor.fit(X_train, y_train, sample_weight=sample_weight)
   return regressor.predict(kfold_data_view.X_test)
 
 
