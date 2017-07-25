@@ -125,8 +125,8 @@ def generate_augmented(kfold_data_view):
     missings.append(tuple(dataset_lib.is_missing(value) for value in x))
   missings_set = set(missings)
 
-  X_augmented = []
-  y_augmented = []
+  augmented_X_train = []
+  augmented_y_train = []
   sample_weight = []
   for x, y in zip(kfold_data_view.X_train, kfold_data_view.y_train):
     augmented_samples = set([tuple(x)])
@@ -134,23 +134,18 @@ def generate_augmented(kfold_data_view):
       augmented_samples.add(tuple(
           [(MISSING_VALUE if b else a) for a, b in zip(x, missing)]))
 
-    X_augmented.append(x)
-    y_augmented.append(y)
+    augmented_X_train.append(x)
+    augmented_y_train.append(y)
     sample_weight.append(1.0)
     for augmented_sample in augmented_samples:
-      X_augmented.append(augmented_sample)
-      y_augmented.append(y)
+      augmented_X_train.append(augmented_sample)
+      augmented_y_train.append(y)
       sample_weight.append(1.0 / len(augmented_samples))
 
-  return X_augmented, y_augmented, sample_weight
-
-def augmented_missing_rf_predictor(kfold_data_view):
-  X_train, y_train, sample_weight = generate_augmented(kfold_data_view)
-  # TODO remove this copy-paste.
-  regressor = RandomForestRegressor(n_estimators=100, max_depth=10,
-                                    max_features='sqrt', min_samples_split=10)
-  regressor.fit(X_train, y_train, sample_weight=sample_weight)
-  return regressor.predict(kfold_data_view.X_test)
+  augmented_kfold_data_view = dataset_lib.KFoldDataView(
+      kfold_data_view.X_labels, np.array(augmented_X_train),
+      kfold_data_view.X_test, np.array(augmented_y_train))
+  return augmented_kfold_data_view, sample_weight
 
 
 def new2016Dataset(include_harvest=True):
@@ -199,10 +194,15 @@ def create_simple_predictor(regressor_generator):
 
 
 def rf_predictor(kfold_data_view):
+  sample_weight = None
+  if True:  # TODO switch to global var?
+    kfold_data_view, sample_weight = generate_augmented(kfold_data_view)
+
   # Based on lab code's configuration.
   regressor = RandomForestRegressor(n_estimators=100, max_depth=10,
                                     max_features='sqrt', min_samples_split=10)
-  regressor.fit(kfold_data_view.X_train, kfold_data_view.y_train)
+  regressor.fit(kfold_data_view.X_train, kfold_data_view.y_train,
+                sample_weight=sample_weight)
   y_pred = regressor.predict(kfold_data_view.X_test)
 
   global global_feature_importances
@@ -265,7 +265,7 @@ def main():
   open(CSV_OUTPUT_PATH, 'w').close()  # Clear file.
 
   predictors = collections.OrderedDict()
-  predictors[RF_REGRESSOR_NAME] = augmented_missing_rf_predictor
+  predictors[RF_REGRESSOR_NAME] = rf_predictor
 
   if not args.rf_only:
     for name, regressor_generator in scikit_regressors.REGRESSORS.items():
