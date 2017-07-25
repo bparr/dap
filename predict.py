@@ -37,7 +37,7 @@ CSV_OUTPUT_PATH = 'results/%s.out'
 # Path to save plot, formatted with the dataset name.
 FEATURE_IMPORTANCE_SAVE_PATH = 'results/feature_importance.%s.png'
 
-RANDOM_SEED = 10611
+RANDOM_SEED = [10611, 85963, 95150, 8511, 789328]
 
 # Used to gather feature importance data across predictions.
 global_feature_importances = []
@@ -265,10 +265,14 @@ def main():
     for name, regressor_generator in scikit_regressors.REGRESSORS.items():
       predictors[name] = create_simple_predictor(regressor_generator)
 
+  predictors[RF_REGRESSOR_NAME + '1'] = augmented_missing_rf_predictor
+  predictors[RF_REGRESSOR_NAME + '2'] = augmented_missing_rf_predictor
+  predictors[RF_REGRESSOR_NAME + '3'] = augmented_missing_rf_predictor
+  predictors[RF_REGRESSOR_NAME + '4'] = augmented_missing_rf_predictor
   results = {}
-  for predictor_name, predictor in predictors.items():
-    random.seed(RANDOM_SEED)
-    np.random.seed(RANDOM_SEED)
+  for (predictor_name, predictor), RS in zip(predictors.items(), RANDOM_SEED):
+    random.seed(RS)
+    np.random.seed(RS)
 
     predictor_dir = os.path.join(PREDICTIONS_DIR, args.dataset, predictor_name)
     os.makedirs(predictor_dir, exist_ok=True)
@@ -282,7 +286,11 @@ def main():
       if not output_label in results:
         results[output_label] = {'num_samples': data_view.get_num_samples()}
       results[output_label][predictor_name] = data_view.get_r2_score(y_pred)
-      print(output_label, results[output_label][predictor_name])
+      print(predictor_name, output_label, results[output_label][predictor_name])
+    sum_r2_score = 0.0
+    for output_label, results_dict in results.items():
+      sum_r2_score += results_dict[predictor_name]
+    print('sum r2_score', sum_r2_score)
 
 
   # Print each predictors' r2 score results..
