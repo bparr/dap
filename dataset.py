@@ -103,9 +103,9 @@ class DataView(object):
   def get_r2_score(self, y_pred):
     return r2_score(self._y, y_pred)
 
-  # TODO add tests.
   # The predictor argument is a function that takes in a KFoldDataView and
   # outputs y test predictions.
+  # TODO(bparr): Add tests for this method.
   def kfold_predict(self, predictor):
     y_pred = []
     for train_indexes, test_indexes in self._kfold.split(self._X):
@@ -146,11 +146,9 @@ class DataView(object):
         writer.writerow(row)
 
 
-# TODO tests!
 # Enforce not knowing true y_test when making predictions by not providing it.
 class KFoldDataView(object):
   def __init__(self, X_labels, X_train, X_test, y_train):
-    # TODO reconsider using Imputer?
     self.X_labels = X_labels
     self.X_train = X_train
     self.X_test = X_test
@@ -172,7 +170,6 @@ class KFoldDataView(object):
     filtered = [(i, x) for i, x in enumerate(self.X_labels)
                 if x.startswith(input_labels_starts_with)]
     filtered_indexes, filtered_labels = zip(*filtered)  # Unzip.
-    # TODO are copys needed? Doc if no copy.
     return KFoldDataView(
         list(filtered_labels), np.copy(self.X_train[:, filtered_indexes]),
         np.copy(self.X_test[:, filtered_indexes]), np.copy(self.y_train))

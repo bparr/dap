@@ -57,7 +57,6 @@ def augment(kfold_data_view):
     augmented_X_train.append(x)
     augmented_y_train.append(y)
     # Note that sum(this sample's augmention weights) == 1.0.
-    # TODO try when all augmentations are weighted the same?
     sample_weight.append(0.5 + 0.5 / num_augmentations)
 
     augmented_samples.remove(tuple_x)

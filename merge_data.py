@@ -33,9 +33,8 @@ MERGED_OUTPUT_FILENAME = DATA_DIRECTORY + '.merged.csv'
 # rows, and uses this offset to reindex rows in the PlotPlan and HarvestData.
 NO_FILL_ROW_OFFSET = 4
 
-# The amount of rows a single cell contains.
-# TODO better name than Cell?
-ROWS_IN_CELL = 4
+# The amount of rows a single subplot contains.
+ROWS_IN_SUBPLOT = 4
 
 
 # Parse a single row or column cell coordinate to an int.
@@ -327,24 +326,19 @@ def main():
   sorted_cells = cells.sorted()
   write_csv(OUTPUT_FILENAME, sorted_cells)
 
-  # TODO all but one of the robot data has merge mismatch values.
-  #      Try both averaging them and handling them deterministically seperately
-  #      (low value = ROBOT_VALUE1, high value = ROBOT_VALUE2)? Sorting like
-  #      thus will intermix the robot values so VALUE1 values might not always
-  #      refer to same part of cell. Hmm. That seems bad. So no sorting if
-  #      treating as two separate values?
+  # Generate merged output.
   merged_cells = []
   for cell in sorted_cells:
     row, column = cell.get_coordinates()
-    if row % ROWS_IN_CELL != 1:
+    if row % ROWS_IN_SUBPLOT != 1:
       continue
 
     merged_cell = Cell(row, column)
-    for i in range(ROWS_IN_CELL):
+    for i in range(ROWS_IN_SUBPLOT):
       cells.get(row + i, column).add_all_data_to_cell(merged_cell)
     merged_cells.append(merged_cell)
 
-  if ROWS_IN_CELL * len(merged_cells) != len(sorted_cells):
+  if ROWS_IN_SUBPLOT * len(merged_cells) != len(sorted_cells):
     raise Exception('Unexpected number of merged cells:',
                     len(merged_cells), len(sorted_cells))
   write_csv(MERGED_OUTPUT_FILENAME, merged_cells)

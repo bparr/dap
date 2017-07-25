@@ -3,7 +3,6 @@
 """
 Visualize specific labels of a CSV file.
 """
-# TODO tests?
 
 import argparse
 from csv_utils import average_mismatch, read_csv_as_dicts
@@ -22,8 +21,8 @@ def main():
   samples = read_csv_as_dicts(args.file)
   samples = [x for x in samples if x[args.label] != '']
 
-  rows = [average_mismatch(x[Features.ROW.value]) for x in samples]
-  columns = [average_mismatch(x[Features.COLUMN.value]) for x in samples]
+  rows = [average_mismatch(x[Features.GPS_EASTINGS.value]) for x in samples]
+  columns = [average_mismatch(x[Features.GPS_NORTHINGS.value]) for x in samples]
   values = [average_mismatch(x[args.label]) for x in samples]
 
   plt.title('Visualization of ' + args.label + ' in ' +
@@ -34,8 +33,7 @@ def main():
               marker=[(-xdim, -ydim), (xdim, -ydim), (xdim, ydim),
                       (-xdim, ydim), (-xdim, -ydim)])
   cb = plt.colorbar()
-  # TODO fill in colorbar title.
-  #cb.ax.set_title('')
+  cb.ax.set_title('Value')
   plt.xlabel("Row")
   plt.ylabel("Range")
   plt.show()
