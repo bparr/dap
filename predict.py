@@ -237,7 +237,7 @@ def main():
     dataset_name += '.noAugmentMissing'
 
   if args.write_dataviews_only:
-    for output_label, data_view in dataset.generate_views():
+    for output_label, data_view in dataset.generate_views(None):
       data_view.write_csv(os.path.join(
           'dataviews', dataset_name, output_label + '.csv'))
     return
