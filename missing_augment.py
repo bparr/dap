@@ -35,9 +35,6 @@ import dataset as dataset_lib
 import numpy as np
 
 
-# TODO tests?! See git commit 447b84c48b4420ccfd8777e96a41fc6ef3b3039d
-# TODO apply to 2014 dataset as well. Would be a better story that way if it
-#     improved both.
 # Return (new kfold_data_view, sample_weight) tuple where the new
 # kfold_data_view contains the results of augment_sample() applied to all
 # original training samples.
@@ -50,20 +47,24 @@ def augment(kfold_data_view):
   augmented_y_train = []
   sample_weight = []
   for x, y in zip(kfold_data_view.X_train, kfold_data_view.y_train):
-    # TODO add test for having set start with tuple(x).
-    augmented_samples = set([tuple(x)])
+    tuple_x = tuple(x)
+    augmented_samples = set([tuple_x])
     for missing in missings:
       augmented_samples.add(tuple([
           (dataset_lib.MISSING_VALUE if b else a) for a, b in zip(x, missing)]))
 
+    num_augmentations = len(augmented_samples)
     augmented_X_train.append(x)
     augmented_y_train.append(y)
     # Note that sum(this sample's augmention weights) == 1.0.
-    sample_weight.append(0.5)
+    # TODO try when all augmentations are weighted the same?
+    sample_weight.append(0.5 + 0.5 / num_augmentations)
+
+    augmented_samples.remove(tuple_x)
     for augmented_sample in augmented_samples:
       augmented_X_train.append(augmented_sample)
       augmented_y_train.append(y)
-      sample_weight.append(0.5 / len(augmented_samples))
+      sample_weight.append(0.5 / num_augmentations)
 
   return dataset_lib.KFoldDataView(
       kfold_data_view.X_labels, np.array(augmented_X_train),
