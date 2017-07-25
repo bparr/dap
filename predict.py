@@ -10,7 +10,6 @@ Usage:
 
 Outputs files to the results/ directory.
 """
-# TODO tests?
 
 import argparse
 import collections
@@ -125,9 +124,6 @@ def new2016Dataset(include_harvest=True):
       'ROBOT_',
       'GPS_',
       'ACCESSION_',
-      # TODO include?
-      #'ROW',
-      #'COLUMN',
   ]
   if include_harvest:
     adjacent_augmented_labels.extend(filter_2016_labels('HARVEST_'))
@@ -265,8 +261,8 @@ def main():
       if not output_label in results:
         results[output_label] = {'num_samples': data_view.get_num_samples()}
       results[output_label][predictor_name] = data_view.get_r2_score(y_pred)
-      # TODO remove.
-      print(output_label, results[output_label][predictor_name])
+
+      print(predictor_name, output_label, results[output_label][predictor_name])
 
 
   # Print each predictors' r2 score results..
