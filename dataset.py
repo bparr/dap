@@ -109,10 +109,9 @@ class DataView(object):
   def kfold_predict(self, predictor):
     y_pred = []
     for train_indexes, test_indexes in self._kfold.split(self._X):
-      X_train, X_test = self._X[train_indexes], self._X[test_indexes]
-      y_train, y_test = self._y[train_indexes], self._y[test_indexes]
-      kfold_data_view = KFoldDataView(list(self._X_labels), np.copy(X_train),
-                                      np.copy(X_test), np.copy(y_train))
+      kfold_data_view = KFoldDataView(
+          list(self._X_labels), np.copy(self._X[train_indexes]),
+          np.copy(self._X[test_indexes]), np.copy(self._y[train_indexes]))
       y_pred.extend(zip(test_indexes, predictor(kfold_data_view)))
 
     y_pred_dict = dict(y_pred)
