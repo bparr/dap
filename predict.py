@@ -147,11 +147,15 @@ def new2016NoHarvestDataset():
 
 
 # Create a predictor that uses a single regressor to fit and predict.
-def create_simple_predictor(regressor_generator):
+def create_simple_predictor(name, regressor_generator):
   def simple_predictor(kfold_data_view, sample_weight=None):
     regressor = regressor_generator()
-    regressor.fit(kfold_data_view.X_train, kfold_data_view.y_train,
-                  sample_weight=sample_weight)
+    # Not all regressors have the sample_weight optional fit() argument.
+    if name in scikit_regressors.REGRESSORS_NOT_SUPPORTING_SAMPLE_WEIGHT:
+      regressor.fit(kfold_data_view.X_train, kfold_data_view.y_train)
+    else:
+      regressor.fit(kfold_data_view.X_train, kfold_data_view.y_train,
+                    sample_weight=sample_weight)
     return regressor.predict(kfold_data_view.X_test)
   return simple_predictor
 
@@ -236,7 +240,7 @@ def main():
 
   if not args.rf_only:
     for name, regressor_generator in scikit_regressors.REGRESSORS.items():
-      predictors[name] = create_simple_predictor(regressor_generator)
+      predictors[name] = create_simple_predictor(name, regressor_generator)
 
   if not args.no_augment_missing:
     for predictor_name, predictor in predictors.items():

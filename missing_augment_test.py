@@ -24,7 +24,7 @@ class TestOutput(unittest.TestCase):
     np.testing.assert_array_equal(expected_X_train, kfold_data_view.X_train)
     np.testing.assert_array_equal(expected_X_test, kfold_data_view.X_test)
     np.testing.assert_array_equal(expected_y_train, kfold_data_view.y_train)
-    self.assertListEqual(expected_sample_weight, sample_weight)
+    np.testing.assert_array_equal(expected_sample_weight, sample_weight)
 
   def test_augment_if_none_missing(self):
     result = missing_augment.augment(create_test_input(

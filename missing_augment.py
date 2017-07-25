@@ -66,7 +66,8 @@ def augment(kfold_data_view):
       augmented_y_train.append(y)
       sample_weight.append(0.5 / num_augmentations)
 
-  return dataset_lib.KFoldDataView(
+  augmented_kfold_data_view = dataset_lib.KFoldDataView(
       kfold_data_view.X_labels, np.array(augmented_X_train),
-      kfold_data_view.X_test, np.array(augmented_y_train)), sample_weight
+      kfold_data_view.X_test, np.array(augmented_y_train))
+  return augmented_kfold_data_view, np.array(sample_weight)
 
