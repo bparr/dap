@@ -227,11 +227,12 @@ def main():
   for predictor_name, predictor in predictors.items():
     random.seed(RANDOM_SEED)
     np.random.seed(RANDOM_SEED)
+    kfold_random_state = np.random.randint(2 ** 32 - 1)
 
     predictor_dir = os.path.join(PREDICTIONS_DIR, args.dataset, predictor_name)
     os.makedirs(predictor_dir, exist_ok=True)
 
-    for output_label, data_view in dataset.generate_views():
+    for output_label, data_view in dataset.generate_views(kfold_random_state):
       y_pred = data_view.kfold_predict(predictor)
       data_view.write_predictions(
           os.path.join(predictor_dir, output_label + '.csv'), y_pred,

@@ -69,7 +69,7 @@ class TestDataset(unittest.TestCase):
         self.samples_with_strings, self.input_labels, self.output_generators)
 
   def test_generate_views(self):
-    results = list(self.dataset.generate_views())
+    results = list(self.dataset.generate_views(123))
     self.assertEqual(2, len(results))
     self.assertListEqual([2, 2], [len(x) for x in results])
     self.assertListEqual(['times10', 'filterGt3'], [x[0] for x in results])
@@ -154,7 +154,7 @@ class TestDataView(unittest.TestCase):
     self.data_view = dataset.DataView(
         ['label1', 'label2'],
         np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]]),
-        'output', np.array([7.0, 8.0, 9.0]))
+        'output', np.array([7.0, 8.0, 9.0]), 'kfold')
 
   def test_get_num_samples(self):
     self.assertEqual(3, self.data_view.get_num_samples())

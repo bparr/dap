@@ -45,10 +45,13 @@ class Dataset(object):
     # Generated and verified in self._generate().
     self._vectorized_feature_names = None
 
-  def generate_views(self):
+  # Use kfold_random_state to make kfold splitting deterministic.
+  # kfold_random_state can be None if want to use current numpy random state.
+  def generate_views(self, kfold_random_state):
+    kf = KFold(n_splits=10, shuffle=True, random_state=kfold_random_state)
     for output_label, output_generator in self._output_generators.items():
       X_labels, X, y = self._generate(output_generator)
-      yield output_label, DataView(X_labels, X, output_label, y)
+      yield output_label, DataView(X_labels, X, output_label, y, kf)
 
   # Can contain a label multiple times if its values were strings, since
   # DictVectorizer converts those to one-hot vectors.
@@ -87,11 +90,12 @@ class Dataset(object):
 
 # A single view of a subset of the data in a a Dataset.
 class DataView(object):
-  def __init__(self, X_labels, X, y_label, y):
+  def __init__(self, X_labels, X, y_label, y, kfold):
     self._X_labels = X_labels
     self._X = X
     self._y_label = y_label
     self._y = y
+    self._kfold = kfold
 
   def get_num_samples(self):
     return self._X.shape[0]
@@ -104,9 +108,7 @@ class DataView(object):
   # outputs y test predictions.
   def kfold_predict(self, predictor):
     y_pred = []
-
-    kf = KFold(n_splits=10, shuffle=True)
-    for train_indexes, test_indexes in kf.split(self._X):
+    for train_indexes, test_indexes in self._kfold.split(self._X):
       X_train, X_test = self._X[train_indexes], self._X[test_indexes]
       y_train, y_test = self._y[train_indexes], self._y[test_indexes]
       kfold_data_view = KFoldDataView(list(self._X_labels), np.copy(X_train),
