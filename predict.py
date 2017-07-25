@@ -113,6 +113,48 @@ def create_2016_output_generator(key):
   return lambda sample: sample[key]
 
 
+# TODO tests?! See git commit 447b84c48b4420ccfd8777e96a41fc6ef3b3039d
+# TODO apply to 2014 dataset as well. Would be a better story that way if it
+#     improved both.
+# Generates new samples with input features missing in a way found in X.
+# Note this only generates new samples, and not samples already in X.
+def generate_augmented(X, y, X_test):
+  MISSING_VALUE = dataset_lib.MISSING_VALUE
+  missings = []
+  for x_sample in X_test:
+    missings.append(tuple(dataset_lib.is_missing(a) for a in x_sample))
+  missings_set = set(missings)
+
+  X_augmented = []
+  y_augmented = []
+  sample_weights = []
+  for x_sample, y_sample in zip(X, y):
+    augmented_samples = set([tuple(x_sample)])
+    for missing in missings_set:
+      augmented_samples.add(tuple(
+          [(MISSING_VALUE if b else a) for a, b in zip(x_sample, missing)]))
+
+    X_augmented.append(x_sample)
+    y_augmented.append(y_sample)
+    sample_weights.append(1.0)
+    for augmented_sample in augmented_samples:
+      X_augmented.append(augmented_sample)
+      y_augmented.append(y_sample)
+      sample_weights.append(1.0 / len(augmented_samples))
+
+  return X_augmented, y_augmented, sample_weights
+
+def augmented_missing_rf_predictor(kfold_data_view):
+  X_train, y_train, sample_weights = generate_augmented(
+      kfold_data_view.X_train, kfold_data_view.y_train,
+      kfold_data_view.X_test)
+  # TODO remove this copy-paste.
+  regressor = RandomForestRegressor(n_estimators=100, max_depth=10,
+                                    max_features='sqrt', min_samples_split=10)
+  regressor.fit(X_train, y_train, sample_weight=sample_weights)
+  return regressor.predict(kfold_data_view.X_test)
+
+
 def new2016Dataset(include_harvest=True):
   samples = csv_utils.read_csv_as_dicts('2016.merged.csv')
   dataset_lib.convert_to_float_or_missing(samples, filter_2016_labels((
@@ -217,7 +259,7 @@ def main():
   open(CSV_OUTPUT_PATH, 'w').close()  # Clear file.
 
   predictors = collections.OrderedDict()
-  predictors[RF_REGRESSOR_NAME] = rf_predictor
+  predictors[RF_REGRESSOR_NAME] = augmented_missing_rf_predictor
 
   if not args.rf_only:
     for name, regressor_generator in scikit_regressors.REGRESSORS.items():
@@ -241,6 +283,7 @@ def main():
       if not output_label in results:
         results[output_label] = {'num_samples': data_view.get_num_samples()}
       results[output_label][predictor_name] = data_view.get_r2_score(y_pred)
+      print(output_label, results[output_label][predictor_name])
 
 
   # Print each predictors' r2 score results..
