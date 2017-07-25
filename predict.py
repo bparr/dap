@@ -166,8 +166,9 @@ def new2016Dataset(include_harvest=True):
       'ROBOT_',
       'GPS_',
       'ACCESSION_',
-      'ROW',
-      'COLUMN',
+      # TODO include?
+      #'ROW',
+      #'COLUMN',
   ]
   if include_harvest:
     adjacent_augmented_labels.extend(filter_2016_labels('HARVEST_'))
@@ -241,21 +242,26 @@ def main():
                       help='Which dataset to use.')
   parser.add_argument('--rf_only', action='store_true',
                       help='Only fit main random forest predictor.')
+  parser.add_argument('--no_augment_missing', action='store_true',
+                      help='Skip augmenting samples with more missing data.')
   parser.add_argument('--write_dataviews_only', action='store_true',
                       help='No prediction. Just write data views.')
   args = parser.parse_args()
 
   dataset = (DATASET_FACTORIES[args.dataset])()
+  dataset_name = args.dataset
+  if args.no_augment_missing:
+    dataset_name += '.noAugmentMissing'
 
   if args.write_dataviews_only:
     for output_label, data_view in dataset.generate_views():
       data_view.write_csv(os.path.join(
-          'dataviews', args.dataset, output_label + '.csv'))
+          'dataviews', dataset_name, output_label + '.csv'))
     return
 
 
   global CSV_OUTPUT_PATH
-  CSV_OUTPUT_PATH = CSV_OUTPUT_PATH % args.dataset
+  CSV_OUTPUT_PATH = CSV_OUTPUT_PATH % dataset_name
   open(CSV_OUTPUT_PATH, 'w').close()  # Clear file.
 
   predictors = collections.OrderedDict()
@@ -271,18 +277,19 @@ def main():
     np.random.seed(RANDOM_SEED)
     kfold_random_state = np.random.randint(2 ** 32 - 1)
 
-    predictor_dir = os.path.join(PREDICTIONS_DIR, args.dataset, predictor_name)
+    predictor_dir = os.path.join(PREDICTIONS_DIR, dataset_name, predictor_name)
     os.makedirs(predictor_dir, exist_ok=True)
 
     for output_label, data_view in dataset.generate_views(kfold_random_state):
       y_pred = data_view.kfold_predict(predictor)
       data_view.write_predictions(
           os.path.join(predictor_dir, output_label + '.csv'), y_pred,
-          [Features.ROW.value, Features.COLUMN.value])
+          [Features.GPS_EASTINGS.value, Features.GPS_NORTHINGS.value])
 
       if not output_label in results:
         results[output_label] = {'num_samples': data_view.get_num_samples()}
       results[output_label][predictor_name] = data_view.get_r2_score(y_pred)
+      # TODO remove.
       print(output_label, results[output_label][predictor_name])
 
 
@@ -317,7 +324,7 @@ def main():
              rotation='vertical', fontsize=8)
   plt.xlim([-1, len(indices)])
   plt.tight_layout()
-  plt.savefig(FEATURE_IMPORTANCE_SAVE_PATH % args.dataset)
+  plt.savefig(FEATURE_IMPORTANCE_SAVE_PATH % dataset_name)
 
 
 if __name__ == '__main__':
