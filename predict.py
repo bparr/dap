@@ -246,6 +246,8 @@ def main():
                       help='Skip augmenting samples with more missing data.')
   parser.add_argument('--write_dataviews_only', action='store_true',
                       help='No prediction. Just write data views.')
+  parser.add_argument('--write_predictions', action='store_true',
+                      help='Write individual predictions to predictions/.')
   args = parser.parse_args()
 
   dataset = (DATASET_FACTORIES[args.dataset])()
@@ -282,9 +284,10 @@ def main():
 
     for output_label, data_view in dataset.generate_views(kfold_random_state):
       y_pred = data_view.kfold_predict(predictor)
-      data_view.write_predictions(
-          os.path.join(predictor_dir, output_label + '.csv'), y_pred,
-          [Features.GPS_EASTINGS.value, Features.GPS_NORTHINGS.value])
+      if args.write_predictions:
+        data_view.write_predictions(
+            os.path.join(predictor_dir, output_label + '.csv'), y_pred,
+            [Features.GPS_EASTINGS.value, Features.GPS_NORTHINGS.value])
 
       if not output_label in results:
         results[output_label] = {'num_samples': data_view.get_num_samples()}
