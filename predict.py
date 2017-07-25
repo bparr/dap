@@ -186,18 +186,15 @@ def new2016NoHarvestDataset():
 
 # Create a predictor that uses a single regressor to fit and predict.
 def create_simple_predictor(regressor_generator):
-  def simple_predictor(kfold_data_view):
+  def simple_predictor(kfold_data_view, sample_weight=None):
     regressor = regressor_generator()
-    regressor.fit(kfold_data_view.X_train, kfold_data_view.y_train)
+    regressor.fit(kfold_data_view.X_train, kfold_data_view.y_train,
+                  sample_weight=sample_weight)
     return regressor.predict(kfold_data_view.X_test)
   return simple_predictor
 
 
-def rf_predictor(kfold_data_view):
-  sample_weight = None
-  if True:  # TODO switch to global var?
-    kfold_data_view, sample_weight = generate_augmented(kfold_data_view)
-
+def rf_predictor(kfold_data_view, sample_weight=None):
   # Based on lab code's configuration.
   regressor = RandomForestRegressor(n_estimators=100, max_depth=10,
                                     max_features='sqrt', min_samples_split=10)
@@ -210,6 +207,14 @@ def rf_predictor(kfold_data_view):
       [tree.feature_importances_ for tree in regressor.estimators_])
 
   return y_pred
+
+
+def create_missing_augmented_predictor(predictor):
+  def missing_augmented_predictor(kfold_data_view):
+    kfold_data_view, sample_weight = generate_augmented(kfold_data_view)
+    return predictor(kfold_data_view, sample_weight=sample_weight)
+
+  return missing_augmented_predictor
 
 
 # Merge (sum) importances that have the same input label.
@@ -270,6 +275,10 @@ def main():
   if not args.rf_only:
     for name, regressor_generator in scikit_regressors.REGRESSORS.items():
       predictors[name] = create_simple_predictor(regressor_generator)
+
+  if not args.no_augment_missing:
+    for predictor_name, predictor in predictors.items():
+      predictors[predictor_name] = create_missing_augmented_predictor(predictor)
 
   results = {}
   for predictor_name, predictor in predictors.items():
