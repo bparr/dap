@@ -27,6 +27,7 @@ from scipy.spatial.distance import pdist, squareform
 from sklearn.ensemble import RandomForestRegressor
 
 
+# Name of main regressor. Random forest with AutonLab code settings.
 RF_REGRESSOR_NAME = 'random_forest'
 
 # Where to store the actual predictions.
@@ -34,6 +35,7 @@ PREDICTIONS_DIR = 'predictions'
 
 # Path to save results as CSV file.
 CSV_OUTPUT_PATH = 'results/%s.out'
+
 # Path to save plot, formatted with the dataset name.
 FEATURE_IMPORTANCE_SAVE_PATH = 'results/feature_importance.%s.png'
 
@@ -42,6 +44,8 @@ RANDOM_SEED = 10611
 # Used to gather feature importance data across predictions.
 global_feature_importances = []
 
+
+# Print string to both stdout and CSV_OUTPUT_PATH.
 def rprint(string_to_print):
   print(string_to_print)
   with open(CSV_OUTPUT_PATH, 'a') as f:
@@ -51,6 +55,7 @@ def rprint(string_to_print):
 #######################
 # 2014 Dataset logic. #
 #######################
+
 # Returns result of percent DM value multiplied by dry weight.
 # If given, the minus label's value is subtracted from label's value.
 def get_2014_weight(sample, dry_weight_label, label, minus=None):
@@ -61,6 +66,7 @@ def get_2014_weight(sample, dry_weight_label, label, minus=None):
       dataset_lib.is_missing(dry_weight)):
     return dataset_lib.MISSING_VALUE
   return dry_weight * (value - minus_value) / 100.0
+
 
 def new2014Dataset():
   samples = csv_utils.read_csv_as_dicts('2014/2014_Pheotypic_Data_FileS2.csv')
@@ -105,8 +111,12 @@ def new2014Dataset():
 #######################
 # 2016 Dataset logic. #
 #######################
+
+# Returns list of Feature values whose names start with the given argument.
+# feature_starts_with can be a string, or tuple of strings.
 def filter_2016_labels(feature_starts_with):
   return [x.value for x in Features if x.name.startswith(feature_starts_with)]
+
 
 # Used instead of lambda to avoid Python scoping issue.
 def create_2016_output_generator(key):
@@ -119,21 +129,18 @@ def new2016Dataset(include_harvest=True):
       'HARVEST_', 'COMPOSITION_', 'ROBOT_', 'SYNTHETIC_', 'GPS_',
       'ROW', 'COLUMN')))
 
-  adjacent_augmented_labels = filter_2016_labels(('ROBOT_', 'SYNTHETIC_'))
   input_features_starts_with = [
       'ROBOT_',
       'GPS_',
       'ACCESSION_',
   ]
-  if include_harvest:
-    adjacent_augmented_labels.extend(filter_2016_labels('HARVEST_'))
-    input_features_starts_with.append('HARVEST_')
-    input_features_starts_with.append('SYNTHETIC_HARVEST_')
 
+  if include_harvest:
+    input_features_starts_with.extend(['HARVEST_', 'SYNTHETIC_HARVEST_'])
 
   input_labels = filter_2016_labels(tuple(input_features_starts_with))
-  output_labels = filter_2016_labels('COMPOSITION_')
 
+  output_labels = filter_2016_labels('COMPOSITION_')
   output_generators = collections.OrderedDict(sorted(
     [(x, create_2016_output_generator(x)) for x in output_labels]
   ))
@@ -144,6 +151,7 @@ def new2016Dataset(include_harvest=True):
 
 def new2016NoHarvestDataset():
   return new2016Dataset(include_harvest=False)
+
 
 
 # Create a predictor that uses a single regressor to fit and predict.
@@ -160,8 +168,9 @@ def create_simple_predictor(name, regressor_generator):
   return simple_predictor
 
 
+# Create a Random Forest predictor with AutonLab's code configuration.
+# Also used for generating feature importances.
 def rf_predictor(kfold_data_view, sample_weight=None):
-  # Based on lab code's configuration.
   regressor = RandomForestRegressor(n_estimators=100, max_depth=10,
                                     max_features='sqrt', min_samples_split=10)
   regressor.fit(kfold_data_view.X_train, kfold_data_view.y_train,
@@ -175,6 +184,8 @@ def rf_predictor(kfold_data_view, sample_weight=None):
   return y_pred
 
 
+# Create a new predictor that first augments the dataset using the missing
+# value augmentation before predicting.
 def create_missing_augmented_predictor(predictor):
   def missing_augmented_predictor(kfold_data_view):
     kfold_data_view, sample_weight = missing_augment.augment(kfold_data_view)
@@ -196,6 +207,7 @@ def get_merged_importances(input_labels):
         feature_importances[:, i])
 
   return sorted_input_labels, merged_feature_importances
+
 
 
 def main():
@@ -246,6 +258,8 @@ def main():
     for predictor_name, predictor in predictors.items():
       predictors[predictor_name] = create_missing_augmented_predictor(predictor)
 
+
+  # Make predictions.
   results = {}
   for predictor_name, predictor in predictors.items():
     random.seed(RANDOM_SEED)
@@ -269,14 +283,13 @@ def main():
       print(predictor_name, output_label, results[output_label][predictor_name])
 
 
-  # Print each predictors' r2 score results..
+  # Print each predictors' r2 score results.
   predictor_names = list(predictors.keys())
   rprint(','.join(['output_label', 'num_samples'] + predictor_names))
   for output_label in sorted(results.keys()):
     result = results[output_label]
     rprint(','.join([output_label, str(result['num_samples'])] +
                     [str(result[x]) for x in predictor_names]))
-
 
   # Print feature importances.
   rprint('\n')
@@ -304,4 +317,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+  main()

@@ -20,6 +20,7 @@ def is_missing(value):
   return value == MISSING_VALUE
 
 
+# For each sample[label], convert to float or MISSING_VALUE.
 def convert_to_float_or_missing(samples, labels):
   for sample in samples:
     for label in labels:
@@ -97,9 +98,11 @@ class DataView(object):
     self._y = y
     self._kfold = kfold
 
+  # Returns total number of samples in the view.
   def get_num_samples(self):
     return self._X.shape[0]
 
+  # Returns r2 score for provided predictions.
   def get_r2_score(self, y_pred):
     return r2_score(self._y, y_pred)
 
@@ -119,6 +122,9 @@ class DataView(object):
       raise Exception('kfold splitting was bad.')
     return [y_pred_dict[i] for i in range(len(self._X))]
 
+  # Write predictions, as well as actual values.
+  # The include_X_labels is a list of other columns to write. Ensure that
+  # the DataView has those columns, or else they won't be written.
   def write_predictions(self, file_path, y_pred, include_X_labels):
     filtered = [(i, x) for i, x in enumerate(self._X_labels)
                 if x in include_X_labels]
@@ -152,24 +158,4 @@ class KFoldDataView(object):
     self.X_train = X_train
     self.X_test = X_test
     self.y_train = y_train
-
-  def get_all_X(self):
-    return np.vstack((self.X_train, self.X_test))
-
-  def augment_X(self, name, X_data):
-    if len(X_data) != len(self.X_train) + len(self.X_test):
-      raise Exception('Augmented data size mismatch!')
-    self.X_labels.append(name)
-    self.X_train = np.append(
-        self.X_train, np.array([X_data[:len(self.X_train)]]).T, axis=1)
-    self.X_test = np.append(
-        self.X_test, np.array([X_data[len(self.X_train):]]).T, axis=1)
-
-  def create_filtered(self, input_labels_starts_with):
-    filtered = [(i, x) for i, x in enumerate(self.X_labels)
-                if x.startswith(input_labels_starts_with)]
-    filtered_indexes, filtered_labels = zip(*filtered)  # Unzip.
-    return KFoldDataView(
-        list(filtered_labels), np.copy(self.X_train[:, filtered_indexes]),
-        np.copy(self.X_test[:, filtered_indexes]), np.copy(self.y_train))
 

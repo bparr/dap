@@ -79,3 +79,4 @@ REGRESSORS_NOT_SUPPORTING_SAMPLE_WEIGHT = set([
   'PLSRegression', 'GaussianProcessRegressor', 'PassiveAggressiveRegressor',
   'RandomizedLogisticRegression', 'SGDRegressor', 'TheilSenRegressor',
   'KNeighborsRegressor', 'MLPRegressor'])
+
