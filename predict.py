@@ -19,6 +19,7 @@ import csv_utils
 import dataset as dataset_lib
 from features import Features
 import matplotlib.pyplot as plt
+import missing_augment
 import numpy as np
 import os
 import random
@@ -113,41 +114,6 @@ def create_2016_output_generator(key):
   return lambda sample: sample[key]
 
 
-# TODO tests?! See git commit 447b84c48b4420ccfd8777e96a41fc6ef3b3039d
-# TODO apply to 2014 dataset as well. Would be a better story that way if it
-#     improved both.
-# Generates new samples with input features missing in a way found in X.
-# Note this only generates new samples, and not samples already in X.
-def generate_augmented(kfold_data_view):
-  MISSING_VALUE = dataset_lib.MISSING_VALUE
-  missings = []
-  for x in kfold_data_view.X_test:
-    missings.append(tuple(dataset_lib.is_missing(value) for value in x))
-  missings_set = set(missings)
-
-  augmented_X_train = []
-  augmented_y_train = []
-  sample_weight = []
-  for x, y in zip(kfold_data_view.X_train, kfold_data_view.y_train):
-    augmented_samples = set([tuple(x)])
-    for missing in missings_set:
-      augmented_samples.add(tuple(
-          [(MISSING_VALUE if b else a) for a, b in zip(x, missing)]))
-
-    augmented_X_train.append(x)
-    augmented_y_train.append(y)
-    sample_weight.append(1.0)
-    for augmented_sample in augmented_samples:
-      augmented_X_train.append(augmented_sample)
-      augmented_y_train.append(y)
-      sample_weight.append(1.0 / len(augmented_samples))
-
-  augmented_kfold_data_view = dataset_lib.KFoldDataView(
-      kfold_data_view.X_labels, np.array(augmented_X_train),
-      kfold_data_view.X_test, np.array(augmented_y_train))
-  return augmented_kfold_data_view, sample_weight
-
-
 def new2016Dataset(include_harvest=True):
   samples = csv_utils.read_csv_as_dicts('2016.merged.csv')
   dataset_lib.convert_to_float_or_missing(samples, filter_2016_labels((
@@ -211,7 +177,7 @@ def rf_predictor(kfold_data_view, sample_weight=None):
 
 def create_missing_augmented_predictor(predictor):
   def missing_augmented_predictor(kfold_data_view):
-    kfold_data_view, sample_weight = generate_augmented(kfold_data_view)
+    kfold_data_view, sample_weight = missing_augment.augment(kfold_data_view)
     return predictor(kfold_data_view, sample_weight=sample_weight)
 
   return missing_augmented_predictor
