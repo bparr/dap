@@ -270,4 +270,4 @@ class TestOutput(unittest.TestCase):
           self._assert_values_equal(v, merged_output_line[k])
 
 if __name__ == '__main__':
-    unittest.main()
+  unittest.main()

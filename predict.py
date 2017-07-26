@@ -10,7 +10,6 @@ Usage:
 
 Outputs files to the results/ directory.
 """
-# TODO tests?
 
 import argparse
 import collections
@@ -19,6 +18,7 @@ import csv_utils
 import dataset as dataset_lib
 from features import Features
 import matplotlib.pyplot as plt
+import missing_augment
 import numpy as np
 import os
 import random
@@ -27,6 +27,7 @@ from scipy.spatial.distance import pdist, squareform
 from sklearn.ensemble import RandomForestRegressor
 
 
+# Name of main regressor. Random forest with AutonLab code settings.
 RF_REGRESSOR_NAME = 'random_forest'
 
 # Where to store the actual predictions.
@@ -34,6 +35,7 @@ PREDICTIONS_DIR = 'predictions'
 
 # Path to save results as CSV file.
 CSV_OUTPUT_PATH = 'results/%s.out'
+
 # Path to save plot, formatted with the dataset name.
 FEATURE_IMPORTANCE_SAVE_PATH = 'results/feature_importance.%s.png'
 
@@ -42,6 +44,8 @@ RANDOM_SEED = [10611, 85963, 95150, 8511, 789328]
 # Used to gather feature importance data across predictions.
 global_feature_importances = []
 
+
+# Print string to both stdout and CSV_OUTPUT_PATH.
 def rprint(string_to_print):
   print(string_to_print)
   with open(CSV_OUTPUT_PATH, 'a') as f:
@@ -51,6 +55,7 @@ def rprint(string_to_print):
 #######################
 # 2014 Dataset logic. #
 #######################
+
 # Returns result of percent DM value multiplied by dry weight.
 # If given, the minus label's value is subtracted from label's value.
 def get_2014_weight(sample, dry_weight_label, label, minus=None):
@@ -61,6 +66,7 @@ def get_2014_weight(sample, dry_weight_label, label, minus=None):
       dataset_lib.is_missing(dry_weight)):
     return dataset_lib.MISSING_VALUE
   return dry_weight * (value - minus_value) / 100.0
+
 
 def new2014Dataset():
   samples = csv_utils.read_csv_as_dicts('2014/2014_Pheotypic_Data_FileS2.csv')
@@ -105,54 +111,16 @@ def new2014Dataset():
 #######################
 # 2016 Dataset logic. #
 #######################
+
+# Returns list of Feature values whose names start with the given argument.
+# feature_starts_with can be a string, or tuple of strings.
 def filter_2016_labels(feature_starts_with):
   return [x.value for x in Features if x.name.startswith(feature_starts_with)]
+
 
 # Used instead of lambda to avoid Python scoping issue.
 def create_2016_output_generator(key):
   return lambda sample: sample[key]
-
-
-# TODO tests?! See git commit 447b84c48b4420ccfd8777e96a41fc6ef3b3039d
-# TODO apply to 2014 dataset as well. Would be a better story that way if it
-#     improved both.
-# Generates new samples with input features missing in a way found in X.
-# Note this only generates new samples, and not samples already in X.
-def generate_augmented(X, y, X_test):
-  MISSING_VALUE = dataset_lib.MISSING_VALUE
-  missings = []
-  for x_sample in X_test:
-    missings.append(tuple(dataset_lib.is_missing(a) for a in x_sample))
-  missings_set = set(missings)
-
-  X_augmented = []
-  y_augmented = []
-  sample_weights = []
-  for x_sample, y_sample in zip(X, y):
-    augmented_samples = set([tuple(x_sample)])
-    for missing in missings_set:
-      augmented_samples.add(tuple(
-          [(MISSING_VALUE if b else a) for a, b in zip(x_sample, missing)]))
-
-    X_augmented.append(x_sample)
-    y_augmented.append(y_sample)
-    sample_weights.append(1.0)
-    for augmented_sample in augmented_samples:
-      X_augmented.append(augmented_sample)
-      y_augmented.append(y_sample)
-      sample_weights.append(1.0 / len(augmented_samples))
-
-  return X_augmented, y_augmented, sample_weights
-
-def augmented_missing_rf_predictor(kfold_data_view):
-  X_train, y_train, sample_weights = generate_augmented(
-      kfold_data_view.X_train, kfold_data_view.y_train,
-      kfold_data_view.X_test)
-  # TODO remove this copy-paste.
-  regressor = RandomForestRegressor(n_estimators=100, max_depth=10,
-                                    max_features='sqrt', min_samples_split=10)
-  regressor.fit(X_train, y_train, sample_weight=sample_weights)
-  return regressor.predict(kfold_data_view.X_test)
 
 
 def new2016Dataset(include_harvest=True):
@@ -161,23 +129,18 @@ def new2016Dataset(include_harvest=True):
       'HARVEST_', 'COMPOSITION_', 'ROBOT_', 'SYNTHETIC_', 'GPS_',
       'ROW', 'COLUMN')))
 
-  adjacent_augmented_labels = filter_2016_labels(('ROBOT_', 'SYNTHETIC_'))
   input_features_starts_with = [
       'ROBOT_',
       'GPS_',
       'ACCESSION_',
-      'ROW',
-      'COLUMN',
   ]
-  if include_harvest:
-    adjacent_augmented_labels.extend(filter_2016_labels('HARVEST_'))
-    input_features_starts_with.append('HARVEST_')
-    input_features_starts_with.append('SYNTHETIC_HARVEST_')
 
+  if include_harvest:
+    input_features_starts_with.extend(['HARVEST_', 'SYNTHETIC_HARVEST_'])
 
   input_labels = filter_2016_labels(tuple(input_features_starts_with))
-  output_labels = filter_2016_labels('COMPOSITION_')
 
+  output_labels = filter_2016_labels('COMPOSITION_')
   output_generators = collections.OrderedDict(sorted(
     [(x, create_2016_output_generator(x)) for x in output_labels]
   ))
@@ -190,20 +153,28 @@ def new2016NoHarvestDataset():
   return new2016Dataset(include_harvest=False)
 
 
+
 # Create a predictor that uses a single regressor to fit and predict.
-def create_simple_predictor(regressor_generator):
-  def simple_predictor(kfold_data_view):
+def create_simple_predictor(name, regressor_generator):
+  def simple_predictor(kfold_data_view, sample_weight=None):
     regressor = regressor_generator()
-    regressor.fit(kfold_data_view.X_train, kfold_data_view.y_train)
+    # Not all regressors have the sample_weight optional fit() argument.
+    if name in scikit_regressors.REGRESSORS_NOT_SUPPORTING_SAMPLE_WEIGHT:
+      regressor.fit(kfold_data_view.X_train, kfold_data_view.y_train)
+    else:
+      regressor.fit(kfold_data_view.X_train, kfold_data_view.y_train,
+                    sample_weight=sample_weight)
     return regressor.predict(kfold_data_view.X_test)
   return simple_predictor
 
 
-def rf_predictor(kfold_data_view):
-  # Based on lab code's configuration.
+# Create a Random Forest predictor with AutonLab's code configuration.
+# Also used for generating feature importances.
+def rf_predictor(kfold_data_view, sample_weight=None):
   regressor = RandomForestRegressor(n_estimators=100, max_depth=10,
                                     max_features='sqrt', min_samples_split=10)
-  regressor.fit(kfold_data_view.X_train, kfold_data_view.y_train)
+  regressor.fit(kfold_data_view.X_train, kfold_data_view.y_train,
+                sample_weight=sample_weight)
   y_pred = regressor.predict(kfold_data_view.X_test)
 
   global global_feature_importances
@@ -211,6 +182,16 @@ def rf_predictor(kfold_data_view):
       [tree.feature_importances_ for tree in regressor.estimators_])
 
   return y_pred
+
+
+# Create a new predictor that first augments the dataset using the missing
+# value augmentation before predicting.
+def create_missing_augmented_predictor(predictor):
+  def missing_augmented_predictor(kfold_data_view):
+    kfold_data_view, sample_weight = missing_augment.augment(kfold_data_view)
+    return predictor(kfold_data_view, sample_weight=sample_weight)
+
+  return missing_augmented_predictor
 
 
 # Merge (sum) importances that have the same input label.
@@ -228,6 +209,7 @@ def get_merged_importances(input_labels):
   return sorted_input_labels, merged_feature_importances
 
 
+
 def main():
   DATASET_FACTORIES = {
     '2014': new2014Dataset,
@@ -241,47 +223,63 @@ def main():
                       help='Which dataset to use.')
   parser.add_argument('--rf_only', action='store_true',
                       help='Only fit main random forest predictor.')
+  parser.add_argument('--no_augment_missing', action='store_true',
+                      help='Skip augmenting samples with more missing data.')
   parser.add_argument('--write_dataviews_only', action='store_true',
                       help='No prediction. Just write data views.')
+  parser.add_argument('--write_predictions', action='store_true',
+                      help='Write individual predictions to predictions/.')
   args = parser.parse_args()
 
   dataset = (DATASET_FACTORIES[args.dataset])()
+  dataset_name = args.dataset
+  if args.no_augment_missing:
+    dataset_name += '.noAugmentMissing'
 
   if args.write_dataviews_only:
-    for output_label, data_view in dataset.generate_views():
+    for output_label, data_view in dataset.generate_views(None):
       data_view.write_csv(os.path.join(
-          'dataviews', args.dataset, output_label + '.csv'))
+          'dataviews', dataset_name, output_label + '.csv'))
     return
 
 
   global CSV_OUTPUT_PATH
-  CSV_OUTPUT_PATH = CSV_OUTPUT_PATH % args.dataset
+  CSV_OUTPUT_PATH = CSV_OUTPUT_PATH % dataset_name
   open(CSV_OUTPUT_PATH, 'w').close()  # Clear file.
 
   predictors = collections.OrderedDict()
-  predictors[RF_REGRESSOR_NAME] = augmented_missing_rf_predictor
+  predictors[RF_REGRESSOR_NAME] = rf_predictor
 
   if not args.rf_only:
     for name, regressor_generator in scikit_regressors.REGRESSORS.items():
-      predictors[name] = create_simple_predictor(regressor_generator)
+      predictors[name] = create_simple_predictor(name, regressor_generator)
+
+  if not args.no_augment_missing:
+    for predictor_name, predictor in predictors.items():
+      predictors[predictor_name] = create_missing_augmented_predictor(predictor)
+
 
   predictors[RF_REGRESSOR_NAME + '1'] = augmented_missing_rf_predictor
   predictors[RF_REGRESSOR_NAME + '2'] = augmented_missing_rf_predictor
   predictors[RF_REGRESSOR_NAME + '3'] = augmented_missing_rf_predictor
   predictors[RF_REGRESSOR_NAME + '4'] = augmented_missing_rf_predictor
+
+  # Make predictions.
   results = {}
   for (predictor_name, predictor), RS in zip(predictors.items(), RANDOM_SEED):
     random.seed(RS)
     np.random.seed(RS)
+    kfold_random_state = np.random.randint(2 ** 32 - 1)
 
-    predictor_dir = os.path.join(PREDICTIONS_DIR, args.dataset, predictor_name)
+    predictor_dir = os.path.join(PREDICTIONS_DIR, dataset_name, predictor_name)
     os.makedirs(predictor_dir, exist_ok=True)
 
-    for output_label, data_view in dataset.generate_views():
+    for output_label, data_view in dataset.generate_views(kfold_random_state):
       y_pred = data_view.kfold_predict(predictor)
-      data_view.write_predictions(
-          os.path.join(predictor_dir, output_label + '.csv'), y_pred,
-          [Features.ROW.value, Features.COLUMN.value])
+      if args.write_predictions:
+        data_view.write_predictions(
+            os.path.join(predictor_dir, output_label + '.csv'), y_pred,
+            [Features.GPS_EASTINGS.value, Features.GPS_NORTHINGS.value])
 
       if not output_label in results:
         results[output_label] = {'num_samples': data_view.get_num_samples()}
@@ -293,14 +291,14 @@ def main():
     print('sum r2_score', sum_r2_score)
 
 
-  # Print each predictors' r2 score results..
+
+  # Print each predictors' r2 score results.
   predictor_names = list(predictors.keys())
   rprint(','.join(['output_label', 'num_samples'] + predictor_names))
   for output_label in sorted(results.keys()):
     result = results[output_label]
     rprint(','.join([output_label, str(result['num_samples'])] +
                     [str(result[x]) for x in predictor_names]))
-
 
   # Print feature importances.
   rprint('\n')
@@ -324,8 +322,8 @@ def main():
              rotation='vertical', fontsize=8)
   plt.xlim([-1, len(indices)])
   plt.tight_layout()
-  plt.savefig(FEATURE_IMPORTANCE_SAVE_PATH % args.dataset)
+  plt.savefig(FEATURE_IMPORTANCE_SAVE_PATH % dataset_name)
 
 
 if __name__ == '__main__':
-    main()
+  main()

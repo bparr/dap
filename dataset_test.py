@@ -69,7 +69,7 @@ class TestDataset(unittest.TestCase):
         self.samples_with_strings, self.input_labels, self.output_generators)
 
   def test_generate_views(self):
-    results = list(self.dataset.generate_views())
+    results = list(self.dataset.generate_views(123))
     self.assertEqual(2, len(results))
     self.assertListEqual([2, 2], [len(x) for x in results])
     self.assertListEqual(['times10', 'filterGt3'], [x[0] for x in results])
@@ -154,7 +154,7 @@ class TestDataView(unittest.TestCase):
     self.data_view = dataset.DataView(
         ['label1', 'label2'],
         np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]]),
-        'output', np.array([7.0, 8.0, 9.0]))
+        'output', np.array([7.0, 8.0, 9.0]), 'kfold')
 
   def test_get_num_samples(self):
     self.assertEqual(3, self.data_view.get_num_samples())
@@ -186,45 +186,5 @@ class TestDataView(unittest.TestCase):
          '5.0,6.0,9.0\n'], lines)
 
 
-class TestKfoldDataView(unittest.TestCase):
-  def setUp(self):
-    self.kfold_data_view = dataset.KFoldDataView(
-        ['label1', 'label2'],
-        np.array([[1.0, 2.0], [3.0, 4.0]]),
-        np.array([[5.0, 6.0]]),
-        np.array([7.0, 8.0]))
-
-  def test_get_all_X(self):
-    np.testing.assert_array_equal(
-        np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]]),
-        self.kfold_data_view.get_all_X())
-
-  def test_augment_X(self):
-    self.kfold_data_view.augment_X('new_label', [10.0, 11.0, 12.0])
-    self.assertListEqual(['label1', 'label2', 'new_label'],
-                         self.kfold_data_view.X_labels)
-    np.testing.assert_array_equal(
-        np.array([[1.0, 2.0, 10.0], [3.0, 4.0, 11.0]]),
-        self.kfold_data_view.X_train)
-    np.testing.assert_array_equal(
-        np.array([[5.0, 6.0, 12.0]]),
-        self.kfold_data_view.X_test)
-    np.testing.assert_array_equal(np.array([7.0, 8.0]),
-                                  self.kfold_data_view.y_train)
-
-  def test_augment_X_raises_exception_if_new_data_wrong_size(self):
-    self.assertRaises(Exception, self.kfold_data_view.augment_X,
-                      'new_label', [10.0, 11.0])
-    self.assertRaises(Exception, self.kfold_data_view.augment_X,
-                      'new_label', [10.0, 11.0, 12.0, 13.0])
-
-  def test_create_filtered_data_view(self):
-    filtered = self.kfold_data_view.create_filtered('label1')
-    self.assertListEqual(['label1'], filtered.X_labels)
-    np.testing.assert_array_equal(np.array([[1.0], [3.0]]), filtered.X_train)
-    np.testing.assert_array_equal(np.array([[5.0]]), filtered.X_test)
-    np.testing.assert_array_equal(np.array([7.0, 8.0]), filtered.y_train)
-
-
 if __name__ == '__main__':
-    unittest.main()
+  unittest.main()

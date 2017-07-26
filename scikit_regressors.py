@@ -73,3 +73,10 @@ REGRESSORS = collections.OrderedDict([
   ('ExtraTreeRegressor', lambda: ExtraTreeRegressor()),
 ])
 
+
+# Regressors that do not support the sample_weight optional fit() argument.
+REGRESSORS_NOT_SUPPORTING_SAMPLE_WEIGHT = set([
+  'PLSRegression', 'GaussianProcessRegressor', 'PassiveAggressiveRegressor',
+  'RandomizedLogisticRegression', 'SGDRegressor', 'TheilSenRegressor',
+  'KNeighborsRegressor', 'MLPRegressor'])
+
