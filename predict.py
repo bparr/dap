@@ -259,10 +259,10 @@ def main():
       predictors[predictor_name] = create_missing_augmented_predictor(predictor)
 
 
-  predictors[RF_REGRESSOR_NAME + '1'] = augmented_missing_rf_predictor
-  predictors[RF_REGRESSOR_NAME + '2'] = augmented_missing_rf_predictor
-  predictors[RF_REGRESSOR_NAME + '3'] = augmented_missing_rf_predictor
-  predictors[RF_REGRESSOR_NAME + '4'] = augmented_missing_rf_predictor
+  predictors[RF_REGRESSOR_NAME + '1'] = rf_predictor
+  predictors[RF_REGRESSOR_NAME + '2'] = rf_predictor
+  predictors[RF_REGRESSOR_NAME + '3'] = rf_predictor
+  predictors[RF_REGRESSOR_NAME + '4'] = rf_predictor
 
   # Make predictions.
   results = {}
