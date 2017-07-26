@@ -249,6 +249,11 @@ def main():
 
   predictors = collections.OrderedDict()
   predictors[RF_REGRESSOR_NAME] = rf_predictor
+  predictors[RF_REGRESSOR_NAME + '1'] = rf_predictor
+  predictors[RF_REGRESSOR_NAME + '2'] = rf_predictor
+  predictors[RF_REGRESSOR_NAME + '3'] = rf_predictor
+  predictors[RF_REGRESSOR_NAME + '4'] = rf_predictor
+
 
   if not args.rf_only:
     for name, regressor_generator in scikit_regressors.REGRESSORS.items():
@@ -258,11 +263,6 @@ def main():
     for predictor_name, predictor in predictors.items():
       predictors[predictor_name] = create_missing_augmented_predictor(predictor)
 
-
-  predictors[RF_REGRESSOR_NAME + '1'] = rf_predictor
-  predictors[RF_REGRESSOR_NAME + '2'] = rf_predictor
-  predictors[RF_REGRESSOR_NAME + '3'] = rf_predictor
-  predictors[RF_REGRESSOR_NAME + '4'] = rf_predictor
 
   # Make predictions.
   results = {}
