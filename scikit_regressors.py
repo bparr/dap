@@ -28,7 +28,8 @@ REGRESSORS = collections.OrderedDict([
   ('RandomForestRegressor', lambda: RandomForestRegressor()),
 
   # Gaussian.
-  ('GaussianProcessRegressor', lambda: GaussianProcessRegressor()),
+  # Way too slow and bad for this dataset.
+  #('GaussianProcessRegressor', lambda: GaussianProcessRegressor()),
 
   # Isotonic regression.
   # ValueError: X should be a 1d array
