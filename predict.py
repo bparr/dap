@@ -27,8 +27,8 @@ from scipy.spatial.distance import pdist, squareform
 from sklearn.ensemble import RandomForestRegressor
 
 
-# Name of main regressor. Random forest with AutonLab code settings.
-RF_REGRESSOR_NAME = 'random_forest'
+# Name prefix of main regressor. Random forest with AutonLab code settings.
+RF_REGRESSOR_PREFIX = 'random_forest_'
 
 # Where to store the actual predictions.
 PREDICTIONS_DIR = 'predictions'
@@ -39,7 +39,7 @@ CSV_OUTPUT_PATH = 'results/%s.out'
 # Path to save plot, formatted with the dataset name.
 FEATURE_IMPORTANCE_SAVE_PATH = 'results/feature_importance.%s.png'
 
-RANDOM_SEED = 10611
+DEFAULT_RANDOM_SEED = 10611
 
 # Used to gather feature importance data across predictions.
 global_feature_importances = []
@@ -224,6 +224,8 @@ def main():
                       help='Which dataset to use.')
   parser.add_argument('--rf_only', action='store_true',
                       help='Only fit main random forest predictor.')
+  parser.add_argument('--rf_iterations', type=int, default=10,
+                      help='Number of times to run main RF predictor.')
   parser.add_argument('--no_augment_missing', action='store_true',
                       help='Skip augmenting samples with more missing data.')
   parser.add_argument('--write_dataviews_only', action='store_true',
@@ -252,11 +254,15 @@ def main():
   open(CSV_OUTPUT_PATH, 'w').close()  # Clear file.
 
   predictors = collections.OrderedDict()
-  predictors[RF_REGRESSOR_NAME] = rf_predictor
+  random_seeds = []
+  for i in range(args.rf_iterations):
+    predictors[RF_REGRESSOR_PREFIX + str(i)] = rf_predictor
+    random_seeds.append(DEFAULT_RANDOM_SEED + i)
 
   if not args.rf_only:
     for name, regressor_generator in scikit_regressors.REGRESSORS.items():
       predictors[name] = create_simple_predictor(name, regressor_generator)
+      random_seeds.append(DEFAULT_RANDOM_SEED)
 
   if not args.no_augment_missing:
     for predictor_name, predictor in predictors.items():
@@ -265,9 +271,10 @@ def main():
 
   # Make predictions.
   results = {}
-  for predictor_name, predictor in predictors.items():
-    random.seed(RANDOM_SEED)
-    np.random.seed(RANDOM_SEED)
+  zipped_predictors = zip(predictors.items(), random_seeds)
+  for (predictor_name, predictor), random_seed in zipped_predictors:
+    random.seed(random_seed)
+    np.random.seed(random_seed)
     kfold_random_state = np.random.randint(2 ** 32 - 1)
 
     predictor_dir = os.path.join(PREDICTIONS_DIR, dataset_name, predictor_name)
