@@ -126,11 +126,12 @@ def create_2016_output_generator(key):
 def new2016Dataset(include_harvest=True):
   samples = csv_utils.read_csv_as_dicts('2016.merged.csv')
   dataset_lib.convert_to_float_or_missing(samples, filter_2016_labels((
-      'HARVEST_', 'COMPOSITION_', 'ROBOT_', 'SYNTHETIC_', 'GPS_',
+      'HARVEST_', 'COMPOSITION_', 'ROBOT_', 'AERIAL_', 'SYNTHETIC_', 'GPS_',
       'ROW', 'COLUMN')))
 
   input_features_starts_with = [
       'ROBOT_',
+      'AERIAL_',
       'GPS_',
       'ACCESSION_',
   ]

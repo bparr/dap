@@ -68,6 +68,7 @@ class TestOutput(unittest.TestCase):
             d[first_column_key], k, feature.value))
 
 
+  # Test parse_coordinates() directly, since it is used by other tests.
   def test_parse_coordinates(self):
     self.assertEqual((1,2), merge_data.parse_coordinates(1, 2))
     self.assertEqual((12, 32), merge_data.parse_coordinates(12, 32))
@@ -168,6 +169,28 @@ class TestOutput(unittest.TestCase):
       self._assert_values_equal(d['End'], get_actual_value(
           d['Rw'], d['Ra'], Features.PLOT_PLAN_END,
           has_fill_rows=False))
+
+  def test_avg_hue_sat_2016BAP_Aerial(self):
+    dict_lines = read_input_file('avg_hue_sat_2016BAP_Aerial.csv')
+
+    for d in dict_lines:
+      if not d['fileName']:
+        continue
+
+      filename_parts = d['fileName'].replace('.png', '').split('R')
+      start_row = int(filename_parts[1][1:])
+      column = int(filename_parts[3][1:])
+      self.assertEqual(start_row + 3, int(filename_parts[2][1:]))
+      for row in range(start_row, start_row + 4):
+        if row <= merge_data.NO_FILL_ROW_OFFSET:
+          continue
+
+        if float(d['hue']) != 0.0:
+          self._assert_values_equal(d['hue'], get_actual_value(
+              row, column, Features.AERIAL_AVERAGE_HUE))
+        if float(d['sat']) != 0.0:
+          self._assert_values_equal(d['sat'], get_actual_value(
+              row, column, Features.AERIAL_AVERAGE_SATURATION))
 
   def test_PanelAccessions_BAP(self):
     dict_lines = read_input_file('PanelAccessions-BAP.csv')

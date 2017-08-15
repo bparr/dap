@@ -63,6 +63,10 @@ class Features(Enum):
   ROBOT_LIGHT_INTERCEPTION_08 = '2016_08_light_interception'
   ROBOT_LIGHT_INTERCEPTION_09 = '2016_09_light_interception'
 
+  # Aerial data.
+  AERIAL_AVERAGE_HUE = 'aerial_average_hue'
+  AERIAL_AVERAGE_SATURATION = 'aerial_average_saturation'
+
   # Synthetically created data.
   SYNTHETIC_HARVEST_SF16h_HGT_120_MEAN = 'SF16h_HGT_120_MEAN'
   SYNTHETIC_HARVEST_SF16h_HGT_120_STD = 'SF16h_HGT_120_STD'

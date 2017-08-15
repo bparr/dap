@@ -237,6 +237,26 @@ def parse_plot_plan_tags(lines, cells):
     cell.add_data(Features.PLOT_PLAN_END, end, append_if_mismatch=True)
 
 
+def parse_hue_sat(lines, cells):
+  lines = lines[1:]  # Ignore labels.
+  for filename, hue, saturation in lines:
+    if not filename:
+      continue
+
+    # Remove starting 'R' and ending '.png' and parse out numbers.
+    start_row, end_row, column = [int(x[1:]) for x in filename[1:-4].split('R')]
+    for row in range(start_row, end_row + 1):
+      # TODO change to checking fill rows?
+      if not cells.exists(row, column):
+        print('Hue sat:', row, column)
+        continue
+      cell = cells.get(row, column)
+      if hue != '0':
+        cell.add_data(Features.AERIAL_AVERAGE_HUE, hue)
+      if saturation != '0':
+        cell.add_data(Features.AERIAL_AVERAGE_SATURATION, saturation)
+
+
 def add_gps_to_cells(lines, cells):
   lines = lines[1:]  # Ignore labels.
   gps = {}
@@ -296,6 +316,7 @@ def main():
   parse_plot_plan(read_csv('BAP16_PlotPlan_Plot_IDs.csv'), cells)
   parse_plot_plan_tags(read_csv('BAP16_PlotPlan_Plot_IDs_Tags.csv'), cells)
 
+  parse_hue_sat(read_csv('avg_hue_sat_2016BAP_Aerial.csv'), cells)
   parse_rw_by_ra(read_csv('2016_07_13-14_Leaf_Necrosis.csv'),
                  Features.ROBOT_LEAF_NECROSIS_07, cells)
   parse_rw_by_ra(read_csv('2016_07_13-14_vegetation_index.csv'),
