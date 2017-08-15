@@ -234,15 +234,18 @@ def main():
 
   dataset = (DATASET_FACTORIES[args.dataset])()
   dataset_name = args.dataset
-  if args.no_augment_missing:
-    dataset_name += '.noAugmentMissing'
 
   if args.write_dataviews_only:
+    dataview_dir = os.path.join('dataviews', dataset_name)
+    os.makedirs(dataview_dir, exist_ok=True)
     for output_label, data_view in dataset.generate_views(None):
-      data_view.write_csv(os.path.join(
-          'dataviews', dataset_name, output_label + '.csv'))
+      data_view.write_csv(os.path.join(dataview_dir, output_label + '.csv'))
     return
 
+  # Append after the args.write_dataviews_only check, since 2016 dataviews are
+  # identical to the 2016.noAugmentMissing dataviews, for example.
+  if args.no_augment_missing:
+    dataset_name += '.noAugmentMissing'
 
   global CSV_OUTPUT_PATH
   CSV_OUTPUT_PATH = CSV_OUTPUT_PATH % dataset_name
