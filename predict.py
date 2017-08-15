@@ -123,18 +123,19 @@ def create_2016_output_generator(key):
   return lambda sample: sample[key]
 
 
-def new2016Dataset(include_harvest=True):
+def new2016Dataset(include_robot_and_aerial=True, include_harvest=True):
   samples = csv_utils.read_csv_as_dicts('2016.merged.csv')
   dataset_lib.convert_to_float_or_missing(samples, filter_2016_labels((
       'HARVEST_', 'COMPOSITION_', 'ROBOT_', 'AERIAL_', 'SYNTHETIC_', 'GPS_',
       'ROW', 'COLUMN')))
 
   input_features_starts_with = [
-      'ROBOT_',
-      'AERIAL_',
       'GPS_',
       'ACCESSION_',
   ]
+
+  if include_robot_and_aerial:
+    input_features_starts_with.extend(['ROBOT_', 'AERIAL_'])
 
   if include_harvest:
     input_features_starts_with.extend(['HARVEST_', 'SYNTHETIC_HARVEST_'])
@@ -148,6 +149,10 @@ def new2016Dataset(include_harvest=True):
 
   print('2016 Inputs: ' + ','.join(input_labels))
   return dataset_lib.Dataset(samples, input_labels, output_generators)
+
+
+def new2016NoRobotAerialHarvestDataset():
+  return new2016Dataset(include_robot_and_aerial=False, include_harvest=False)
 
 
 def new2016NoHarvestDataset():
@@ -216,6 +221,7 @@ def main():
     '2014': new2014Dataset,
     '2016': new2016Dataset,
     '2016.noHarvest': new2016NoHarvestDataset,
+    '2016.noRobotAerialHarvest': new2016NoRobotAerialHarvestDataset,
   }
 
   parser = argparse.ArgumentParser(description='Predict harvest data.')
