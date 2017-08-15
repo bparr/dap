@@ -246,9 +246,7 @@ def parse_hue_sat(lines, cells):
     # Remove starting 'R' and ending '.png' and parse out numbers.
     start_row, end_row, column = [int(x[1:]) for x in filename[1:-4].split('R')]
     for row in range(start_row, end_row + 1):
-      # TODO change to checking fill rows?
-      if not cells.exists(row, column):
-        print('Hue sat:', row, column)
+      if row <= NO_FILL_ROW_OFFSET:
         continue
       cell = cells.get(row, column)
       if hue != '0':
