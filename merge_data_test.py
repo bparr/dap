@@ -192,6 +192,14 @@ class TestOutput(unittest.TestCase):
           self._assert_values_equal(d['sat'], get_actual_value(
               row, column, Features.AERIAL_AVERAGE_SATURATION))
 
+  def test_avg_hue_sat_2016BAP_Aerial_merged_no_mismatch(self):
+    for output_columns in MERGED_OUTPUT_CONTENTS.values():
+      for output_line in output_columns.values():
+        hue = output_line[Features.AERIAL_AVERAGE_HUE.value]
+        self.assertEqual(1, len(csv_utils.split_values(hue)))
+        saturation = output_line[Features.AERIAL_AVERAGE_SATURATION.value]
+        self.assertEqual(1, len(csv_utils.split_values(saturation)))
+
   def test_PanelAccessions_BAP(self):
     dict_lines = read_input_file('PanelAccessions-BAP.csv')
     accessions = dict((x['Taxa'], x) for x in dict_lines)
