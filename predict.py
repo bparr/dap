@@ -234,10 +234,10 @@ def main():
                       help='Number of times to run main RF predictor.')
   parser.add_argument('--no_augment_missing', action='store_true',
                       help='Skip augmenting samples with more missing data.')
+  parser.add_argument('--no_write_predictions', action='store_true',
+                      help='Skip writing predicted values to predictions/.')
   parser.add_argument('--write_dataviews_only', action='store_true',
                       help='No prediction. Just write data views.')
-  parser.add_argument('--write_predictions', action='store_true',
-                      help='Write individual predictions to predictions/.')
   args = parser.parse_args()
 
   dataset = (DATASET_FACTORIES[args.dataset])()
@@ -288,7 +288,7 @@ def main():
 
     for output_label, data_view in dataset.generate_views(kfold_random_state):
       y_pred = data_view.kfold_predict(predictor)
-      if args.write_predictions:
+      if not args.no_write_predictions:
         data_view.write_predictions(
             os.path.join(predictor_dir, output_label + '.csv'), y_pred,
             [Features.GPS_EASTINGS.value, Features.GPS_NORTHINGS.value])
