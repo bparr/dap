@@ -90,7 +90,7 @@ def main():
           actual, predicted, multioutput='uniform_average')
 
     print('\n\n')
-    print('Results_for_dataset_' + d)
+    print('Results_for_dataset: ' + d)
     print(','.join(['output_label'] + list(results.keys())))
     output_labels = None
     for predictor_name, predictor_values in results.items():
