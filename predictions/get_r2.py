@@ -27,12 +27,30 @@ def convert(s):
   return float(s)
 
 
-def main():
-  dirs = get_subdirs('.')
+# Assert identical ordering of entries across all output predictions.
+def verify_matched_rows_and_columns(all_lines):
+  rows_and_columns = None
+  for filename, lines in all_lines.items():
+    current_rows_and_columns = [(x['row'], x['range']) for x in lines]
+    if rows_and_columns is None:
+      rows_and_columns = current_rows_and_columns
+    if rows_and_columns != current_rows_and_columns:
+      raise Exception('Rows and columns mismatch!')
 
-  for d in dirs:
+
+def main():
+  for d in get_subdirs('.'):
     results = collections.OrderedDict()
     for subdir in get_subdirs(d):
+      all_lines = collections.OrderedDict()
+      for filename in sorted(os.listdir(os.path.join(d, subdir))):
+        with open(os.path.join(d, subdir, filename)) as f:
+          all_lines[filename] = list(csv.DictReader(f))
+
+      # The 2014 dataset does not have required 'row' or 'range' features.
+      if not d.startswith('2014'):
+        verify_matched_rows_and_columns(all_lines)
+
       results[subdir] = collections.OrderedDict()
       actual = []
       predicted = []
@@ -52,7 +70,7 @@ def main():
       # TODO remove this hack?
       #      The 2014 dataset does not have consistent number of entries, which
       #      breaks the overall r2_score.
-      if d == '2014' or d == '2014.noAugmentMissing':
+      if d.startswith('2014'):
         continue
 
       actual = np.transpose(np.array(actual))
