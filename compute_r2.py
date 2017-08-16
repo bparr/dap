@@ -5,7 +5,7 @@ For each dataset directory in the current directory:
 Prints overal r2 score as well as the r2 score for each individual label.
 
 Usage (must be run from the predictions/ directory!):
-  ./get_r2.py > r2.csv
+  ./compute_r2.py > r2.csv
 
 """
 
@@ -15,6 +15,10 @@ import csv
 import numpy as np
 import os
 from sklearn.metrics import r2_score
+
+
+# Where the prediction files are stored.
+PREDICTIONS_DIRNAME = 'predictions'
 
 
 def get_subdirs(d):
@@ -39,12 +43,13 @@ def verify_matched_gps(all_lines):
 
 
 def main():
-  for d in get_subdirs('.'):
+  for d in get_subdirs(PREDICTIONS_DIRNAME):
     results = collections.OrderedDict()
-    for subdir in get_subdirs(d):
+    for subdir in get_subdirs(os.path.join(PREDICTIONS_DIRNAME, d)):
       all_lines = collections.OrderedDict()
-      for filename in sorted(os.listdir(os.path.join(d, subdir))):
-        with open(os.path.join(d, subdir, filename)) as f:
+      subdir_path = os.path.join(PREDICTIONS_DIRNAME, d, subdir)
+      for filename in sorted(os.listdir(subdir_path)):
+        with open(os.path.join(subdir_path, filename)) as f:
           all_lines[filename] = list(csv.DictReader(f))
 
       # The 2014 dataset does not have required GPS features.
@@ -54,10 +59,8 @@ def main():
       results[subdir] = collections.OrderedDict()
       actual = []
       predicted = []
-      for filename in sorted(os.listdir(os.path.join(d, subdir))):
+      for filename, lines in all_lines.items():
         output_name = filename.replace('.csv', '')
-        with open(os.path.join(d, subdir, filename)) as f:
-          lines = list(csv.DictReader(f))
         actual_values = [convert(x['actual_' + output_name]) for x in lines]
         predicted_values = ([convert(x['predicted_' + output_name])
                              for x in lines])
