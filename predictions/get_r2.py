@@ -28,14 +28,14 @@ def convert(s):
 
 
 # Assert identical ordering of entries across all output predictions.
-def verify_matched_rows_and_columns(all_lines):
-  rows_and_columns = None
+def verify_matched_gps(all_lines):
+  gps = None
   for filename, lines in all_lines.items():
-    current_rows_and_columns = [(x['row'], x['range']) for x in lines]
-    if rows_and_columns is None:
-      rows_and_columns = current_rows_and_columns
-    if rows_and_columns != current_rows_and_columns:
-      raise Exception('Rows and columns mismatch!')
+    current_gps = [(x['gps_eastings_UTMzone17N'], x['gps_northings_UTMzone17N']) for x in lines]
+    if gps is None:
+      gps = current_gps
+    if gps != current_gps:
+      raise Exception('GPS mismatch!')
 
 
 def main():
@@ -47,9 +47,9 @@ def main():
         with open(os.path.join(d, subdir, filename)) as f:
           all_lines[filename] = list(csv.DictReader(f))
 
-      # The 2014 dataset does not have required 'row' or 'range' features.
+      # The 2014 dataset does not have required GPS features.
       if not d.startswith('2014'):
-        verify_matched_rows_and_columns(all_lines)
+        verify_matched_gps(all_lines)
 
       results[subdir] = collections.OrderedDict()
       actual = []
