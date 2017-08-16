@@ -76,9 +76,11 @@ def main():
         predicted.append(predicted_values)
 
 
-      # TODO remove this hack?
-      #      The 2014 dataset does not have consistent number of entries, which
-      #      breaks the overall r2_score.
+      # TODO(bparr): Remove this hack? The 2014 dataset does not have a
+      #              consistent number of entries, which breaks the overall
+      #              r2_score. Add an identifier element to the 2014 prediction
+      #              files so that predictions for different outputs on the same
+      #              sample can be matched?
       if d.startswith('2014'):
         continue
 
