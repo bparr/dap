@@ -12,6 +12,7 @@ Usage (must be run from the predictions/ directory!):
 import argparse
 import collections
 import csv
+from features import Features
 import numpy as np
 import os
 from sklearn.metrics import r2_score
@@ -31,11 +32,16 @@ def convert(s):
   return float(s)
 
 
+def extract_gps(sample):
+  return (sample[Features.GPS_EASTINGS.value],
+          sample[Features.GPS_NORTHINGS.value])
+
+
 # Assert identical ordering of entries across all output predictions.
 def verify_matched_gps(all_lines):
   gps = None
   for filename, lines in all_lines.items():
-    current_gps = [(x['gps_eastings_UTMzone17N'], x['gps_northings_UTMzone17N']) for x in lines]
+    current_gps = [extract_gps(x) for x in lines]
     if gps is None:
       gps = current_gps
     if gps != current_gps:
