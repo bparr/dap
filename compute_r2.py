@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 """
-For each dataset directory in the current directory:
+For each dataset directory in the predictions/ directory:
 Prints overal r2 score as well as the r2 score for each individual label.
 
-Usage (must be run from the predictions/ directory!):
+Usage:
   ./compute_r2.py > r2.csv
 
 """

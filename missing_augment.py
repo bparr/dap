@@ -39,7 +39,7 @@ import numpy as np
 # kfold_data_view contains the results of augment_sample() applied to all
 # original training samples.
 def augment(kfold_data_view):
-  missings = set()  # Set up True/False tuples.
+  missings = set()  # Set of True/False tuples.
   for x in kfold_data_view.X_test:
     missings.add(tuple(dataset_lib.is_missing(value) for value in x))
 
