@@ -230,7 +230,7 @@ def main():
                       help='Which dataset to use.')
   parser.add_argument('--rf_only', action='store_true',
                       help='Only fit main random forest predictor.')
-  parser.add_argument('--rf_iterations', type=int, default=10,
+  parser.add_argument('--rf_iterations', type=int, default=1,
                       help='Number of times to run main RF predictor.')
   parser.add_argument('--no_augment_missing', action='store_true',
                       help='Skip augmenting samples with more missing data.')
