@@ -238,6 +238,8 @@ def main():
                       help='Skip writing predicted values to predictions/.')
   parser.add_argument('--write_dataviews_only', action='store_true',
                       help='No prediction. Just write data views.')
+  parser.add_argument('--start_iteration', type=int, default=0,
+                      help='Which rf iteration number to start on.')
   args = parser.parse_args()
 
   dataset = (DATASET_FACTORIES[args.dataset])()
@@ -261,7 +263,8 @@ def main():
 
   predictors = collections.OrderedDict()
   random_seeds = []
-  for i in range(args.rf_iterations):
+  for i in range(args.start_iteration,
+                 args.start_iteration + args.rf_iterations):
     predictors[RF_REGRESSOR_PREFIX + str(i)] = rf_predictor
     random_seeds.append(DEFAULT_RANDOM_SEED + i)
 
