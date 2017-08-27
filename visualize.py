@@ -2,6 +2,9 @@
 
 """
 Visualize specific labels of a CSV file.
+
+Usage example:
+  ./visualize.py -f predictions/2016/random_forest_0/ADF.csv -l prediction_diff
 """
 
 import argparse

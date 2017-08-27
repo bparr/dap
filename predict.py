@@ -4,9 +4,8 @@
 Parse full csv and predict harvest data.
 
 Usage:
-  ./predict.py -d 2016
-  ./predict.py -d 2016.noHarvest
-  ./predict.py -d 2014
+  ./predict.py --rf_only
+  ./predict.py --help  # See full command line argument list.
 
 Outputs files to the results/ directory.
 """
