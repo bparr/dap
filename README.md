@@ -4,7 +4,7 @@ Ben Parr (bparr)
 
 Machine Learning Department, Carnegie Mellon University
 
-Data Analysis Project (https://www.ml.cmu.edu/current-students/Data%20Analysis%20Project.html).
+Data Analysis Project (https://www.ml.cmu.edu/academics/dap.html).
 
 ___
 
