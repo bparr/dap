@@ -5,10 +5,10 @@ Augment a dataset that has a high amount of missing data.
 
 Example: A four sample dataset, where each sample has three input features and
 one output feature. The first two samples are in the training set and the
-remaining two samples are in the test set.
+remaining two samples are in the train set.
 
-X-test sample #1 = [MISSING, 2.0, 3.0]
-X-test sample #2 = [4.0, 5.0, MISSING]
+X-train sample #1 = [MISSING, 2.0, 3.0]
+X-train sample #2 = [4.0, 5.0, MISSING]
 
 X-train sample #1: = [7.0, 8.0, 9.0]
 augment_sample(X-train sample #1) =
@@ -40,7 +40,7 @@ import numpy as np
 # original training samples.
 def augment(kfold_data_view):
   missings = set()  # Set of True/False tuples.
-  for x in kfold_data_view.X_test:
+  for x in kfold_data_view.X_train:
     missings.add(tuple(dataset_lib.is_missing(value) for value in x))
 
   augmented_X_train = []

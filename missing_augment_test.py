@@ -28,44 +28,46 @@ class TestOutput(unittest.TestCase):
 
   def test_augment_if_none_missing(self):
     result = missing_augment.augment(create_test_input(
-      [[1, 2, 3], [4, 5, MV]], [[7, 8, 9]], [42, 43]))
-    self._assert_result(result, [[1, 2, 3], [4, 5, MV]], [[7, 8, 9]],
+      [[1, 2, 3], [4, 5, 6]], [[7, 8, MV]], [42, 43]))
+    self._assert_result(result, [[1, 2, 3], [4, 5, 6]], [[7, 8, MV]],
                         [42, 43], [1.0, 1.0])
 
   def test_augment_if_all_same_missing_feature(self):
     result = missing_augment.augment(create_test_input(
-      [[1, 2, MV], [4, 5, MV]], [[7, 8, MV]], [42, 43]))
-    self._assert_result(result, [[1, 2, MV], [4, 5, MV]], [[7, 8, MV]],
+      [[1, 2, MV], [4, 5, MV]], [[7, 8, 9]], [42, 43]))
+    self._assert_result(result, [[1, 2, MV], [4, 5, MV]], [[7, 8, 9]],
                         [42, 43], [1.0, 1.0])
 
   def test_augment_augments_simple(self):
     result = missing_augment.augment(create_test_input(
-      [[1, 2, 3], [4, 5, MV]], [[7, 8, MV]], [42, 43]))
+      [[1, 2, 3], [4, 5, MV]], [[7, 8, 9]], [42, 43]))
     self._assert_result(
         result,
         [[1, 2, 3], [1, 2, MV], [4, 5, MV]],
-        [[7, 8, MV]],
+        [[7, 8, 9]],
         [42, 42, 43], [0.75, 0.25, 1.0])
 
 
   def test_augment_augments_all_samples(self):
     result = missing_augment.augment(create_test_input(
-      [[1, 2, 3], [4, 5, MV]], [[7, 8, MV], [MV, 10, 11]], [42, 43]))
+      [[1, 2, 3], [4, 5, MV], [MV, 8, 9]], [[10, 11, 12]], [42, 43, 44]))
     self._assert_result(
         result,
-        [[1, 2, 3], [1, 2, MV], [MV, 2, 3], [4, 5, MV], [MV, 5, MV]],
-        [[7, 8, MV], [MV, 10, 11]],
-        [42, 42, 42, 43, 43], [4.0 / 6, 1.0 / 6, 1.0 / 6, 0.75, 0.25])
+        [[1, 2, 3], [1, 2, MV], [MV, 2, 3], [4, 5, MV], [MV, 5, MV],
+         [MV, 8, 9], [MV, 8, MV]],
+        [[10, 11, 12]],
+        [42, 42, 42, 43, 43, 44, 44],
+        [4.0 / 6, 1.0 / 6, 1.0 / 6, 0.75, 0.25, 0.75, 0.25])
 
 
   def test_augment_result_has_no_duplicates(self):
     result = missing_augment.augment(create_test_input(
-      [[1, MV, 3], [4, 5, MV]], [[7, MV, MV]], [42, 43]))
+      [[1, MV, 3], [4, 5, MV], [7, MV, MV]], [[10, 11, 12]], [42, 43, 44]))
     self._assert_result(
         result,
-        [[1, MV, 3], [1, MV, MV], [4, 5, MV], [4, MV, MV]],
-        [[7, MV, MV]],
-        [42, 42, 43, 43], [0.75, 0.25, 0.75, 0.25])
+        [[1, MV, 3], [1, MV, MV], [4, 5, MV], [4, MV, MV], [7, MV, MV]],
+        [[10, 11, 12]],
+        [42, 42, 43, 43, 44], [0.75, 0.25, 0.75, 0.25, 1.0])
 
 
 if __name__ == '__main__':
